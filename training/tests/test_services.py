@@ -234,6 +234,75 @@ class TestGamification:
         profile.refresh_from_db()
         assert profile.level >= 2
 
+    def test_level_display(self, profile):
+        profile.xp = 4820
+        profile.level = 4
+        profile.save()
+        assert profile.level_display == "LEVEL 4 — ADVANCED"
+        assert profile.xp_display == "4,820"
+
+
+@pytest.mark.django_db
+class TestWorkloadSafety:
+    def test_no_alert_on_sustainable_days(self, user, profile):
+        from training.models import Phase
+        from training.services import assess_workload
+
+        profile.program_start_date = date.today() - timedelta(days=2)
+        profile.save()
+        phase = Phase.objects.create(name="P1", order=1)
+        week = Week.objects.create(phase=phase, week_number=1, title="W1")
+        for n in (1, 2, 3):
+            TrainingDay.objects.create(
+                week=week, day_number=n, title=f"D{n}", focus="Python", target_minutes=180
+            )
+        result = assess_workload(user)
+        assert result["alert"] is False
+
+    def test_alert_after_consecutive_high_days(self, user, profile):
+        from training.models import Phase
+        from training.services import assess_workload
+
+        profile.program_start_date = date.today() - timedelta(days=2)
+        profile.save()
+        phase = Phase.objects.create(name="P1", order=1)
+        week = Week.objects.create(phase=phase, week_number=1, title="W1")
+        for n in (1, 2, 3):
+            TrainingDay.objects.create(
+                week=week, day_number=n, title=f"D{n}", focus="Python", target_minutes=270
+            )
+        result = assess_workload(user)
+        assert result["alert"] is True
+        assert result["consecutive_high_days"] >= 3
+        assert "moving low-priority tasks" in result["suggestions"]
+
+    def test_recommendations_lighten_under_alert(self, user, profile, skill):
+        from training.models import Phase
+
+        profile.program_start_date = date.today() - timedelta(days=2)
+        profile.save()
+        phase = Phase.objects.create(name="P1", order=1)
+        week = Week.objects.create(phase=phase, week_number=1, title="W1")
+        for n in (1, 2, 3):
+            day = TrainingDay.objects.create(
+                week=week, day_number=n, title=f"D{n}", focus="Python", target_minutes=270
+            )
+            Task.objects.create(
+                training_day=day, skill=skill, title=f"Task {n}a",
+                task_type="study", estimated_minutes=60, order=1,
+            )
+            Task.objects.create(
+                training_day=day, skill=skill, title=f"Task {n}b",
+                task_type="study", estimated_minutes=60, order=2,
+            )
+            Task.objects.create(
+                training_day=day, skill=skill, title=f"Task {n}c",
+                task_type="study", estimated_minutes=60, order=3,
+            )
+        recs = get_daily_recommendations(user)
+        assert any(r["type"] == "workload" for r in recs)
+        assert len(recs) <= 5
+
 
 @pytest.mark.django_db
 class TestTaskCompletion:

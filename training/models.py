@@ -213,7 +213,7 @@ class UserProfile(models.Model):
             1: "Apprentice",
             2: "Operator",
             3: "Engineer",
-            4: "Senior",
+            4: "Advanced",
             5: "Principal",
             6: "Architect",
         }
@@ -237,12 +237,20 @@ class UserProfile(models.Model):
             1: "Apprentice",
             2: "Operator",
             3: "Engineer",
-            4: "Senior",
+            4: "Advanced",
             5: "Principal",
             6: "Architect",
             7: "Architect",
         }
         return titles.get(min(self.level + 1, 7), "Architect")
+
+    @property
+    def level_display(self) -> str:
+        return f"LEVEL {self.level} — {self.level_title.upper()}"
+
+    @property
+    def xp_display(self) -> str:
+        return f"{self.xp:,}"
 
 
 class StudySession(models.Model):

@@ -2,6 +2,8 @@
 {% block title %}Dashboard — DevMastery 90{% endblock %}
 {% block content %}
 <div class="dm-stack">
+    {% include "partials/workload_alert.html" %}
+
     <section id="stats" class="dm-rise" hx-get="{% url 'dashboard' %}?partial=stats" hx-trigger="every 60s" hx-swap="innerHTML">
         {% include "dashboard/_stats.html" %}
     </section>

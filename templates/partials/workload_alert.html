@@ -1,0 +1,24 @@
+{% if workload.alert %}
+<aside class="dm-workload" role="status">
+    <div class="dm-workload-title">
+        <svg class="dm-ico" aria-hidden="true"><use href="#i-alert"/></svg>
+        WORKLOAD ALERT
+    </div>
+    <p class="dm-workload-copy">
+        Your planned workload has been unusually high
+        {% if workload.consecutive_high_days %}
+        for {{ workload.consecutive_high_days }} consecutive day{{ workload.consecutive_high_days|pluralize }}
+        {% endif %}
+        {% if workload.today_planned_hours %}
+        (today: ~{{ workload.today_planned_hours }}h planned)
+        {% endif %}.
+    </p>
+    <p class="dm-workload-lead">Consider:</p>
+    <ul class="dm-workload-list">
+        <li>moving low-priority tasks</li>
+        <li>reducing today's workload</li>
+        <li>continuing at the normal pace</li>
+    </ul>
+    <p class="dm-workload-note">Sustainable progress beats excessive study hours.</p>
+</aside>
+{% endif %}

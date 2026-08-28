@@ -146,6 +146,104 @@ def award_xp(user, amount: int) -> UserProfile:
     return profile
 
 
+def get_day_planned_minutes(training_day: TrainingDay | None) -> int:
+    """Planned workload for a day: max of target vs sum of task estimates."""
+    if training_day is None:
+        return 0
+    task_minutes = (
+        training_day.tasks.aggregate(total=Sum("estimated_minutes"))["total"] or 0
+    )
+    return max(training_day.target_minutes, task_minutes)
+
+
+def assess_workload(user) -> dict[str, Any]:
+    """
+    Detect sustained high planned (or logged) workload.
+
+    Encourages sustainable pace — does not push longer hours.
+    """
+    high = getattr(settings, "WORKLOAD_HIGH_MINUTES", 240)
+    excessive = getattr(settings, "WORKLOAD_EXCESSIVE_MINUTES", 300)
+    consecutive_needed = getattr(settings, "WORKLOAD_CONSECUTIVE_DAYS", 3)
+    sustainable = getattr(settings, "WORKLOAD_SUSTAINABLE_MINUTES", 210)
+    actual_high = getattr(settings, "WORKLOAD_ACTUAL_HIGH_MINUTES", 300)
+
+    current = get_current_day_number(user)
+    window_start = max(1, current - consecutive_needed + 1)
+    day_numbers = list(range(window_start, current + 1))
+
+    days = {
+        d.day_number: d
+        for d in TrainingDay.objects.filter(day_number__in=day_numbers).prefetch_related(
+            "tasks"
+        )
+    }
+
+    recent: list[dict[str, Any]] = []
+    consecutive_high = 0
+    for day_num in reversed(day_numbers):
+        day = days.get(day_num)
+        planned = get_day_planned_minutes(day)
+        is_high = planned >= high
+        recent.append(
+            {
+                "day_number": day_num,
+                "planned_minutes": planned,
+                "planned_hours": round(planned / 60, 1),
+                "is_high": is_high,
+                "is_excessive": planned >= excessive,
+            }
+        )
+        if is_high:
+            consecutive_high += 1
+        else:
+            break
+
+    recent.reverse()
+
+    # Logged study overload (actual hours)
+    lookback = date.today() - timedelta(days=consecutive_needed - 1)
+    actual_by_day = (
+        StudySession.objects.filter(
+            user=user,
+            ended_at__isnull=False,
+            started_at__date__gte=lookback,
+        )
+        .values("started_at__date")
+        .annotate(total=Sum("duration_minutes"))
+    )
+    heavy_logged_days = sum(1 for row in actual_by_day if (row["total"] or 0) >= actual_high)
+
+    planned_alert = consecutive_high >= consecutive_needed
+    actual_alert = heavy_logged_days >= consecutive_needed
+    alert = planned_alert or actual_alert
+
+    today_planned = recent[-1]["planned_minutes"] if recent else 0
+
+    reason = "planned"
+    if actual_alert and not planned_alert:
+        reason = "logged"
+    elif actual_alert and planned_alert:
+        reason = "both"
+
+    return {
+        "alert": alert,
+        "reason": reason,
+        "consecutive_high_days": consecutive_high,
+        "heavy_logged_days": heavy_logged_days,
+        "threshold_minutes": high,
+        "sustainable_minutes": sustainable,
+        "today_planned_minutes": today_planned,
+        "today_planned_hours": round(today_planned / 60, 1),
+        "recent_days": recent,
+        "suggestions": [
+            "moving low-priority tasks",
+            "reducing today's workload",
+            "continuing at the normal pace",
+        ],
+    }
+
+
 def update_training_day_completion(training_day: TrainingDay) -> None:
     """Update training day completion percentage based on tasks."""
     tasks = training_day.tasks.all()
@@ -290,17 +388,24 @@ def get_top_weaknesses(user, limit: int = 3) -> list[dict[str, Any]]:
 
 
 def get_daily_recommendations(user) -> list[dict[str, Any]]:
-    """Generate prioritized daily recommendations."""
+    """Generate prioritized daily recommendations.
+
+    When workload is elevated, prefer a lighter list and do not stack
+    extra practice on top of an already heavy day.
+    """
     recommendations = []
     current_day = get_current_day_number(user)
     training_day = get_training_day(current_day)
+    workload = assess_workload(user)
+    light_mode = workload["alert"]
 
     # 1. Overdue incomplete tasks from past days
+    overdue_limit = 1 if light_mode else 3
     overdue = Task.objects.filter(
         training_day__day_number__lt=current_day,
         completed=False,
         skipped=False,
-    ).select_related("skill", "training_day").order_by("training_day__day_number")[:3]
+    ).select_related("skill", "training_day").order_by("training_day__day_number")[:overdue_limit]
     for task in overdue:
         recommendations.append({
             "priority": "critical",
@@ -311,50 +416,55 @@ def get_daily_recommendations(user) -> list[dict[str, Any]]:
             "type": "overdue",
         })
 
-    # 2. Weak skills
-    for weakness in get_top_weaknesses(user, 2):
-        recommendations.append({
-            "priority": "high",
-            "title": f"Strengthen {weakness['skill'].name}",
-            "minutes": 45,
-            "reason": weakness["recommended_action"],
-            "skill_slug": weakness["skill"].slug,
-            "type": "weakness",
-        })
+    # 2. Weak skills — skip stacking when workload is already high
+    if not light_mode:
+        for weakness in get_top_weaknesses(user, 2):
+            recommendations.append({
+                "priority": "high",
+                "title": f"Strengthen {weakness['skill'].name}",
+                "minutes": 45,
+                "reason": weakness["recommended_action"],
+                "skill_slug": weakness["skill"].slug,
+                "type": "weakness",
+            })
 
     # 3. Recent assessment failures
-    failed = Assessment.objects.filter(user=user, percentage__lt=70).order_by("-completed_at")[:2]
-    for assessment in failed:
-        recommendations.append({
-            "priority": "high",
-            "title": f"Review {assessment.name}",
-            "minutes": 30,
-            "reason": f"Scored {assessment.percentage}% — needs improvement",
-            "type": "assessment",
-        })
+    if not light_mode:
+        failed = Assessment.objects.filter(user=user, percentage__lt=70).order_by("-completed_at")[:2]
+        for assessment in failed:
+            recommendations.append({
+                "priority": "high",
+                "title": f"Review {assessment.name}",
+                "minutes": 30,
+                "reason": f"Scored {assessment.percentage}% — needs improvement",
+                "type": "assessment",
+            })
 
     # 4. Repeated mistakes
-    repeated = (
-        Mistake.objects.filter(user=user, resolved=False)
-        .values("description")
-        .annotate(count=Count("id"))
-        .filter(count__gte=2)
-        .order_by("-count")[:2]
-    )
-    for mistake in repeated:
-        recommendations.append({
-            "priority": "medium",
-            "title": "Resolve repeated mistake",
-            "minutes": 30,
-            "reason": mistake["description"][:80],
-            "type": "mistake",
-        })
+    if not light_mode:
+        repeated = (
+            Mistake.objects.filter(user=user, resolved=False)
+            .values("description")
+            .annotate(count=Count("id"))
+            .filter(count__gte=2)
+            .order_by("-count")[:2]
+        )
+        for mistake in repeated:
+            recommendations.append({
+                "priority": "medium",
+                "title": "Resolve repeated mistake",
+                "minutes": 30,
+                "reason": mistake["description"][:80],
+                "type": "mistake",
+            })
 
-    # 5. Today's scheduled tasks
+    # 5. Today's scheduled tasks (cap when protecting workload)
     if training_day:
+        task_limit = 2 if light_mode else 4
         today_tasks = training_day.tasks.filter(
             completed=False, skipped=False
-        ).select_related("skill")[:4]
+        ).select_related("skill").order_by("order")[:task_limit]
+        # Prefer higher-priority curriculum items when lightening load
         for task in today_tasks:
             recommendations.append({
                 "priority": task.priority,
@@ -365,10 +475,19 @@ def get_daily_recommendations(user) -> list[dict[str, Any]]:
                 "type": "scheduled",
             })
 
+    if light_mode:
+        recommendations.insert(0, {
+            "priority": "high",
+            "title": "Protect sustainable pace",
+            "minutes": 0,
+            "reason": "Workload has been high. Prefer quality over volume today.",
+            "type": "workload",
+        })
+
     # Sort by priority
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
     recommendations.sort(key=lambda x: priority_order.get(x["priority"], 4))
-    return recommendations[:8]
+    return recommendations[: (5 if light_mode else 8)]
 
 
 def get_analytics_data(user) -> dict[str, Any]:

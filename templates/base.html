@@ -50,20 +50,16 @@
                 </a>
             </nav>
             <div class="dm-nav-meta">
+                <div class="dm-rank" title="Progress">
+                    <div class="dm-rank-level">{{ user_level_display }}</div>
+                    <div class="dm-rank-xp">XP: {{ user_xp_display }}</div>
+                </div>
                 {% if user_streak %}
-                <div class="dm-streak" title="Consistency chain">
+                <div class="dm-streak" title="Study streak">
                     <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-flame"/></svg>
-                    {{ user_streak }}d
+                    {{ user_streak }} day streak
                 </div>
                 {% endif %}
-                <div class="dm-xp-wrap" title="{{ user_xp_into_level }} / 1000 XP → {{ user_next_level_title }}">
-                    <div class="dm-xp-ring" style="--pct: {{ user_xp_pct }}"></div>
-                    <span class="dm-xp-ring-label">L{{ user_level }}</span>
-                </div>
-                <div class="dm-nav-level">
-                    <div class="dm-mono" style="font-size:0.65rem;color:var(--ink-muted)">{{ user_level_title }}</div>
-                    <div class="dm-mono" style="font-weight:600;font-size:0.78rem">{{ user_xp }} XP</div>
-                </div>
                 <a href="{% url 'logout' %}" class="dm-logout" aria-label="Logout" title="Logout">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg>
                     <span class="dm-logout-text">Logout</span>
