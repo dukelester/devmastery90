@@ -14,11 +14,11 @@
     </div>
 </div>
 {% empty %}
-<p class="dm-muted">No open tasks for today.</p>
+<p class="dm-muted">No open tasks for today. Check the calendar or mark previous days complete.</p>
 {% endfor %}
 {% if today_tasks %}
 <a href="{% url 'today' %}" class="dm-btn dm-btn-primary dm-btn-block">
     <svg class="dm-ico" aria-hidden="true"><use href="#i-arrow"/></svg>
-    Open execution view
+    Open today's execution view
 </a>
 {% endif %}

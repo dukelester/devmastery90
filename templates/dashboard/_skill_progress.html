@@ -1,14 +1,14 @@
-<div class="dm-panel dm-pad">
-    {% for s in skill_scores %}
-    <div class="dm-list-row">
-        <span>{{ s.skill.name }}</span>
-        <div class="dm-score-bar">
-            <div class="dm-score-track {% if s.score < 7 %}is-weak{% endif %}">
-                <i style="width: {{ s.score|floatformat:0 }}0%"></i>
-            </div>
-            <span class="dm-mono" style="min-width:3.5rem;text-align:right">
+<div class="dm-panel dm-pad dm-skill-grid">
+    {% for s in skill_scores|slice:":12" %}
+    <div class="dm-skill-cell">
+        <div class="dm-skill-top">
+            <span class="dm-skill-name">{{ s.skill.name }}</span>
+            <span class="dm-mono dm-skill-score">
                 <span class="dm-muted">{{ s.trend }}</span> {{ s.score }}
             </span>
+        </div>
+        <div class="dm-score-track {% if s.score < 7 %}is-weak{% endif %}" style="width:100%">
+            <i style="width: {{ s.score|floatformat:0 }}0%"></i>
         </div>
     </div>
     {% empty %}
