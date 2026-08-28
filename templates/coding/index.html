@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Coding Tracker — DevMastery 90{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="grid md:grid-cols-4 gap-4">
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 text-center">
+            <p class="text-gray-400 text-sm">Total</p>
+            <p class="text-2xl font-bold">{{ total }}</p>
+        </div>
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 text-center">
+            <p class="text-gray-400 text-sm">Solved</p>
+            <p class="text-2xl font-bold text-emerald-400">{{ solved }}</p>
+        </div>
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 text-center">
+            <p class="text-gray-400 text-sm">Success Rate</p>
+            <p class="text-2xl font-bold">{{ success_rate }}%</p>
+        </div>
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 text-center">
+            <p class="text-gray-400 text-sm">Avg Time</p>
+            <p class="text-2xl font-bold">{{ avg_solve_time }}m</p>
+        </div>
+    </div>
+
+    {% if categories %}
+    <div>
+        <h2 class="text-lg font-semibold mb-3">Pattern Performance</h2>
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-2">
+            {% for cat in categories %}
+            <div class="flex justify-between text-sm">
+                <span>{{ cat.category }}</span>
+                <span class="font-mono {% if cat.rate < 60 %}text-orange-400{% elif cat.rate >= 80 %}text-emerald-400{% endif %}">{{ cat.rate }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div>
+        <h2 class="text-lg font-semibold mb-3">Add Problem</h2>
+        <form hx-post="{% url 'coding_create' %}" hx-target="#problem-list" hx-swap="beforeend" class="bg-gray-900 rounded-lg border border-gray-800 p-4 grid md:grid-cols-3 gap-3">
+            {% csrf_token %}
+            <input name="title" placeholder="Problem title" required class="bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+            <input name="category" placeholder="Category (e.g. Arrays)" class="bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+            <select name="difficulty" class="bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+            <input name="platform" placeholder="Platform" class="bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+            <input name="url" placeholder="URL" class="bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded p-2 text-sm">Add</button>
+        </form>
+    </div>
+
+    <div id="problem-list" class="space-y-2">
+        {% for problem in problems %}
+        {% include "coding/_problem.html" %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

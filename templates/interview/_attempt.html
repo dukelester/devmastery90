@@ -1,0 +1,5 @@
+<div class="bg-gray-800 rounded p-3 text-sm">
+    <span class="text-gray-400">{{ attempt.question.category }}</span>
+    <span class="font-mono ml-2">{{ attempt.score }}/10</span>
+    <p class="mt-1 text-gray-300">{{ attempt.answer|truncatewords:30 }}</p>
+</div>

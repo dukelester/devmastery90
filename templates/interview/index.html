@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Interview Practice — DevMastery 90{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    {% if categories %}
+    <div class="grid md:grid-cols-3 gap-4">
+        {% for cat in categories %}
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
+            <h3 class="font-medium">{{ cat.category }}</h3>
+            <p class="text-2xl font-bold mt-2">{{ cat.avg_score }}/10</p>
+            <p class="text-sm text-gray-400">{{ cat.attempted }} attempted · {{ cat.needs_review }} need review</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div>
+        <h2 class="text-lg font-semibold mb-3">Practice Questions</h2>
+        <div class="space-y-4">
+            {% for question in questions %}
+            <div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
+                <div class="flex gap-2 mb-2">
+                    <span class="text-xs bg-gray-800 px-2 py-0.5 rounded">{{ question.category }}</span>
+                    <span class="text-xs bg-gray-800 px-2 py-0.5 rounded">{{ question.difficulty }}</span>
+                </div>
+                <p class="font-medium">{{ question.question }}</p>
+                {% if question.ideal_topics %}
+                <p class="text-sm text-gray-400 mt-1">Cover: {{ question.ideal_topics }}</p>
+                {% endif %}
+                <form hx-post="{% url 'interview_attempt' question.id %}" hx-target="#attempts" hx-swap="beforeend" class="mt-3 space-y-2">
+                    {% csrf_token %}
+                    <textarea name="answer" rows="3" placeholder="Your answer..." class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm"></textarea>
+                    <div class="flex gap-3 items-center">
+                        <label class="text-sm text-gray-400">Score: <input name="score" type="number" min="0" max="10" value="5" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 w-16 text-sm"></label>
+                        <label class="text-sm text-gray-400">Confidence: <input name="confidence" type="number" min="0" max="10" value="5" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 w-16 text-sm"></label>
+                        <label class="text-sm text-gray-400"><input name="needs_review" type="checkbox"> Review</label>
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-sm">Submit</button>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="attempts" class="space-y-2">
+        {% for attempt in recent_attempts %}
+        {% include "interview/_attempt.html" %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
