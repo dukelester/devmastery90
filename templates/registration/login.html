@@ -3,13 +3,15 @@
 {% block content %}
 <div class="dm-auth">
     <div class="dm-auth-stage dm-rise">
-        <p class="dm-kicker" style="text-align:center">Personal engineering coach</p>
+        <p class="dm-kicker" style="justify-content:center">Personal engineering coach</p>
         <h1 class="dm-hero-brand">DevMastery <em>90</em></h1>
-        <p class="dm-muted" style="text-align:center;margin:0.5rem 0 0">Sign in to continue your 90-day training.</p>
+        <p class="dm-muted" style="text-align:center;margin:0.65rem auto 0;max-width:22rem;line-height:1.5">
+            Ninety days of advanced practice. Sign in and continue the mission.
+        </p>
         <form method="post" class="dm-panel dm-auth-form">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.5rem">Sign in</button>
+            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.35rem">Sign in</button>
         </form>
         <p class="dm-auth-foot">
             No account? <a href="{% url 'register' %}">Create one</a>

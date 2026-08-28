@@ -4,24 +4,24 @@
 <div class="dm-stack dm-rise">
     <header>
         <p class="dm-kicker">Pattern mastery</p>
-        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Coding Tracker</h1>
-        <p class="dm-muted" style="margin:0.4rem 0 0">Track solve rate by pattern. Weak categories surface first.</p>
+        <h1 class="dm-display" style="font-size:clamp(1.8rem,4vw,2.6rem);margin:0.45rem 0 0">Coding Tracker</h1>
+        <p class="dm-soft" style="margin:0.55rem 0 0;max-width:34rem;line-height:1.5">Track solve rate by pattern. Weak categories surface first.</p>
     </header>
 
     <div class="dm-grid-4">
-        <div class="dm-panel dm-pad" style="text-align:center">
+        <div class="dm-panel dm-metric">
             <div class="dm-stat-label">Total</div>
             <div class="dm-stat-value">{{ total }}</div>
         </div>
-        <div class="dm-panel dm-pad" style="text-align:center">
+        <div class="dm-panel dm-metric">
             <div class="dm-stat-label">Solved</div>
             <div class="dm-stat-value" style="color:var(--signal)">{{ solved }}</div>
         </div>
-        <div class="dm-panel dm-pad" style="text-align:center">
+        <div class="dm-panel dm-metric">
             <div class="dm-stat-label">Success</div>
             <div class="dm-stat-value">{{ success_rate }}%</div>
         </div>
-        <div class="dm-panel dm-pad" style="text-align:center">
+        <div class="dm-panel dm-metric">
             <div class="dm-stat-label">Avg time</div>
             <div class="dm-stat-value">{{ avg_solve_time }}m</div>
         </div>

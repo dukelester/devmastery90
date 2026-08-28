@@ -8,14 +8,14 @@
 
     <div class="dm-grid-2 dm-rise dm-rise-delay-1">
         <section>
-            <h2 class="dm-section-title">Today's Mission</h2>
-            <div id="today-tasks" class="dm-panel dm-pad">
+            <h2 class="dm-section-title"><span class="dm-sec-num">01</span> Today's Mission</h2>
+            <div id="today-tasks" class="dm-panel dm-pad-lg">
                 {% include "dashboard/_today_tasks.html" %}
             </div>
         </section>
         <section>
-            <h2 class="dm-section-title">Recommended Focus</h2>
-            <div id="recommendations" class="dm-panel dm-pad">
+            <h2 class="dm-section-title"><span class="dm-sec-num">02</span> Recommended Focus</h2>
+            <div id="recommendations" class="dm-panel dm-pad-lg">
                 {% include "dashboard/_recommendations.html" %}
             </div>
         </section>
@@ -23,38 +23,41 @@
 
     <div class="dm-grid-2 dm-rise dm-rise-delay-2">
         <section>
-            <h2 class="dm-section-title">Top Weaknesses</h2>
-            <div class="dm-panel dm-pad">
+            <h2 class="dm-section-title"><span class="dm-sec-num">03</span> Top Weaknesses</h2>
+            <div class="dm-panel dm-pad-lg">
                 {% for w in weaknesses %}
                 <div class="dm-list-row">
-                    <div>
-                        <div style="font-weight:600">{{ w.skill.name }}</div>
-                        <div class="dm-muted" style="font-size:0.75rem;margin-top:0.2rem">{{ w.recommended_action|truncatechars:72 }}</div>
+                    <div style="display:flex;gap:0.75rem;align-items:flex-start">
+                        <span class="dm-priority-dot is-high" aria-hidden="true"></span>
+                        <div>
+                            <div style="font-weight:650">{{ w.skill.name }}</div>
+                            <div class="dm-muted" style="font-size:0.78rem;margin-top:0.25rem;line-height:1.4">{{ w.recommended_action|truncatechars:80 }}</div>
+                        </div>
                     </div>
                     <div class="dm-score-bar">
                         <div class="dm-score-track is-weak"><i style="width: {{ w.score|floatformat:0 }}0%"></i></div>
-                        <span class="dm-mono" style="font-weight:600;color:var(--alert)">{{ w.score }}/10</span>
+                        <span class="dm-mono" style="font-weight:600;color:var(--ember)">{{ w.score }}/10</span>
                     </div>
                 </div>
                 {% empty %}
-                <p class="dm-muted">No critical weaknesses detected. Stay consistent.</p>
+                <p class="dm-muted">No critical weaknesses detected. Protect the streak and deepen strong skills.</p>
                 {% endfor %}
             </div>
         </section>
         <section id="skill-progress">
-            <h2 class="dm-section-title">Skill Progress</h2>
+            <h2 class="dm-section-title"><span class="dm-sec-num">04</span> Skill Progress</h2>
             {% include "dashboard/_skill_progress.html" %}
         </section>
     </div>
 
     {% if recent_assessments %}
     <section class="dm-rise dm-rise-delay-3">
-        <h2 class="dm-section-title">Recent Performance</h2>
-        <div class="dm-panel dm-pad">
+        <h2 class="dm-section-title"><span class="dm-sec-num">05</span> Recent Performance</h2>
+        <div class="dm-panel dm-pad-lg">
             {% for a in recent_assessments %}
             <div class="dm-list-row">
-                <span>{{ a.name }}</span>
-                <span class="dm-mono" style="font-weight:600;color:{% if a.percentage >= 70 %}var(--signal){% else %}var(--alert){% endif %}">{{ a.percentage }}%</span>
+                <span style="font-weight:550">{{ a.name }}</span>
+                <span class="dm-mono" style="font-weight:600;color:{% if a.percentage >= 70 %}var(--signal){% else %}var(--ember){% endif %}">{{ a.percentage }}%</span>
             </div>
             {% endfor %}
         </div>

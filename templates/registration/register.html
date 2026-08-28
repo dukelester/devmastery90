@@ -3,13 +3,15 @@
 {% block content %}
 <div class="dm-auth">
     <div class="dm-auth-stage dm-rise">
-        <p class="dm-kicker" style="text-align:center">Begin Day 1</p>
+        <p class="dm-kicker" style="justify-content:center">Begin Day 1</p>
         <h1 class="dm-hero-brand">DevMastery <em>90</em></h1>
-        <p class="dm-muted" style="text-align:center;margin:0.5rem 0 0">Create your training profile and start the program.</p>
+        <p class="dm-muted" style="text-align:center;margin:0.65rem auto 0;max-width:22rem;line-height:1.5">
+            Create your profile and open the 90-day mastery cycle.
+        </p>
         <form method="post" class="dm-panel dm-auth-form">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.5rem">Create account</button>
+            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.35rem">Create account</button>
         </form>
         <p class="dm-auth-foot">
             Already training? <a href="{% url 'login' %}">Sign in</a>

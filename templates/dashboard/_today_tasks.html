@@ -1,6 +1,6 @@
 {% for task in today_tasks %}
 <div class="dm-task">
-    <div class="dm-check"> </div>
+    <div class="dm-check"></div>
     <div>
         <div class="dm-task-title">{{ task.title }}</div>
         <div class="dm-task-meta">
@@ -14,5 +14,5 @@
 <p class="dm-muted">No open tasks for today.</p>
 {% endfor %}
 {% if today_tasks %}
-<a href="{% url 'today' %}" class="dm-btn dm-btn-primary" style="margin-top:1rem;width:100%">Open today's session</a>
+<a href="{% url 'today' %}" class="dm-btn dm-btn-primary" style="margin-top:1.15rem;width:100%">Open execution view</a>
 {% endif %}

@@ -2,7 +2,7 @@
     {% if active_session %}
     <p class="dm-timer-status"><span class="dm-timer-live"></span>Session active</p>
     {% if active_session.task %}
-    <p style="font-weight:600;margin:0.75rem 0 0.25rem">{{ active_session.task.title }}</p>
+    <p style="font-weight:650;margin:0.85rem 0 0.3rem;font-size:0.95rem">{{ active_session.task.title }}</p>
     {% endif %}
     <p class="dm-muted" style="font-size:0.8rem;margin:0">Running {{ active_session.started_at|timesince }}</p>
     <button
@@ -10,18 +10,20 @@
         hx-target="#timer-widget"
         hx-swap="innerHTML"
         class="dm-btn dm-btn-danger"
-        style="margin-top:1.25rem">
+        style="margin-top:1.15rem">
         Stop & save
     </button>
     {% else %}
-    <p class="dm-timer-status" style="color:var(--ink-muted)">Idle</p>
-    <p class="dm-muted" style="margin:0.75rem 0 0;font-size:0.875rem">Start a focused block. Sessions auto-save to your streak and XP.</p>
+    <p class="dm-timer-status" style="color:rgba(237,242,247,0.55)">Idle</p>
+    <p class="dm-muted" style="margin:0.7rem auto 0;font-size:0.85rem;max-width:16rem;line-height:1.45">
+        Start a focused block. Sessions feed streak, XP, and analytics.
+    </p>
     <button
         hx-post="{% url 'timer_start' %}"
         hx-target="#timer-widget"
         hx-swap="innerHTML"
         class="dm-btn dm-btn-primary"
-        style="margin-top:1.25rem">
+        style="margin-top:1.15rem">
         Start timer
     </button>
     {% endif %}

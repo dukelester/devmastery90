@@ -2,35 +2,54 @@
 {% block title %}Today — DevMastery 90{% endblock %}
 {% block content %}
 <div class="dm-stack">
-    <header class="dm-hero dm-rise">
-        <p class="dm-kicker">Execution day</p>
-        <div class="dm-day-mark">Day {{ progress.current_day }} <span class="dm-muted" style="font-weight:600;font-size:0.55em">/ 90</span></div>
-        {% if training_day %}
-        <p class="dm-soft" style="margin:0.6rem 0 0;max-width:36rem">
-            <strong style="color:var(--ink)">{{ training_day.title }}</strong>
-            — {{ training_day.focus }}
-        </p>
-        {% endif %}
-        <div class="dm-stat-row">
-            <div class="dm-stat">
-                <div class="dm-stat-label">Target</div>
-                <div class="dm-stat-value">{% if training_day %}{{ training_day.target_minutes }}m{% else %}—{% endif %}</div>
+    <header class="dm-hero-stage dm-rise">
+        <div class="dm-hero-main">
+            <p class="dm-kicker">Execution day</p>
+            <div class="dm-day-mark">Day {{ progress.current_day }} <span class="dm-muted" style="font-weight:500;font-size:0.5em">/ 90</span></div>
+            {% if training_day %}
+            <p class="dm-hero-copy">
+                <strong style="color:var(--ink)">{{ training_day.title }}</strong>
+                — {{ training_day.focus }}
+            </p>
+            {% endif %}
+            <div class="dm-stat-row">
+                <div class="dm-stat">
+                    <div class="dm-stat-label">Target</div>
+                    <div class="dm-stat-value">{% if training_day %}{{ training_day.target_minutes }}m{% else %}—{% endif %}</div>
+                </div>
+                <div class="dm-stat">
+                    <div class="dm-stat-label">Logged</div>
+                    <div class="dm-stat-value">{{ daily_total_minutes }}m</div>
+                </div>
+                <div class="dm-stat">
+                    <div class="dm-stat-label">Chain</div>
+                    <div class="dm-stat-value" style="color:var(--ember)">{{ progress.streak }}d</div>
+                </div>
+                <div class="dm-stat">
+                    <div class="dm-stat-label">XP today</div>
+                    <div class="dm-stat-value" style="font-size:1.1rem">+{{ user_xp_into_level }}</div>
+                </div>
             </div>
-            <div class="dm-stat">
-                <div class="dm-stat-label">Logged today</div>
-                <div class="dm-stat-value">{{ daily_total_minutes }}m</div>
-            </div>
-            <div class="dm-stat">
-                <div class="dm-stat-label">Chain</div>
-                <div class="dm-stat-value" style="color:var(--alert)">{{ progress.streak }}d</div>
+        </div>
+        <div class="dm-orbit">
+            <div class="dm-orbit-core">
+                <div>
+                    <p class="dm-kicker">Focus block</p>
+                    <p style="font-family:var(--font-display);font-size:1.6rem;font-weight:600;letter-spacing:-0.04em;margin:0.6rem 0 0;line-height:1.15">
+                        {% if training_day %}{{ training_day.focus }}{% else %}Ready when you are{% endif %}
+                    </p>
+                </div>
+                <div id="timer-widget">
+                    {% include "study/_timer.html" %}
+                </div>
             </div>
         </div>
     </header>
 
     <div class="dm-grid-2 is-mission dm-rise dm-rise-delay-1">
         <section>
-            <h2 class="dm-section-title">Today's Tasks</h2>
-            <div class="dm-panel dm-pad" id="task-list">
+            <h2 class="dm-section-title"><span class="dm-sec-num">01</span> Today's Tasks</h2>
+            <div class="dm-panel dm-pad-lg" id="task-list">
                 {% for task in tasks %}
                 {% include "tasks/_task.html" %}
                 {% empty %}
@@ -38,17 +57,9 @@
                 {% endfor %}
             </div>
         </section>
-        <aside class="dm-stack" style="gap:1.25rem">
-            <section>
-                <h2 class="dm-section-title">Study Timer</h2>
-                <div id="timer-widget" class="dm-panel">
-                    {% include "study/_timer.html" %}
-                </div>
-            </section>
-            <section>
-                <h2 class="dm-section-title">Daily Review</h2>
-                {% include "today/_daily_review_form.html" %}
-            </section>
+        <aside>
+            <h2 class="dm-section-title"><span class="dm-sec-num">02</span> Daily Review</h2>
+            {% include "today/_daily_review_form.html" %}
         </aside>
     </div>
 </div>
