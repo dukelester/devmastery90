@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — DevMastery 90{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div id="stats" hx-get="{% url 'dashboard' %}?partial=stats" hx-trigger="every 60s" hx-swap="innerHTML">
+        {% include "dashboard/_stats.html" %}
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+        <div id="today-tasks">
+            <h2 class="text-lg font-semibold mb-3">Today's Mission</h2>
+            {% include "dashboard/_today_tasks.html" %}
+        </div>
+        <div id="recommendations">
+            <h2 class="text-lg font-semibold mb-3">Recommended</h2>
+            {% include "dashboard/_recommendations.html" %}
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+        <div>
+            <h2 class="text-lg font-semibold mb-3">Top Weaknesses</h2>
+            <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-3">
+                {% for w in weaknesses %}
+                <div class="flex justify-between items-center">
+                    <span class="text-orange-400">⚠ {{ w.skill.name }}</span>
+                    <span class="font-mono">{{ w.score }}/10</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400">No weaknesses detected yet. Keep practicing!</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="skill-progress">
+            <h2 class="text-lg font-semibold mb-3">Skill Progress</h2>
+            {% include "dashboard/_skill_progress.html" %}
+        </div>
+    </div>
+
+    {% if recent_assessments %}
+    <div>
+        <h2 class="text-lg font-semibold mb-3">Recent Performance</h2>
+        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-2">
+            {% for a in recent_assessments %}
+            <div class="flex justify-between text-sm">
+                <span>{{ a.name }}</span>
+                <span class="font-mono {% if a.percentage >= 70 %}text-emerald-400{% else %}text-orange-400{% endif %}">{{ a.percentage }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

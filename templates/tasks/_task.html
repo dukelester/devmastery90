@@ -1,0 +1,71 @@
+<div id="task-{{ task.id }}" class="bg-gray-900 rounded-lg border border-gray-800 p-4 {% if task.completed %}opacity-60{% endif %} {% if task.blocked %}border-orange-700{% endif %}">
+    <div class="flex items-start gap-3">
+        <div class="flex-1">
+            <div class="flex items-center gap-2">
+                {% if task.completed %}
+                <span class="text-emerald-400">✓</span>
+                {% elif task.skipped %}
+                <span class="text-gray-500">⊘</span>
+                {% elif task.blocked %}
+                <span class="text-orange-400">⚠</span>
+                {% else %}
+                <span class="text-gray-500">☐</span>
+                {% endif %}
+                <span class="font-medium">{{ task.title }}</span>
+                <span class="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{{ task.task_type }}</span>
+            </div>
+            {% if task.description %}
+            <p class="text-gray-400 text-sm mt-1">{{ task.description }}</p>
+            {% endif %}
+            <div class="flex gap-4 mt-2 text-xs text-gray-500">
+                <span>{{ task.estimated_minutes }}m</span>
+                {% if task.skill %}<span>{{ task.skill.name }}</span>{% endif %}
+                <span>{{ task.difficulty }}</span>
+            </div>
+            {% if task.notes %}
+            <p class="text-gray-400 text-sm mt-2 italic">{{ task.notes }}</p>
+            {% endif %}
+        </div>
+        {% if not task.completed and not task.skipped %}
+        <div class="flex gap-2">
+            <button
+                hx-post="{% url 'task_complete' task.id %}"
+                hx-target="#task-{{ task.id }}"
+                hx-swap="outerHTML"
+                class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs">
+                Complete
+            </button>
+            <button
+                hx-post="{% url 'timer_start' %}"
+                hx-vals='{"task_id": "{{ task.id }}"}'
+                hx-target="#timer-widget"
+                hx-swap="innerHTML"
+                class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs">
+                Timer
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% if not task.completed %}
+    <details class="mt-3">
+        <summary class="text-xs text-gray-500 cursor-pointer">More actions</summary>
+        <div class="mt-2 space-y-2">
+            <form hx-post="{% url 'task_notes' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" class="flex gap-2">
+                {% csrf_token %}
+                <input name="notes" placeholder="Add notes..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
+                <button type="submit" class="text-xs text-emerald-400">Save</button>
+            </form>
+            <form hx-post="{% url 'task_skip' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" class="flex gap-2">
+                {% csrf_token %}
+                <input name="reason" placeholder="Skip reason..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
+                <button type="submit" class="text-xs text-gray-400">Skip</button>
+            </form>
+            <form hx-post="{% url 'task_block' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" class="flex gap-2">
+                {% csrf_token %}
+                <input name="reason" placeholder="Blocked reason..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
+                <button type="submit" class="text-xs text-orange-400">Block</button>
+            </form>
+        </div>
+    </details>
+    {% endif %}
+</div>

@@ -1,0 +1,11 @@
+<div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-2">
+    {% for s in skill_scores %}
+    <div class="flex justify-between items-center text-sm">
+        <span>{{ s.skill.name }}</span>
+        <span class="font-mono">
+            <span class="text-gray-400">{{ s.trend }}</span>
+            {{ s.score }}
+        </span>
+    </div>
+    {% endfor %}
+</div>

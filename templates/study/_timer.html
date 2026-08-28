@@ -1,0 +1,29 @@
+<div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
+    {% if active_session %}
+    <div class="text-center">
+        <p class="text-emerald-400 font-medium">Session Active</p>
+        {% if active_session.task %}
+        <p class="text-sm text-gray-400 mt-1">{{ active_session.task.title }}</p>
+        {% endif %}
+        <p class="text-xs text-gray-500 mt-1">Started {{ active_session.started_at|timesince }} ago</p>
+        <button
+            hx-post="{% url 'timer_stop' %}"
+            hx-target="#timer-widget"
+            hx-swap="innerHTML"
+            class="mt-4 bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded">
+            Stop
+        </button>
+    </div>
+    {% else %}
+    <div class="text-center">
+        <p class="text-gray-400">No active session</p>
+        <button
+            hx-post="{% url 'timer_start' %}"
+            hx-target="#timer-widget"
+            hx-swap="innerHTML"
+            class="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded">
+            Start Timer
+        </button>
+    </div>
+    {% endif %}
+</div>

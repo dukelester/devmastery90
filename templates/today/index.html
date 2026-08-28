@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Today — DevMastery 90{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <div class="flex flex-wrap gap-6 justify-between">
+            <div>
+                <p class="text-3xl font-bold">DAY {{ progress.current_day }} / 90</p>
+                {% if training_day %}
+                <p class="text-emerald-400 mt-2">FOCUS: {{ training_day.focus }}</p>
+                <p class="text-gray-400">TARGET: {{ training_day.target_minutes }} min</p>
+                {% endif %}
+            </div>
+            <div class="text-right">
+                <p class="text-gray-400">Today's Study</p>
+                <p class="text-2xl font-bold">{{ daily_total_minutes }}m</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <h2 class="text-lg font-semibold mb-3">Today's Tasks</h2>
+            <div class="space-y-2" id="task-list">
+                {% for task in tasks %}
+                {% include "tasks/_task.html" %}
+                {% empty %}
+                <p class="text-gray-400">No training day found.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <h2 class="text-lg font-semibold mb-3">Study Timer</h2>
+            <div id="timer-widget">
+                {% include "study/_timer.html" %}
+            </div>
+            <div class="mt-6">
+                <h2 class="text-lg font-semibold mb-3">Daily Review</h2>
+                {% include "today/_daily_review_form.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
