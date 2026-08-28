@@ -1,12 +1,15 @@
 <div>
-    <h3 class="text-lg font-bold">Day {{ day.day_number }}: {{ day.title }}</h3>
-    <p class="text-emerald-400">{{ day.focus }}</p>
-    <p class="text-gray-400 text-sm mt-1">Target: {{ day.target_minutes }} min · {{ day.completion_percentage|floatformat:0 }}% complete</p>
-    <div class="mt-4 space-y-2">
+    <p class="dm-kicker">Day {{ day.day_number }}</p>
+    <h3 class="dm-display" style="font-size:1.5rem;margin:0.35rem 0 0">{{ day.title }}</h3>
+    <p style="color:var(--signal);font-weight:600;margin:0.4rem 0 0">{{ day.focus }}</p>
+    <p class="dm-muted" style="font-size:0.85rem;margin:0.35rem 0 0">
+        Target {{ day.target_minutes }} min · {{ day.completion_percentage|floatformat:0 }}% complete
+    </p>
+    <div style="margin-top:1rem">
         {% for task in day.tasks.all %}
-        <div class="flex justify-between text-sm py-1 border-b border-gray-800">
-            <span class="{% if task.completed %}text-emerald-400{% endif %}">{{ task.title }}</span>
-            <span class="text-gray-500">{{ task.estimated_minutes }}m</span>
+        <div class="dm-list-row">
+            <span {% if task.completed %}style="color:var(--signal)"{% endif %}>{{ task.title }}</span>
+            <span class="dm-mono dm-muted">{{ task.estimated_minutes }}m</span>
         </div>
         {% endfor %}
     </div>

@@ -1,14 +1,18 @@
-<div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-2">
-    {% for task in today_tasks %}
-    <div class="flex items-center gap-3 py-2 border-b border-gray-800 last:border-0">
-        <span class="text-gray-500">☐</span>
-        <span class="flex-1">{{ task.title }}</span>
-        <span class="text-gray-400 text-sm">{{ task.estimated_minutes }}m</span>
+{% for task in today_tasks %}
+<div class="dm-task">
+    <div class="dm-check"> </div>
+    <div>
+        <div class="dm-task-title">{{ task.title }}</div>
+        <div class="dm-task-meta">
+            <span>{{ task.estimated_minutes }}m</span>
+            {% if task.skill %}<span>{{ task.skill.name }}</span>{% endif %}
+            <span class="dm-tag">{{ task.task_type }}</span>
+        </div>
     </div>
-    {% empty %}
-    <p class="text-gray-400">No tasks for today. <a href="{% url 'today' %}" class="text-emerald-400">Go to Today</a></p>
-    {% endfor %}
-    {% if today_tasks %}
-    <a href="{% url 'today' %}" class="block text-center text-emerald-400 text-sm mt-2 hover:underline">Start Today's Tasks →</a>
-    {% endif %}
 </div>
+{% empty %}
+<p class="dm-muted">No open tasks for today.</p>
+{% endfor %}
+{% if today_tasks %}
+<a href="{% url 'today' %}" class="dm-btn dm-btn-primary" style="margin-top:1rem;width:100%">Open today's session</a>
+{% endif %}

@@ -139,7 +139,7 @@ def award_xp(user, amount: int) -> UserProfile:
     """Award XP and update level."""
     profile = get_or_create_profile(user)
     profile.xp += amount
-    new_level = max(1, profile.xp // 1000 + 1)
+    new_level = max(1, (profile.xp // UserProfile.XP_PER_LEVEL) + 1)
     if new_level > profile.level:
         profile.level = min(new_level, 6)
     profile.save()

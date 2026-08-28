@@ -1,15 +1,16 @@
-<div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-3">
-    {% for rec in recommendations %}
-    <div class="border-b border-gray-800 pb-3 last:border-0">
-        <div class="flex justify-between items-start">
-            <span class="{% if rec.priority == 'critical' %}text-red-400{% elif rec.priority == 'high' %}text-orange-400{% else %}text-gray-300{% endif %}">
-                {{ rec.title }}
-            </span>
-            <span class="text-gray-400 text-sm">{{ rec.minutes }}m</span>
+{% for rec in recommendations %}
+<div class="dm-list-row" style="align-items:flex-start">
+    <div>
+        <div style="font-weight:600;color:{% if rec.priority == 'critical' %}var(--danger){% elif rec.priority == 'high' %}var(--alert){% else %}var(--ink){% endif %}">
+            {{ rec.title }}
         </div>
-        <p class="text-gray-500 text-sm mt-1">{{ rec.reason }}</p>
+        <p class="dm-muted" style="font-size:0.8rem;margin:0.3rem 0 0">{{ rec.reason }}</p>
     </div>
-    {% empty %}
-    <p class="text-gray-400">Complete today's curriculum tasks.</p>
-    {% endfor %}
+    <span class="dm-mono dm-muted">{{ rec.minutes }}m</span>
 </div>
+{% empty %}
+<p class="dm-muted">Follow today's curriculum. You're on track.</p>
+{% endfor %}
+{% if today_tasks %}
+<a href="{% url 'today' %}" class="dm-btn dm-btn-ghost" style="margin-top:1rem;width:100%">Start recommended work</a>
+{% endif %}

@@ -1,25 +1,25 @@
-<form hx-post="{% url 'daily_review' %}" hx-target="#daily-review-result" hx-swap="innerHTML" class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-3">
+<form hx-post="{% url 'daily_review' %}" hx-target="#daily-review-result" hx-swap="innerHTML" class="dm-panel dm-pad" style="display:flex;flex-direction:column;gap:0.85rem">
     {% csrf_token %}
     <div>
-        <label class="text-sm text-gray-400">What did you learn?</label>
-        <textarea name="lessons" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm"></textarea>
+        <label>What did you learn?</label>
+        <textarea name="lessons" rows="2" class="dm-textarea"></textarea>
     </div>
     <div>
-        <label class="text-sm text-gray-400">Challenges</label>
-        <textarea name="challenges" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm"></textarea>
+        <label>Challenges</label>
+        <textarea name="challenges" rows="2" class="dm-textarea"></textarea>
     </div>
     <div>
-        <label class="text-sm text-gray-400">Wins</label>
-        <textarea name="wins" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm"></textarea>
+        <label>Wins</label>
+        <textarea name="wins" rows="2" class="dm-textarea"></textarea>
     </div>
     <div>
-        <label class="text-sm text-gray-400">Tomorrow's focus</label>
-        <input name="tomorrow_focus" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+        <label>Tomorrow's focus</label>
+        <input name="tomorrow_focus" class="dm-input">
     </div>
     <div>
-        <label class="text-sm text-gray-400">Confidence (0-10)</label>
-        <input name="confidence_score" type="number" min="0" max="10" value="5" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm">
+        <label>Confidence (0–10)</label>
+        <input name="confidence_score" type="number" min="0" max="10" value="5" class="dm-input">
     </div>
-    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 rounded text-sm">Save Review</button>
+    <button type="submit" class="dm-btn dm-btn-primary">Save review</button>
 </form>
-<div id="daily-review-result" class="mt-2"></div>
+<div id="daily-review-result" style="margin-top:0.5rem"></div>

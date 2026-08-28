@@ -205,17 +205,44 @@ class UserProfile(models.Model):
     def __str__(self) -> str:
         return f"Profile: {self.user.username}"
 
+    XP_PER_LEVEL = 1000
+
     @property
     def level_title(self) -> str:
         titles = {
-            1: "Beginner",
-            2: "Intermediate",
-            3: "Proficient",
-            4: "Advanced",
-            5: "Expert",
-            6: "Master",
+            1: "Apprentice",
+            2: "Operator",
+            3: "Engineer",
+            4: "Senior",
+            5: "Principal",
+            6: "Architect",
         }
-        return titles.get(self.level, "Elite")
+        return titles.get(min(self.level, 6), "Architect")
+
+    @property
+    def xp_into_level(self) -> int:
+        return self.xp % self.XP_PER_LEVEL
+
+    @property
+    def xp_to_next_level(self) -> int:
+        return self.XP_PER_LEVEL - self.xp_into_level
+
+    @property
+    def xp_progress_pct(self) -> float:
+        return round((self.xp_into_level / self.XP_PER_LEVEL) * 100, 1)
+
+    @property
+    def next_level_title(self) -> str:
+        titles = {
+            1: "Apprentice",
+            2: "Operator",
+            3: "Engineer",
+            4: "Senior",
+            5: "Principal",
+            6: "Architect",
+            7: "Architect",
+        }
+        return titles.get(min(self.level + 1, 7), "Architect")
 
 
 class StudySession(models.Model):

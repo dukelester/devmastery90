@@ -1,16 +1,19 @@
-<div id="problem-{{ problem.id }}" class="bg-gray-900 rounded-lg border border-gray-800 p-4 flex justify-between items-center">
+<div id="problem-{{ problem.id }}" class="dm-list-row">
     <div>
-        <span class="{% if problem.solved %}text-emerald-400{% endif %}">{{ problem.title }}</span>
-        <span class="text-xs text-gray-500 ml-2">{{ problem.category }} · {{ problem.difficulty }}</span>
+        <span style="font-weight:600{% if problem.solved %};color:var(--signal){% endif %}">{{ problem.title }}</span>
+        <div class="dm-task-meta">
+            <span>{{ problem.category|default:"—" }}</span>
+            <span class="dm-tag">{{ problem.difficulty }}</span>
+        </div>
     </div>
     {% if not problem.solved %}
-    <form hx-post="{% url 'coding_solve' problem.id %}" hx-target="#problem-{{ problem.id }}" hx-swap="outerHTML" class="flex gap-2">
+    <form hx-post="{% url 'coding_solve' problem.id %}" hx-target="#problem-{{ problem.id }}" hx-swap="outerHTML" style="display:flex;gap:0.4rem;align-items:center">
         {% csrf_token %}
-        <input name="time_taken" type="number" placeholder="min" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs w-16">
-        <input name="confidence" type="number" min="0" max="10" value="5" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs w-16">
-        <button type="submit" class="text-emerald-400 text-xs">Solve</button>
+        <input name="time_taken" type="number" placeholder="min" class="dm-input" style="width:4rem">
+        <input name="confidence" type="number" min="0" max="10" value="5" class="dm-input" style="width:4rem">
+        <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Solve</button>
     </form>
     {% else %}
-    <span class="text-emerald-400 text-sm">✓ Solved</span>
+    <span class="dm-mono" style="color:var(--signal);font-weight:600">Solved</span>
     {% endif %}
 </div>

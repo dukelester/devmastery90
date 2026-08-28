@@ -1,27 +1,34 @@
 {% extends "base.html" %}
 {% block title %}Calendar — DevMastery 90{% endblock %}
 {% block content %}
-<div class="space-y-4">
-    <h1 class="text-2xl font-bold">90-Day Calendar</h1>
-    <div class="grid grid-cols-7 md:grid-cols-10 gap-2">
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">90-day map</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Training Calendar</h1>
+        <p class="dm-muted" style="margin:0.4rem 0 0">Select a day for mission details.</p>
+    </header>
+
+    <div class="dm-cal-grid">
         {% for day in days %}
         <button
+            type="button"
             hx-get="{% url 'calendar_day' day.day_number %}"
             hx-target="#day-detail"
             hx-swap="innerHTML"
-            class="p-2 rounded text-center text-sm border
-                {% if day.day_number == current_day %}border-emerald-500 bg-emerald-900/30
-                {% elif day.completed %}border-emerald-700 bg-emerald-900/20
-                {% elif day.completion_percentage > 0 %}border-blue-700 bg-blue-900/20
-                {% elif day.day_number < current_day %}border-orange-800 bg-orange-900/10
-                {% else %}border-gray-800 bg-gray-900{% endif %}">
-            <span class="font-bold">{{ day.day_number }}</span>
-            <span class="block text-xs text-gray-400">{{ day.completion_percentage|floatformat:0 }}%</span>
+            class="dm-cal-day
+                {% if day.day_number == current_day %}is-today
+                {% elif day.completed %}is-done
+                {% elif day.day_number < current_day and day.completion_percentage == 0 %}is-missed
+                {% elif day.day_number > current_day %}is-future
+                {% endif %}">
+            <strong>{{ day.day_number }}</strong>
+            <span class="dm-muted">{{ day.completion_percentage|floatformat:0 }}%</span>
         </button>
         {% endfor %}
     </div>
-    <div id="day-detail" class="bg-gray-900 rounded-lg border border-gray-800 p-4">
-        <p class="text-gray-400">Click a day to see details.</p>
+
+    <div id="day-detail" class="dm-panel dm-pad">
+        <p class="dm-muted">Click a day to load details.</p>
     </div>
 </div>
 {% endblock %}

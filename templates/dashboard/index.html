@@ -1,54 +1,64 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — DevMastery 90{% endblock %}
 {% block content %}
-<div class="space-y-6">
-    <div id="stats" hx-get="{% url 'dashboard' %}?partial=stats" hx-trigger="every 60s" hx-swap="innerHTML">
+<div class="dm-stack">
+    <section id="stats" class="dm-rise" hx-get="{% url 'dashboard' %}?partial=stats" hx-trigger="every 60s" hx-swap="innerHTML">
         {% include "dashboard/_stats.html" %}
+    </section>
+
+    <div class="dm-grid-2 dm-rise dm-rise-delay-1">
+        <section>
+            <h2 class="dm-section-title">Today's Mission</h2>
+            <div id="today-tasks" class="dm-panel dm-pad">
+                {% include "dashboard/_today_tasks.html" %}
+            </div>
+        </section>
+        <section>
+            <h2 class="dm-section-title">Recommended Focus</h2>
+            <div id="recommendations" class="dm-panel dm-pad">
+                {% include "dashboard/_recommendations.html" %}
+            </div>
+        </section>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-        <div id="today-tasks">
-            <h2 class="text-lg font-semibold mb-3">Today's Mission</h2>
-            {% include "dashboard/_today_tasks.html" %}
-        </div>
-        <div id="recommendations">
-            <h2 class="text-lg font-semibold mb-3">Recommended</h2>
-            {% include "dashboard/_recommendations.html" %}
-        </div>
-    </div>
-
-    <div class="grid lg:grid-cols-2 gap-6">
-        <div>
-            <h2 class="text-lg font-semibold mb-3">Top Weaknesses</h2>
-            <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-3">
+    <div class="dm-grid-2 dm-rise dm-rise-delay-2">
+        <section>
+            <h2 class="dm-section-title">Top Weaknesses</h2>
+            <div class="dm-panel dm-pad">
                 {% for w in weaknesses %}
-                <div class="flex justify-between items-center">
-                    <span class="text-orange-400">⚠ {{ w.skill.name }}</span>
-                    <span class="font-mono">{{ w.score }}/10</span>
+                <div class="dm-list-row">
+                    <div>
+                        <div style="font-weight:600">{{ w.skill.name }}</div>
+                        <div class="dm-muted" style="font-size:0.75rem;margin-top:0.2rem">{{ w.recommended_action|truncatechars:72 }}</div>
+                    </div>
+                    <div class="dm-score-bar">
+                        <div class="dm-score-track is-weak"><i style="width: {{ w.score|floatformat:0 }}0%"></i></div>
+                        <span class="dm-mono" style="font-weight:600;color:var(--alert)">{{ w.score }}/10</span>
+                    </div>
                 </div>
                 {% empty %}
-                <p class="text-gray-400">No weaknesses detected yet. Keep practicing!</p>
+                <p class="dm-muted">No critical weaknesses detected. Stay consistent.</p>
                 {% endfor %}
             </div>
-        </div>
-        <div id="skill-progress">
-            <h2 class="text-lg font-semibold mb-3">Skill Progress</h2>
+        </section>
+        <section id="skill-progress">
+            <h2 class="dm-section-title">Skill Progress</h2>
             {% include "dashboard/_skill_progress.html" %}
-        </div>
+        </section>
     </div>
 
     {% if recent_assessments %}
-    <div>
-        <h2 class="text-lg font-semibold mb-3">Recent Performance</h2>
-        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-2">
+    <section class="dm-rise dm-rise-delay-3">
+        <h2 class="dm-section-title">Recent Performance</h2>
+        <div class="dm-panel dm-pad">
             {% for a in recent_assessments %}
-            <div class="flex justify-between text-sm">
+            <div class="dm-list-row">
                 <span>{{ a.name }}</span>
-                <span class="font-mono {% if a.percentage >= 70 %}text-emerald-400{% else %}text-orange-400{% endif %}">{{ a.percentage }}%</span>
+                <span class="dm-mono" style="font-weight:600;color:{% if a.percentage >= 70 %}var(--signal){% else %}var(--alert){% endif %}">{{ a.percentage }}%</span>
             </div>
             {% endfor %}
         </div>
-    </div>
+    </section>
     {% endif %}
 </div>
 {% endblock %}

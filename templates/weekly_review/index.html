@@ -1,57 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Week {{ week.week_number }} Review{% endblock %}
 {% block content %}
-<div class="max-w-2xl mx-auto space-y-6">
-    <h1 class="text-2xl font-bold">WEEK {{ week.week_number }} REVIEW</h1>
-    <p class="text-gray-400">{{ week.title }}</p>
+<div class="dm-stack dm-rise" style="max-width:40rem;margin:0 auto">
+    <header>
+        <p class="dm-kicker">Retrospective</p>
+        <h1 class="dm-display" style="font-size:2.25rem;margin:0.35rem 0 0">Week {{ week.week_number }}</h1>
+        <p class="dm-muted" style="margin:0.4rem 0 0">{{ week.title }}</p>
+    </header>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
-            <p class="text-gray-400 text-sm">Tasks</p>
-            <p class="text-2xl font-bold">{{ tasks_completed }} / {{ tasks_total }}</p>
+    <div class="dm-grid-2">
+        <div class="dm-panel dm-pad">
+            <div class="dm-stat-label">Tasks</div>
+            <div class="dm-stat-value">{{ tasks_completed }} / {{ tasks_total }}</div>
         </div>
-        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
-            <p class="text-gray-400 text-sm">Study</p>
-            <p class="text-2xl font-bold">{{ study_minutes }}m</p>
+        <div class="dm-panel dm-pad">
+            <div class="dm-stat-label">Study</div>
+            <div class="dm-stat-value">{{ study_minutes }}m</div>
         </div>
     </div>
 
     {% if strongest and weakest %}
-    <div class="grid grid-cols-2 gap-4">
-        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
-            <p class="text-gray-400 text-sm">Strongest</p>
-            <p class="text-emerald-400">{{ strongest.skill.name }} ({{ strongest.score }})</p>
+    <div class="dm-grid-2">
+        <div class="dm-panel dm-pad">
+            <div class="dm-stat-label">Strongest</div>
+            <p style="margin:0.35rem 0 0;font-weight:600;color:var(--signal)">{{ strongest.skill.name }} ({{ strongest.score }})</p>
         </div>
-        <div class="bg-gray-900 rounded-lg border border-gray-800 p-4">
-            <p class="text-gray-400 text-sm">Weakest</p>
-            <p class="text-orange-400">{{ weakest.skill.name }} ({{ weakest.score }})</p>
+        <div class="dm-panel dm-pad">
+            <div class="dm-stat-label">Weakest</div>
+            <p style="margin:0.35rem 0 0;font-weight:600;color:var(--alert)">{{ weakest.skill.name }} ({{ weakest.score }})</p>
         </div>
     </div>
     {% endif %}
 
-    <form method="post" class="bg-gray-900 rounded-lg border border-gray-800 p-6 space-y-4">
+    <form method="post" class="dm-panel dm-pad" style="display:flex;flex-direction:column;gap:1rem">
         {% csrf_token %}
         <div>
-            <label class="text-sm text-gray-400">What did you learn?</label>
-            <textarea name="learned" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded p-2">{{ review.learned }}</textarea>
+            <label>What did you learn?</label>
+            <textarea name="learned" rows="3" class="dm-textarea">{{ review.learned }}</textarea>
         </div>
         <div>
-            <label class="text-sm text-gray-400">What was difficult?</label>
-            <textarea name="difficult" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded p-2">{{ review.difficult }}</textarea>
+            <label>What was difficult?</label>
+            <textarea name="difficult" rows="3" class="dm-textarea">{{ review.difficult }}</textarea>
         </div>
         <div>
-            <label class="text-sm text-gray-400">What went well?</label>
-            <textarea name="went_well" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded p-2">{{ review.went_well }}</textarea>
+            <label>What went well?</label>
+            <textarea name="went_well" rows="3" class="dm-textarea">{{ review.went_well }}</textarea>
         </div>
         <div>
-            <label class="text-sm text-gray-400">What should improve?</label>
-            <textarea name="improve" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded p-2">{{ review.improve }}</textarea>
+            <label>What should improve?</label>
+            <textarea name="improve" rows="3" class="dm-textarea">{{ review.improve }}</textarea>
         </div>
         <div>
-            <label class="text-sm text-gray-400">Next week focus</label>
-            <textarea name="next_week_focus" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded p-2">{{ review.next_week_focus }}</textarea>
+            <label>Next week focus</label>
+            <textarea name="next_week_focus" rows="3" class="dm-textarea">{{ review.next_week_focus }}</textarea>
         </div>
-        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-6 rounded">Save Review</button>
+        <button type="submit" class="dm-btn dm-btn-primary">Save weekly review</button>
     </form>
 </div>
 {% endblock %}

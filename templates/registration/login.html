@@ -1,15 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Login — DevMastery 90{% endblock %}
 {% block content %}
-<div class="max-w-md mx-auto mt-16">
-    <h1 class="text-2xl font-bold text-center mb-8">DevMastery 90</h1>
-    <form method="post" class="bg-gray-900 p-6 rounded-lg border border-gray-800 space-y-4">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded font-medium">Login</button>
-    </form>
-    <p class="text-center mt-4 text-gray-400">
-        No account? <a href="{% url 'register' %}" class="text-emerald-400 hover:underline">Register</a>
-    </p>
+<div class="dm-auth">
+    <div class="dm-auth-stage dm-rise">
+        <p class="dm-kicker" style="text-align:center">Personal engineering coach</p>
+        <h1 class="dm-hero-brand">DevMastery <em>90</em></h1>
+        <p class="dm-muted" style="text-align:center;margin:0.5rem 0 0">Sign in to continue your 90-day training.</p>
+        <form method="post" class="dm-panel dm-auth-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.5rem">Sign in</button>
+        </form>
+        <p class="dm-auth-foot">
+            No account? <a href="{% url 'register' %}">Create one</a>
+        </p>
+    </div>
 </div>
 {% endblock %}

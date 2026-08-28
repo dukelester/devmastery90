@@ -1,46 +1,75 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DevMastery 90{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
-    <style>
-        .progress-bar { transition: width 0.3s ease; }
-    </style>
 </head>
-<body class="h-full bg-gray-950 text-gray-100">
+<body class="dm-shell">
+    <script>
+        document.body.addEventListener('htmx:configRequest', (e) => {
+            const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrf) e.detail.headers['X-CSRFToken'] = csrf.value;
+        });
+    </script>
     {% if user.is_authenticated %}
-    <nav class="bg-gray-900 border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-6">
-                <a href="{% url 'dashboard' %}" class="text-xl font-bold text-emerald-400">DevMastery 90</a>
-                <div class="hidden md:flex gap-4 text-sm">
-                    <a href="{% url 'dashboard' %}" class="hover:text-emerald-400">Dashboard</a>
-                    <a href="{% url 'today' %}" class="hover:text-emerald-400">Today</a>
-                    <a href="{% url 'coding' %}" class="hover:text-emerald-400">Coding</a>
-                    <a href="{% url 'interview' %}" class="hover:text-emerald-400">Interview</a>
-                    <a href="{% url 'analytics' %}" class="hover:text-emerald-400">Analytics</a>
-                    <a href="{% url 'calendar' %}" class="hover:text-emerald-400">Calendar</a>
+    <header class="dm-nav">
+        <div class="dm-nav-inner">
+            <a href="{% url 'dashboard' %}" class="dm-brand">DevMastery <span>90</span></a>
+            <nav class="dm-nav-links" aria-label="Primary">
+                <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="is-active"{% endif %}>Dashboard</a>
+                <a href="{% url 'today' %}" {% if request.resolver_match.url_name == 'today' %}class="is-active"{% endif %}>Today</a>
+                <a href="{% url 'coding' %}" {% if request.resolver_match.url_name == 'coding' %}class="is-active"{% endif %}>Coding</a>
+                <a href="{% url 'interview' %}" {% if request.resolver_match.url_name == 'interview' %}class="is-active"{% endif %}>Interview</a>
+                <a href="{% url 'analytics' %}" {% if request.resolver_match.url_name == 'analytics' %}class="is-active"{% endif %}>Analytics</a>
+                <a href="{% url 'calendar' %}" {% if request.resolver_match.url_name == 'calendar' %}class="is-active"{% endif %}>Calendar</a>
+            </nav>
+            <div class="dm-nav-meta">
+                {% if user_streak %}
+                <div class="dm-streak" title="Consistency chain">
+                    <span class="dm-streak-dot" aria-hidden="true"></span>
+                    {{ user_streak }}d chain
                 </div>
-            </div>
-            <div class="flex items-center gap-4 text-sm">
-                {% if user_streak %}<span class="text-orange-400">🔥 {{ user_streak }} day streak</span>{% endif %}
-                <span class="text-gray-400">Lv {{ user_level }} {{ user_level_title }}</span>
-                <span class="text-emerald-400">{{ user_xp }} XP</span>
-                <a href="{% url 'logout' %}" class="text-gray-400 hover:text-white">Logout</a>
+                {% endif %}
+                <div class="dm-xp-wrap" title="{{ user_xp_into_level }} / 1000 XP to {{ user_next_level_title }}">
+                    <div class="dm-xp-ring" style="--pct: {{ user_xp_pct }}"></div>
+                    <span class="dm-xp-ring-label">L{{ user_level }}</span>
+                </div>
+                <div class="dm-nav-level">
+                    <div class="dm-mono" style="font-size:0.7rem;color:var(--ink-muted)">{{ user_level_title }}</div>
+                    <div class="dm-mono" style="font-weight:600">{{ user_xp }} XP</div>
+                </div>
+                <a href="{% url 'logout' %}" class="dm-logout">Logout</a>
             </div>
         </div>
-    </nav>
+    </header>
     {% endif %}
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main class="dm-main">
+        {% if user.is_authenticated %}
+        <nav class="dm-mobile-nav" aria-label="Mobile">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'today' %}">Today</a>
+            <a href="{% url 'coding' %}">Coding</a>
+            <a href="{% url 'interview' %}">Interview</a>
+            <a href="{% url 'analytics' %}">Analytics</a>
+            <a href="{% url 'calendar' %}">Calendar</a>
+        </nav>
+        {% endif %}
+
         {% if messages %}
         {% for message in messages %}
-        <div class="mb-4 p-3 rounded bg-emerald-900/50 border border-emerald-700 text-emerald-300">{{ message }}</div>
+        <div class="dm-flash">{{ message }}</div>
         {% endfor %}
         {% endif %}
+
+        {% csrf_token %}
         {% block content %}{% endblock %}
     </main>
 </body>

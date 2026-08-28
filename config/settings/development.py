@@ -16,3 +16,8 @@ CACHES = {  # noqa: F405
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}

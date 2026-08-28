@@ -1,34 +1,52 @@
-<div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
-    <div class="flex flex-wrap gap-6 items-center justify-between">
-        <div>
-            <p class="text-3xl font-bold">DAY {{ progress.current_day }} / 90</p>
-            <p class="text-gray-400">{{ progress.days_remaining }} days remaining</p>
+<div class="dm-hero">
+    <p class="dm-kicker">Engineering training system</p>
+    <h1 class="dm-hero-brand">DevMastery <em>90</em></h1>
+    <div class="dm-day-mark">Day {{ progress.current_day }} <span class="dm-muted" style="font-weight:600;font-size:0.55em">/ 90</span></div>
+    <p class="dm-soft" style="margin:0.5rem 0 0;max-width:36rem">
+        {% if training_day %}
+        Today's focus: <strong style="color:var(--ink)">{{ training_day.focus }}</strong>
+        {% else %}
+        Your personal coach for advanced Python, backend, and interview readiness.
+        {% endif %}
+    </p>
+
+    <div class="dm-stat-row">
+        <div class="dm-stat">
+            <div class="dm-stat-label">Remaining</div>
+            <div class="dm-stat-value">{{ progress.days_remaining }}</div>
         </div>
-        <div class="text-center">
-            <p class="text-2xl text-orange-400">🔥 {{ progress.streak }} day streak</p>
+        <div class="dm-stat">
+            <div class="dm-stat-label">Chain</div>
+            <div class="dm-stat-value" style="color:var(--alert)">{{ progress.streak }}d</div>
         </div>
-        <div class="text-right">
-            <p class="text-gray-400">Study Hours</p>
-            <p class="text-2xl font-bold">{{ progress.study_hours }}h</p>
+        <div class="dm-stat">
+            <div class="dm-stat-label">Study</div>
+            <div class="dm-stat-value">{{ progress.study_hours }}h</div>
+        </div>
+        <div class="dm-stat">
+            <div class="dm-stat-label">Rank</div>
+            <div class="dm-stat-value" style="font-size:1.1rem">{{ progress.level_title }}</div>
         </div>
     </div>
-    {% if training_day %}
-    <div class="mt-4">
-        <p class="text-emerald-400 font-medium">TODAY'S FOCUS</p>
-        <p class="text-lg">{{ training_day.focus }}</p>
-    </div>
-    {% endif %}
-    <div class="mt-4">
-        <div class="flex justify-between text-sm mb-1">
-            <span>Progress</span>
-            <span>{{ progress.day_progress }}%</span>
+
+    <div style="margin-top:1.35rem;max-width:28rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:0.4rem">
+            <span class="dm-mono dm-muted">PROGRAM PROGRESS</span>
+            <span class="dm-mono" style="font-weight:600">{{ progress.day_progress }}%</span>
         </div>
-        <div class="w-full bg-gray-800 rounded-full h-3">
-            <div class="bg-emerald-500 h-3 rounded-full progress-bar" style="width: {{ progress.day_progress }}%"></div>
+        <div class="dm-progress"><span style="width:{{ progress.day_progress }}%"></span></div>
+        <div class="dm-muted" style="font-size:0.75rem;margin-top:0.55rem">
+            {{ progress.completed_tasks }}/{{ progress.total_tasks }} tasks · {{ progress.completed_days }} days complete · {{ progress.xp }} XP
         </div>
     </div>
-    <div class="mt-4 flex gap-6 text-sm text-gray-400">
-        <span>{{ progress.completed_tasks }}/{{ progress.total_tasks }} tasks</span>
-        <span>{{ progress.completed_days }} days completed</span>
+
+    <div class="dm-milestones">
+        <span class="dm-milestone {% if progress.current_day >= 7 %}is-earned{% endif %}">Week 1</span>
+        <span class="dm-milestone {% if progress.current_day >= 30 %}is-earned{% endif %}">Month 1</span>
+        <span class="dm-milestone {% if progress.current_day >= 60 %}is-earned{% endif %}">Month 2</span>
+        <span class="dm-milestone {% if progress.streak >= 7 or user_longest_streak >= 7 %}is-earned{% endif %}">7-day chain</span>
+        <span class="dm-milestone {% if progress.xp >= 1000 %}is-earned{% endif %}">1K XP</span>
+        <span class="dm-milestone {% if progress.xp >= 5000 %}is-earned{% endif %}">5K XP</span>
+        <span class="dm-milestone {% if progress.current_day >= 90 %}is-earned{% endif %}">Day 90</span>
     </div>
 </div>

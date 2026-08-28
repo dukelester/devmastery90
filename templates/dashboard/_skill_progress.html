@@ -1,11 +1,17 @@
-<div class="bg-gray-900 rounded-lg border border-gray-800 p-4 space-y-2">
+<div class="dm-panel dm-pad">
     {% for s in skill_scores %}
-    <div class="flex justify-between items-center text-sm">
+    <div class="dm-list-row">
         <span>{{ s.skill.name }}</span>
-        <span class="font-mono">
-            <span class="text-gray-400">{{ s.trend }}</span>
-            {{ s.score }}
-        </span>
+        <div class="dm-score-bar">
+            <div class="dm-score-track {% if s.score < 7 %}is-weak{% endif %}">
+                <i style="width: {{ s.score|floatformat:0 }}0%"></i>
+            </div>
+            <span class="dm-mono" style="min-width:3.5rem;text-align:right">
+                <span class="dm-muted">{{ s.trend }}</span> {{ s.score }}
+            </span>
+        </div>
     </div>
+    {% empty %}
+    <p class="dm-muted">Skills will appear after seeding the curriculum.</p>
     {% endfor %}
 </div>

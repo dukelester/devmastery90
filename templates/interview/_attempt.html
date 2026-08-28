@@ -1,5 +1,10 @@
-<div class="bg-gray-800 rounded p-3 text-sm">
-    <span class="text-gray-400">{{ attempt.question.category }}</span>
-    <span class="font-mono ml-2">{{ attempt.score }}/10</span>
-    <p class="mt-1 text-gray-300">{{ attempt.answer|truncatewords:30 }}</p>
+<div class="dm-list-row" style="align-items:flex-start">
+    <div>
+        <span class="dm-tag">{{ attempt.question.category }}</span>
+        <span class="dm-mono" style="margin-left:0.5rem;font-weight:600">{{ attempt.score }}/10</span>
+        <p class="dm-soft" style="margin:0.35rem 0 0;font-size:0.85rem">{{ attempt.answer|truncatewords:30 }}</p>
+    </div>
+    {% if attempt.needs_review %}
+    <span class="dm-tag" style="background:var(--alert-soft);color:var(--alert)">Review</span>
+    {% endif %}
 </div>
