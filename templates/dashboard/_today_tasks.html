@@ -1,3 +1,73 @@
+{% if day_complete %}
+<div class="dm-mission-done">
+    <p class="dm-kicker" style="margin:0">Day complete</p>
+    <h3 class="dm-mission-done-title">Mission cleared</h3>
+    <p class="dm-muted dm-mission-done-copy">
+        All tasks for Day {{ progress.current_day }} are done.
+        Protect your streak — rest, review notes, or preview tomorrow.
+    </p>
+    <div class="dm-mission-done-actions">
+        <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-book"/></svg>
+            Daily review
+        </a>
+        {% if tomorrow_day %}
+        <a href="{% url 'calendar_day' tomorrow_day.day_number %}" class="dm-btn dm-btn-primary">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+            Preview Day {{ tomorrow_day.day_number }}
+        </a>
+        {% else %}
+        <a href="{% url 'calendar' %}" class="dm-btn dm-btn-primary">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
+            Open calendar
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if completed_today %}
+<div class="dm-mission-section">
+    <p class="dm-mono dm-muted dm-mission-label">Completed today</p>
+    {% for task in completed_today %}
+    <div class="dm-task is-done">
+        <div class="dm-check">
+            <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-check"/></svg>
+        </div>
+        <div>
+            <div class="dm-task-title">{{ task.title }}</div>
+            <div class="dm-task-meta">
+                <span>{{ task.estimated_minutes }}m</span>
+                {% if task.skill %}<span>{{ task.skill.name }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if tomorrow_tasks %}
+<div class="dm-mission-section">
+    <p class="dm-mono dm-muted dm-mission-label">Tomorrow — Day {{ tomorrow_day.day_number }}: {{ tomorrow_day.title }}</p>
+    {% for task in tomorrow_tasks %}
+    <div class="dm-task">
+        <div class="dm-check"></div>
+        <div>
+            <div class="dm-task-title">{{ task.title }}</div>
+            <div class="dm-task-meta">
+                <span>
+                    <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-clock"/></svg>
+                    {{ task.estimated_minutes }}m
+                </span>
+                {% if task.skill %}<span>{{ task.skill.name }}</span>{% endif %}
+                <span class="dm-tag">{{ task.task_type }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% elif today_tasks %}
 {% for task in today_tasks %}
 <div class="dm-task">
     <div class="dm-check"></div>
@@ -13,12 +83,22 @@
         </div>
     </div>
 </div>
-{% empty %}
-<p class="dm-muted">No open tasks for today. Check the calendar or mark previous days complete.</p>
 {% endfor %}
-{% if today_tasks %}
 <a href="{% url 'today' %}" class="dm-btn dm-btn-primary dm-btn-block">
     <svg class="dm-ico" aria-hidden="true"><use href="#i-arrow"/></svg>
     Open today's execution view
 </a>
+
+{% else %}
+<div class="dm-mission-empty">
+    <p class="dm-mission-empty-title">No open tasks for today</p>
+    <p class="dm-muted">Seed the curriculum or check the calendar for your current day.</p>
+    <div class="dm-mission-done-actions">
+        <a href="{% url 'calendar' %}" class="dm-btn dm-btn-primary">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
+            Open calendar
+        </a>
+        <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost">Go to Today</a>
+    </div>
+</div>
 {% endif %}

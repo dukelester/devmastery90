@@ -1522,6 +1522,53 @@ label {
   }
 }
 
+.dm-mission-done {
+  padding: 0.25rem 0 0.5rem;
+}
+
+.dm-mission-done-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin: 0.4rem 0 0;
+}
+
+.dm-mission-done-copy {
+  margin: 0.5rem 0 0;
+  line-height: 1.5;
+  max-width: 36rem;
+}
+
+.dm-mission-done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.dm-mission-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.dm-mission-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+
+.dm-mission-empty {
+  padding: 0.5rem 0;
+}
+
+.dm-mission-empty-title {
+  font-weight: 650;
+  margin: 0 0 0.35rem;
+}
+
 /* ——— Mobile refinements ——— */
 
 @media (max-width: 639px) {

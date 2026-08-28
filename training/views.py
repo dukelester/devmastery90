@@ -71,14 +71,37 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     progress = calculate_progress(request.user)
     training_day = get_today_training_day(request.user)
     today_tasks = []
+    completed_today = []
+    tomorrow_day = None
+    tomorrow_tasks = []
+    day_complete = False
+
     if training_day:
-        today_tasks = training_day.tasks.filter(
-            completed=False, skipped=False
-        ).select_related("skill")[:6]
+        all_tasks = list(training_day.tasks.select_related("skill").order_by("order"))
+        today_tasks = [t for t in all_tasks if not t.completed and not t.skipped][:8]
+        completed_today = [t for t in all_tasks if t.completed]
+        open_count = len([t for t in all_tasks if not t.completed and not t.skipped])
+        day_complete = open_count == 0 and len(all_tasks) > 0
+
+        if day_complete or not today_tasks:
+            from training.services import get_training_day
+
+            tomorrow_day = get_training_day(progress["current_day"] + 1)
+            if tomorrow_day:
+                tomorrow_tasks = list(
+                    tomorrow_day.tasks.filter(completed=False, skipped=False)
+                    .select_related("skill")
+                    .order_by("order")[:5]
+                )
+
     context = {
         "progress": progress,
         "training_day": training_day,
         "today_tasks": today_tasks,
+        "completed_today": completed_today,
+        "day_complete": day_complete,
+        "tomorrow_day": tomorrow_day,
+        "tomorrow_tasks": tomorrow_tasks,
         "weaknesses": get_top_weaknesses(request.user),
         "recommendations": get_daily_recommendations(request.user),
         "skill_scores": get_skill_scores(request.user),

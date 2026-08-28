@@ -14,7 +14,12 @@
 {% empty %}
 <p class="dm-muted">Follow today’s curriculum. You’re on track.</p>
 {% endfor %}
-{% if today_tasks %}
+{% if day_complete %}
+<a href="{% url 'calendar' %}" class="dm-btn dm-btn-ghost dm-btn-block">
+    <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
+    Plan next session
+</a>
+{% elif today_tasks %}
 <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost dm-btn-block">
     <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
     Begin work

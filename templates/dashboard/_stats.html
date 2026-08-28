@@ -1,4 +1,10 @@
-<div class="dm-dash-bar" id="stats">
+<div
+    class="dm-dash-bar"
+    id="stats"
+    hx-get="{% url 'dashboard' %}?partial=stats"
+    hx-trigger="every 60s"
+    hx-swap="outerHTML"
+>
     <div class="dm-dash-bar-main">
         <div class="dm-dash-day">
             <span class="dm-kicker" style="margin:0">Day {{ progress.current_day }} / 90</span>

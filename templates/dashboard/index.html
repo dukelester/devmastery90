@@ -1,19 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — DevMastery 90{% endblock %}
 {% block content %}
-<div class="dm-dash dm-rise">
+<div class="dm-dash">
     {% include "partials/workload_alert.html" %}
 
     {% include "dashboard/_stats.html" %}
 
-    <div class="dm-dash-body dm-rise dm-rise-delay-1">
+    <div class="dm-dash-body">
         <section class="dm-dash-primary">
             <div class="dm-dash-head">
                 <h2 class="dm-section-title" style="margin:0">
-                    <span class="dm-sec-num">01</span> Today's Mission
+                    <span class="dm-sec-num">01</span>
+                    {% if day_complete %}Day Complete{% else %}Today's Mission{% endif %}
                 </h2>
                 {% if training_day %}
-                <p class="dm-dash-focus">{{ training_day.focus }} · {{ training_day.target_minutes }}m target</p>
+                <p class="dm-dash-focus">
+                    {% if day_complete %}
+                    {{ completed_today|length }} tasks finished · Day {{ progress.current_day }}
+                    {% else %}
+                    {{ training_day.focus }} · {{ training_day.target_minutes }}m target
+                    {% endif %}
+                </p>
                 {% endif %}
             </div>
             <div id="today-tasks" class="dm-panel dm-pad-lg">
@@ -88,7 +95,7 @@
         </aside>
     </div>
 
-    <section id="skill-progress" class="dm-dash-skills dm-rise dm-rise-delay-2">
+    <section id="skill-progress" class="dm-dash-skills">
         <div class="dm-dash-head">
             <h2 class="dm-section-title" style="margin:0"><span class="dm-sec-num">06</span> Skill Progress</h2>
             <a href="{% url 'analytics' %}" class="dm-link-quiet">Full analytics →</a>
