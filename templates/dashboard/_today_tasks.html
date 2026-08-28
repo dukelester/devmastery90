@@ -4,7 +4,10 @@
     <div>
         <div class="dm-task-title">{{ task.title }}</div>
         <div class="dm-task-meta">
-            <span>{{ task.estimated_minutes }}m</span>
+            <span>
+                <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-clock"/></svg>
+                {{ task.estimated_minutes }}m
+            </span>
             {% if task.skill %}<span>{{ task.skill.name }}</span>{% endif %}
             <span class="dm-tag">{{ task.task_type }}</span>
         </div>
@@ -14,5 +17,8 @@
 <p class="dm-muted">No open tasks for today.</p>
 {% endfor %}
 {% if today_tasks %}
-<a href="{% url 'today' %}" class="dm-btn dm-btn-primary" style="margin-top:1.15rem;width:100%">Open execution view</a>
+<a href="{% url 'today' %}" class="dm-btn dm-btn-primary dm-btn-block">
+    <svg class="dm-ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+    Open execution view
+</a>
 {% endif %}

@@ -14,20 +14,32 @@
             {% endif %}
             <div class="dm-stat-row">
                 <div class="dm-stat">
-                    <div class="dm-stat-label">Target</div>
+                    <div class="dm-stat-label">
+                        <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
+                        Target
+                    </div>
                     <div class="dm-stat-value">{% if training_day %}{{ training_day.target_minutes }}m{% else %}—{% endif %}</div>
                 </div>
                 <div class="dm-stat">
-                    <div class="dm-stat-label">Logged</div>
+                    <div class="dm-stat-label">
+                        <svg class="dm-ico" aria-hidden="true"><use href="#i-clock"/></svg>
+                        Logged
+                    </div>
                     <div class="dm-stat-value">{{ daily_total_minutes }}m</div>
                 </div>
                 <div class="dm-stat">
-                    <div class="dm-stat-label">Chain</div>
+                    <div class="dm-stat-label">
+                        <svg class="dm-ico" aria-hidden="true"><use href="#i-flame"/></svg>
+                        Chain
+                    </div>
                     <div class="dm-stat-value" style="color:var(--ember)">{{ progress.streak }}d</div>
                 </div>
                 <div class="dm-stat">
-                    <div class="dm-stat-label">XP today</div>
-                    <div class="dm-stat-value" style="font-size:1.1rem">+{{ user_xp_into_level }}</div>
+                    <div class="dm-stat-label">
+                        <svg class="dm-ico" aria-hidden="true"><use href="#i-trophy"/></svg>
+                        Level XP
+                    </div>
+                    <div class="dm-stat-value" style="font-size:1.1rem">{{ user_xp_into_level }}</div>
                 </div>
             </div>
         </div>

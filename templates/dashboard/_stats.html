@@ -13,25 +13,37 @@
 
         <div class="dm-stat-row">
             <div class="dm-stat">
-                <div class="dm-stat-label">Remaining</div>
+                <div class="dm-stat-label">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-flag"/></svg>
+                    Remaining
+                </div>
                 <div class="dm-stat-value">{{ progress.days_remaining }}</div>
             </div>
             <div class="dm-stat">
-                <div class="dm-stat-label">Chain</div>
+                <div class="dm-stat-label">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-flame"/></svg>
+                    Chain
+                </div>
                 <div class="dm-stat-value" style="color:var(--ember)">{{ progress.streak }}d</div>
             </div>
             <div class="dm-stat">
-                <div class="dm-stat-label">Study</div>
+                <div class="dm-stat-label">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-clock"/></svg>
+                    Study
+                </div>
                 <div class="dm-stat-value">{{ progress.study_hours }}h</div>
             </div>
             <div class="dm-stat">
-                <div class="dm-stat-label">Rank</div>
+                <div class="dm-stat-label">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-trophy"/></svg>
+                    Rank
+                </div>
                 <div class="dm-stat-value" style="font-size:1.05rem">{{ progress.level_title }}</div>
             </div>
         </div>
 
-        <div style="margin-top:1.4rem;max-width:32rem;position:relative;z-index:1">
-            <div style="display:flex;justify-content:space-between;margin-bottom:0.45rem">
+        <div class="dm-progress-block">
+            <div class="dm-progress-meta">
                 <span class="dm-mono dm-muted" style="font-size:0.68rem;letter-spacing:0.1em">PROGRAM PROGRESS</span>
                 <span class="dm-mono" style="font-weight:600;font-size:0.78rem">{{ progress.day_progress }}%</span>
             </div>
@@ -42,8 +54,14 @@
         </div>
 
         <div class="dm-cta-row">
-            <a href="{% url 'today' %}" class="dm-btn dm-btn-primary">Start today's session</a>
-            <a href="{% url 'analytics' %}" class="dm-btn dm-btn-ghost">View analytics</a>
+            <a href="{% url 'today' %}" class="dm-btn dm-btn-primary">
+                <svg class="dm-ico" aria-hidden="true"><use href="#i-play"/></svg>
+                Start today's session
+            </a>
+            <a href="{% url 'analytics' %}" class="dm-btn dm-btn-ghost">
+                <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
+                View analytics
+            </a>
         </div>
     </div>
 
@@ -70,7 +88,10 @@
             </div>
         </div>
         <div class="dm-panel dm-pad">
-            <p class="dm-kicker" style="margin:0 0 0.75rem">Milestones</p>
+            <p class="dm-kicker" style="margin:0 0 0.75rem">
+                <svg class="dm-ico dm-ico-sm" aria-hidden="true" style="margin-right:0.25rem"><use href="#i-trophy"/></svg>
+                Milestones
+            </p>
             <div class="dm-milestones">
                 <span class="dm-milestone {% if progress.current_day >= 7 %}is-earned{% endif %}">Week 1</span>
                 <span class="dm-milestone {% if progress.current_day >= 30 %}is-earned{% endif %}">Month 1</span>

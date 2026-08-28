@@ -7,11 +7,17 @@
             <p class="dm-muted" style="font-size:0.8rem;margin:0.3rem 0 0;line-height:1.4">{{ rec.reason }}</p>
         </div>
     </div>
-    <span class="dm-mono dm-muted" style="flex-shrink:0">{{ rec.minutes }}m</span>
+    <span class="dm-mono dm-muted" style="flex-shrink:0;display:inline-flex;align-items:center;gap:0.25rem">
+        <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-clock"/></svg>
+        {{ rec.minutes }}m
+    </span>
 </div>
 {% empty %}
 <p class="dm-muted">Follow today’s curriculum. You’re on track.</p>
 {% endfor %}
 {% if today_tasks %}
-<a href="{% url 'today' %}" class="dm-btn dm-btn-ghost" style="margin-top:1.15rem;width:100%">Begin recommended work</a>
+<a href="{% url 'today' %}" class="dm-btn dm-btn-ghost dm-btn-block">
+    <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
+    Begin recommended work
+</a>
 {% endif %}

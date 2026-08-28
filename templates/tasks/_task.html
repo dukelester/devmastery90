@@ -1,37 +1,42 @@
 <div id="task-{{ task.id }}" class="dm-task {% if task.completed %}is-done{% endif %} {% if task.blocked %}is-blocked{% endif %}">
-    <div class="dm-check">{% if task.completed %}✓{% elif task.skipped %}–{% elif task.blocked %}!{% endif %}</div>
+    <div class="dm-check">
+        {% if task.completed %}<svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-check"/></svg>{% elif task.blocked %}<svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-alert"/></svg>{% endif %}
+    </div>
     <div>
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem">
+        <div class="dm-task-head">
             <span class="dm-task-title">{{ task.title }}</span>
             <span class="dm-tag">{{ task.task_type }}</span>
         </div>
         {% if task.description %}
-        <p class="dm-muted" style="font-size:0.85rem;margin:0.35rem 0 0">{{ task.description }}</p>
+        <p class="dm-muted dm-task-desc">{{ task.description }}</p>
         {% endif %}
         <div class="dm-task-meta">
-            <span>{{ task.estimated_minutes }}m</span>
+            <span>
+                <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-clock"/></svg>
+                {{ task.estimated_minutes }}m
+            </span>
             {% if task.skill %}<span>{{ task.skill.name }}</span>{% endif %}
             <span>{{ task.difficulty }}</span>
         </div>
         {% if task.notes %}
-        <p class="dm-soft" style="font-size:0.8rem;margin:0.4rem 0 0;font-style:italic">{{ task.notes }}</p>
+        <p class="dm-soft dm-task-notes">{{ task.notes }}</p>
         {% endif %}
 
         {% if not task.completed %}
-        <details style="margin-top:0.65rem">
-            <summary class="dm-muted" style="font-size:0.75rem;cursor:pointer">More actions</summary>
-            <div style="margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem">
-                <form hx-post="{% url 'task_notes' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" style="display:flex;gap:0.4rem">
+        <details class="dm-task-more">
+            <summary>More actions</summary>
+            <div class="dm-task-more-body">
+                <form hx-post="{% url 'task_notes' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" class="dm-inline-form">
                     {% csrf_token %}
                     <input name="notes" placeholder="Add notes…" class="dm-input">
                     <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Save</button>
                 </form>
-                <form hx-post="{% url 'task_skip' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" style="display:flex;gap:0.4rem">
+                <form hx-post="{% url 'task_skip' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" class="dm-inline-form">
                     {% csrf_token %}
                     <input name="reason" placeholder="Skip reason…" class="dm-input">
                     <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Skip</button>
                 </form>
-                <form hx-post="{% url 'task_block' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" style="display:flex;gap:0.4rem">
+                <form hx-post="{% url 'task_block' task.id %}" hx-target="#task-{{ task.id }}" hx-swap="outerHTML" class="dm-inline-form">
                     {% csrf_token %}
                     <input name="reason" placeholder="Blocked reason…" class="dm-input">
                     <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Block</button>
@@ -42,12 +47,13 @@
     </div>
 
     {% if not task.completed and not task.skipped %}
-    <div style="display:flex;flex-direction:column;gap:0.35rem">
+    <div class="dm-task-actions">
         <button
             hx-post="{% url 'task_complete' task.id %}"
             hx-target="#task-{{ task.id }}"
             hx-swap="outerHTML"
             class="dm-btn dm-btn-primary dm-btn-sm">
+            <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-check"/></svg>
             Complete
         </button>
         <button
@@ -56,6 +62,7 @@
             hx-target="#timer-widget"
             hx-swap="innerHTML"
             class="dm-btn dm-btn-ghost dm-btn-sm">
+            <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-timer"/></svg>
             Timer
         </button>
     </div>
