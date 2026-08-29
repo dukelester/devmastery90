@@ -1,104 +1,83 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — DevMastery 90{% endblock %}
 {% block content %}
-<div class="dm-dash">
+<div class="dm-dash dm-dash-tight">
     {% include "partials/workload_alert.html" %}
-
     {% include "dashboard/_stats.html" %}
+    {% include "dashboard/_coaching_strip.html" %}
 
     <div class="dm-dash-body">
         <section class="dm-dash-primary">
-            <div class="dm-dash-head">
+            <div class="dm-dash-head dm-dash-head-tight">
                 <h2 class="dm-section-title" style="margin:0">
-                    <span class="dm-sec-num">01</span>
-                    {% if day_complete %}Day Complete{% else %}Today's Mission{% endif %}
+                    {% if day_complete %}Day complete{% else %}Today's mission{% endif %}
                 </h2>
                 {% if training_day %}
-                <p class="dm-dash-focus">
-                    {% if day_complete %}
-                    {{ completed_today|length }} tasks finished · Day {{ progress.current_day }}
-                    {% else %}
-                    {{ training_day.focus }} · {{ training_day.target_minutes }}m target
-                    {% endif %}
-                </p>
+                <p class="dm-dash-focus">{{ training_day.focus }} · {{ training_day.target_minutes }}m</p>
                 {% endif %}
             </div>
-            <div id="today-tasks" class="dm-panel dm-pad-lg">
+            <div id="today-tasks" class="dm-panel dm-pad dm-mission-panel">
                 {% include "dashboard/_today_tasks.html" %}
             </div>
-
-            {% if recent_assessments %}
-            <div class="dm-dash-assess">
-                <h2 class="dm-section-title"><span class="dm-sec-num">02</span> Recent Performance</h2>
-                <div class="dm-panel dm-pad">
-                    <div class="dm-assess-row">
-                        {% for a in recent_assessments %}
-                        <div class="dm-assess-item">
-                            <span class="dm-assess-name">{{ a.name }}</span>
-                            <span class="dm-mono dm-assess-score {% if a.percentage >= 70 %}is-ok{% else %}is-warn{% endif %}">{{ a.percentage }}%</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </section>
 
-        <aside class="dm-dash-aside">
+        <aside class="dm-dash-aside dm-dash-aside-tight">
             <section>
-                <h2 class="dm-section-title"><span class="dm-sec-num">03</span> Recommended</h2>
-                <div id="recommendations" class="dm-panel dm-pad">
-                    {% include "dashboard/_recommendations.html" %}
-                </div>
-            </section>
-
-            <section>
-                <h2 class="dm-section-title"><span class="dm-sec-num">04</span> Top Weaknesses</h2>
-                <div class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Weak spots</h2>
+                <div class="dm-panel dm-pad dm-panel-compact">
                     {% for w in weaknesses %}
-                    <div class="dm-list-row">
+                    <div class="dm-list-row dm-list-row-tight">
                         <div class="dm-weak-copy">
                             <span class="dm-priority-dot is-high" aria-hidden="true"></span>
                             <div>
                                 <div class="dm-weak-name">{{ w.skill.name }}</div>
-                                <div class="dm-muted dm-weak-hint">{{ w.recommended_action|truncatechars:64 }}</div>
+                                <div class="dm-muted dm-weak-hint">{{ w.recommended_action|truncatechars:48 }}</div>
                             </div>
                         </div>
-                        <span class="dm-mono dm-weak-score">{{ w.score }}/10</span>
+                        <span class="dm-mono dm-weak-score">{{ w.score }}</span>
                     </div>
                     {% empty %}
-                    <p class="dm-muted">No critical weaknesses. Stay consistent.</p>
+                    <p class="dm-muted">No critical weaknesses.</p>
                     {% endfor %}
                 </div>
             </section>
 
+            {% if focus_recommendations %}
             <section>
-                <h2 class="dm-section-title"><span class="dm-sec-num">05</span> Status</h2>
-                <div class="dm-panel dm-pad dm-dash-status">
-                    <div class="dm-rank-panel">
-                        <div class="dm-rank-level">{{ user_level_display }}</div>
-                        <div class="dm-rank-xp">XP: {{ user_xp_display }}</div>
-                        {% if user_streak %}
-                        <div class="dm-streak dm-streak-quiet">
-                            <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-flame"/></svg>
-                            {{ user_streak }} day streak
+                <h2 class="dm-section-title dm-section-title-sm">Coach priority</h2>
+                <div id="recommendations" class="dm-panel dm-pad dm-panel-compact">
+                    {% for rec in focus_recommendations %}
+                    <div class="dm-list-row dm-list-row-tight dm-rec-row">
+                        <div class="dm-rec-main">
+                            <span class="dm-priority-dot is-{{ rec.priority }}" aria-hidden="true"></span>
+                            <div>
+                                <div class="dm-rec-title">{{ rec.title }}</div>
+                                <p class="dm-muted dm-rec-reason">{{ rec.reason|truncatechars:56 }}</p>
+                            </div>
                         </div>
-                        {% endif %}
+                        {% if rec.minutes %}<span class="dm-mono dm-muted">{{ rec.minutes }}m</span>{% endif %}
                     </div>
-                    <div class="dm-milestones" style="margin-top:0.85rem">
-                        {% for m in user_milestones %}
-                        <span class="dm-milestone {% if m.earned %}is-earned{% endif %}">{{ m.label }}</span>
-                        {% endfor %}
-                    </div>
+                    {% endfor %}
                 </div>
             </section>
+            {% endif %}
+
+            <nav class="dm-quick-links dm-panel dm-pad dm-panel-compact">
+                <a href="{% url 'review' %}">Spaced review</a>
+                <a href="{% url 'mistakes' %}">Mistakes</a>
+                <a href="{% url 'engineering' %}">Labs</a>
+                <a href="{% url 'interview' %}">Practice</a>
+                <a href="{% url 'career' %}">Career</a>
+                <a href="{% url 'mock_interviews' %}">Mock interviews</a>
+                <a href="{% url 'cognitive_hub' %}">Aptitude & teasers</a>
+            </nav>
         </aside>
     </div>
 
-    <section id="skill-progress" class="dm-dash-skills">
-        <div class="dm-dash-head">
-            <h2 class="dm-section-title" style="margin:0"><span class="dm-sec-num">06</span> Skill Progress</h2>
-            <a href="{% url 'analytics' %}" class="dm-link-quiet">Full analytics →</a>
+    <section id="skill-progress" class="dm-dash-skills dm-dash-skills-tight">
+        <div class="dm-dash-head dm-dash-head-tight">
+            <h2 class="dm-section-title dm-section-title-sm" style="margin:0">Focus skills</h2>
+            <a href="{% url 'analytics' %}" class="dm-link-quiet">All analytics →</a>
         </div>
         {% include "dashboard/_skill_progress.html" %}
     </section>

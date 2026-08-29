@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Assessments — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Improve</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Assessments</h1>
+        <p class="dm-muted">Log timed tests and mock interviews to track performance trends.</p>
+    </header>
+
+    <form method="post" class="dm-panel dm-pad dm-stack" style="gap:0.75rem">
+        {% csrf_token %}
+        <input name="name" class="dm-input" placeholder="Assessment name" required>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+            <input name="score" type="number" class="dm-input" placeholder="Score" required style="width:6rem">
+            <input name="maximum_score" type="number" class="dm-input" value="100" style="width:6rem">
+            <input name="duration_minutes" type="number" class="dm-input" placeholder="Minutes" style="width:6rem">
+            <select name="category" class="dm-select">
+                <option value="python">Python</option>
+                <option value="dsa">DSA</option>
+                <option value="backend">Backend</option>
+                <option value="system_design">System Design</option>
+            </select>
+        </div>
+        <textarea name="notes" rows="2" class="dm-textarea" placeholder="Notes"></textarea>
+        <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Log assessment</button>
+    </form>
+
+    <section>
+        <h2 class="dm-section-title">History</h2>
+        <div class="dm-panel dm-pad">
+            {% for a in assessments %}
+            <div class="dm-list-row">
+                <span>{{ a.name }} <span class="dm-muted">· {{ a.duration_minutes }}m</span></span>
+                <span class="dm-mono">{{ a.percentage }}%</span>
+            </div>
+            {% empty %}
+            <p class="dm-muted">No assessments logged.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

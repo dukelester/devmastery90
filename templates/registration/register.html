@@ -8,10 +8,24 @@
         <p class="dm-muted" style="text-align:center;margin:0.65rem auto 0;max-width:22rem;line-height:1.5">
             Create your profile and open the 90-day mastery cycle.
         </p>
-        <form method="post" class="dm-panel dm-auth-form">
+        <form method="post" class="dm-panel dm-auth-form dm-form-stack" novalidate>
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.35rem">Create account</button>
+            {% if form.non_field_errors %}
+            <ul class="dm-form-errors">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <div class="dm-form-row">
+                {% include "partials/form_field.html" with field=form.first_name %}
+                {% include "partials/form_field.html" with field=form.last_name %}
+            </div>
+            {% include "partials/form_field.html" with field=form.username %}
+            {% include "partials/form_field.html" with field=form.email %}
+            {% include "partials/form_field.html" with field=form.password1 %}
+            {% include "partials/form_field.html" with field=form.password2 %}
+            <button type="submit" class="dm-btn dm-btn-primary dm-btn-block">Create account</button>
         </form>
         <p class="dm-auth-foot">
             Already training? <a href="{% url 'login' %}">Sign in</a>

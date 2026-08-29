@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Engineering Practice — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Practice engineering</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Labs & challenges</h1>
+        <p class="dm-muted">Open a workspace for step checklists, code notes, hints, and a lab timer.</p>
+    </header>
+
+    {% for type_key, items in by_type.items %}
+    <section>
+        <h2 class="dm-section-title">{{ items.0.get_challenge_type_display }}</h2>
+        <div class="dm-stack" style="gap:0.75rem">
+            {% for ch in items %}
+            <article class="dm-panel dm-pad">
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:flex-start;justify-content:space-between">
+                    <div>
+                        <h3 style="margin:0;font-size:1.05rem">{{ ch.title }}</h3>
+                        <p class="dm-muted" style="margin:0.35rem 0 0">{{ ch.description }}</p>
+                    </div>
+                    <a href="{% url 'engineering_lab' ch.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Open workspace →</a>
+                </div>
+                {% if ch.lab_session and ch.lab_steps %}
+                <div class="dm-lab-progress" style="margin-top:0.75rem">
+                    <div class="dm-lab-progress-bar" style="width:{{ ch.lab_session.step_progress_pct }}%"></div>
+                </div>
+                <p class="dm-muted" style="font-size:0.8rem;margin:0.35rem 0 0">
+                    {{ ch.lab_session.completed_steps|length }}/{{ ch.lab_steps|length }} steps · {{ ch.lab_session.step_progress_pct }}%
+                </p>
+                {% elif ch.estimated_minutes %}
+                <p class="dm-muted" style="font-size:0.8rem;margin:0.5rem 0 0">~{{ ch.estimated_minutes }} min</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+
+    {% if attempts %}
+    <section>
+        <h2 class="dm-section-title">Recent attempts</h2>
+        <div class="dm-stack" style="gap:0.35rem">
+            {% for a in attempts %}
+            <div class="dm-list-row">
+                <span>{{ a.challenge.title }}</span>
+                <span class="dm-muted dm-mono">{{ a.score }}/10 · {{ a.time_minutes }}m</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if not by_type %}
+    <p class="dm-muted">Run: python manage.py seed_engineering</p>
+    {% endif %}
+</div>
+{% endblock %}

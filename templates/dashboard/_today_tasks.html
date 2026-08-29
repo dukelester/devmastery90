@@ -12,7 +12,7 @@
             Daily review
         </a>
         {% if tomorrow_day %}
-        <a href="{% url 'calendar_day' tomorrow_day.day_number %}" class="dm-btn dm-btn-primary">
+        <a href="{% url 'calendar_day' tomorrow_day.id %}" class="dm-btn dm-btn-primary">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-arrow"/></svg>
             Preview Day {{ tomorrow_day.day_number }}
         </a>

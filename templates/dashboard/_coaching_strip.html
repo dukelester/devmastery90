@@ -1,0 +1,58 @@
+<details class="dm-coach-strip dm-panel" open>
+    <summary class="dm-coach-strip-summary">
+        <span class="dm-kicker" style="margin:0">Coach briefing</span>
+        <span class="dm-coach-strip-oneline">
+            {% if coaching.next_actions %}
+            Next: {{ coaching.next_actions.0.title|truncatechars:42 }}
+            {% else %}
+            {{ coaching.what_today.mission_title|truncatechars:48 }}
+            {% endif %}
+        </span>
+    </summary>
+
+    <div class="dm-coach-grid">
+        <div class="dm-coach-item">
+            <span class="dm-coach-label">Today</span>
+            <p>{{ coaching.what_today.mission_title|truncatechars:36 }}</p>
+            <a href="{% url 'today' %}" class="dm-link-quiet">Execute →</a>
+        </div>
+        <div class="dm-coach-item">
+            <span class="dm-coach-label">Why</span>
+            <p>Day {{ coaching.why.day_number }} · {{ coaching.why.focus|truncatechars:40 }}</p>
+        </div>
+        <div class="dm-coach-item">
+            <span class="dm-coach-label">Performance</span>
+            <p>{{ coaching.performance.summary|truncatechars:52 }}</p>
+        </div>
+        <div class="dm-coach-item">
+            <span class="dm-coach-label">Weak</span>
+            {% for w in coaching.weaknesses|slice:":2" %}
+            <p>{{ w.skill.name }} {{ w.score }}/10</p>
+            {% empty %}<p class="dm-muted">Stable</p>{% endfor %}
+        </div>
+        <div class="dm-coach-item">
+            <span class="dm-coach-label">Repeating mistakes</span>
+            {% for m in coaching.repeated_mistakes|slice:":1" %}
+            <p>{{ m.description|truncatechars:40 }} ×{{ m.count }}</p>
+            {% empty %}<p class="dm-muted">None logged</p>{% endfor %}
+        </div>
+        <div class="dm-coach-item">
+            <span class="dm-coach-label">Improving?</span>
+            <p class="{% if coaching.improving.is_improving %}dm-coaching-yes{% endif %}">
+                {% if coaching.improving.is_improving %}Yes{% else %}Build consistency{% endif %}
+                · {{ coaching.improving.streak }}d streak
+            </p>
+        </div>
+        <div class="dm-coach-item dm-coach-item-wide">
+            <span class="dm-coach-label">Do next</span>
+            {% for action in coaching.next_actions|slice:":2" %}
+            <p>
+                {{ action.title|truncatechars:44 }}
+                {% if action.url %}<a href="{{ action.url }}" class="dm-link-quiet">Go</a>{% endif %}
+            </p>
+            {% empty %}
+            <p>Continue today's mission.</p>
+            {% endfor %}
+        </div>
+    </div>
+</details>

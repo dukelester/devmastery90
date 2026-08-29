@@ -1,0 +1,22 @@
+<h2 class="dm-section-title">Steps</h2>
+<ul class="dm-lab-steps">
+    {% for step in challenge.lab_steps %}
+    <li>
+        <form
+            hx-post="{% url 'engineering_toggle_step' challenge.id forloop.counter0 %}"
+            hx-target="#lab-steps"
+            hx-swap="innerHTML"
+            style="display:flex;gap:0.5rem;align-items:flex-start;width:100%"
+        >
+            {% csrf_token %}
+            <button type="submit" class="dm-lab-step-btn {% if forloop.counter0 in session.completed_steps %}is-done{% endif %}" aria-label="Toggle step {{ forloop.counter }}">
+                {% if forloop.counter0 in session.completed_steps %}✓{% else %}{{ forloop.counter }}{% endif %}
+            </button>
+            <span class="dm-lab-step-text">{{ step }}</span>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+<p class="dm-muted" style="font-size:0.8rem;margin:0.5rem 0 0">
+    {{ session.completed_steps|length }}/{{ challenge.lab_steps|length }} complete
+</p>

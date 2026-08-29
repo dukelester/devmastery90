@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Cognitive Training — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Sharpen your mind</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Aptitude & Brain Teasers</h1>
+        <p class="dm-muted" style="margin:0.4rem 0 0">
+            {{ counts.total }} challenges — try yourself, then reveal answers. {{ revealed_total }} answers revealed so far.
+        </p>
+    </header>
+
+    <div class="dm-grid-2">
+        <a href="{% url 'cognitive_list' 'aptitude' %}" class="dm-panel dm-pad dm-cognitive-card">
+            <div class="dm-stat-label">Aptitude tests</div>
+            <div class="dm-stat-value" style="font-size:1.75rem">{{ counts.aptitude }}</div>
+            <p class="dm-muted" style="margin:0.5rem 0 0;font-size:0.9rem">
+                Math, logic, percentages, ratios, probability, and pattern speed drills.
+            </p>
+            <p class="dm-mono dm-muted" style="font-size:0.8rem;margin:0.5rem 0 0">
+                {{ aptitude_revealed }}/{{ counts.aptitude }} revealed
+            </p>
+            <div class="dm-progress" style="margin-top:0.65rem">
+                <div class="dm-progress-bar" style="width:{% widthratio aptitude_revealed counts.aptitude 100 %}%"></div>
+            </div>
+        </a>
+        <a href="{% url 'cognitive_list' 'brain-teasers' %}" class="dm-panel dm-pad dm-cognitive-card">
+            <div class="dm-stat-label">Brain teasers</div>
+            <div class="dm-stat-value" style="font-size:1.75rem">{{ counts.brain_teaser }}</div>
+            <p class="dm-muted" style="margin:0.5rem 0 0;font-size:0.9rem">
+                Riddles, lateral thinking, logic puzzles, and cognitive flexibility.
+            </p>
+            <p class="dm-mono dm-muted" style="font-size:0.8rem;margin:0.5rem 0 0">
+                {{ teaser_revealed }}/{{ counts.brain_teaser }} revealed
+            </p>
+            <div class="dm-progress" style="margin-top:0.65rem">
+                <div class="dm-progress-bar" style="width:{% widthratio teaser_revealed counts.brain_teaser 100 %}%"></div>
+            </div>
+        </a>
+    </div>
+
+    <section class="dm-grid-2">
+        <div class="dm-panel dm-pad">
+            <p class="dm-stat-label">Aptitude categories</p>
+            <ul class="dm-cognitive-cat-list">
+                {% for c in aptitude_categories %}
+                <li><a href="{% url 'cognitive_list' 'aptitude' %}?category={{ c.category }}">{{ c.category }} <span class="dm-mono">{{ c.count }}</span></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="dm-panel dm-pad">
+            <p class="dm-stat-label">Teaser categories</p>
+            <ul class="dm-cognitive-cat-list">
+                {% for c in teaser_categories %}
+                <li><a href="{% url 'cognitive_list' 'brain-teasers' %}?category={{ c.category }}">{{ c.category }} <span class="dm-mono">{{ c.count }}</span></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+</div>
+{% endblock %}

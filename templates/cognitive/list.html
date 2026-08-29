@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ type_label }} — Cognitive{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker"><a href="{% url 'cognitive_hub' %}" class="dm-muted">Cognitive</a> / {{ type_label }}</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">{{ type_label }}</h1>
+        <p class="dm-muted" style="margin:0.35rem 0 0">
+            {{ questions|length }} shown · {{ revealed_count }} revealed
+        </p>
+    </header>
+
+    <form method="get" class="dm-panel dm-pad dm-cognitive-filters">
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+            <select name="category" class="dm-input" style="width:auto;min-width:10rem">
+                <option value="">All categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+            <select name="difficulty" class="dm-input" style="width:auto">
+                <option value="">All difficulties</option>
+                <option value="easy" {% if difficulty_filter == 'easy' %}selected{% endif %}>Easy</option>
+                <option value="medium" {% if difficulty_filter == 'medium' %}selected{% endif %}>Medium</option>
+                <option value="hard" {% if difficulty_filter == 'hard' %}selected{% endif %}>Hard</option>
+            </select>
+            <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Filter</button>
+        </div>
+    </form>
+
+    <div class="dm-cognitive-list">
+        {% for q in questions %}
+        <article class="dm-panel dm-pad dm-cognitive-item {% if q.is_revealed %}is-revealed{% endif %}">
+            <div class="dm-cognitive-item-head">
+                <span class="dm-mono">#{{ q.order }}</span>
+                <span class="dm-tag">{{ q.category }}</span>
+                <span class="dm-tag">{{ q.get_difficulty_display }}</span>
+                <span class="dm-tag dm-tag-timer">{{ q.time_limit_label }}</span>
+                {% if q.is_revealed %}<span class="dm-tag" style="background:var(--signal-soft);color:var(--signal-deep)">Revealed</span>{% endif %}
+            </div>
+            <p style="margin:0.5rem 0 0;font-weight:600;line-height:1.45">{{ q.question }}</p>
+            <a href="{% url 'cognitive_question' type_slug q.id %}" class="dm-btn dm-btn-primary dm-btn-sm" style="margin-top:0.65rem">
+                Work on this →
+            </a>
+        </article>
+        {% empty %}
+        <p class="dm-muted">No questions match this filter.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

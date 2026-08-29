@@ -8,10 +8,21 @@
         <p class="dm-muted" style="text-align:center;margin:0.65rem auto 0;max-width:22rem;line-height:1.5">
             Ninety days of advanced practice. Sign in and continue the mission.
         </p>
-        <form method="post" class="dm-panel dm-auth-form">
+        <form method="post" class="dm-panel dm-auth-form dm-form-stack" novalidate>
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="dm-btn dm-btn-primary" style="width:100%;margin-top:0.35rem">Sign in</button>
+            {% if form.non_field_errors %}
+            <ul class="dm-form-errors">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% include "partials/form_field.html" with field=form.username %}
+            {% include "partials/form_field.html" with field=form.password %}
+            <div class="dm-auth-actions">
+                <a href="{% url 'password_reset' %}" class="dm-auth-forgot">Forgot password?</a>
+            </div>
+            <button type="submit" class="dm-btn dm-btn-primary dm-btn-block">Sign in</button>
         </form>
         <p class="dm-auth-foot">
             No account? <a href="{% url 'register' %}">Create one</a>

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Career — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Manage career</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Career hub</h1>
+        <p class="dm-muted">Applications, portfolio, and roadmap goals.</p>
+    </header>
+
+    <div class="dm-grid-2">
+        <section class="dm-panel dm-pad">
+            <h2 class="dm-section-title">Add application</h2>
+            <form method="post" class="dm-stack" style="gap:0.6rem">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="application">
+                <input name="company" class="dm-input" placeholder="Company" required>
+                <input name="role" class="dm-input" placeholder="Role" required>
+                <select name="status" class="dm-select">
+                    <option value="applied">Applied</option>
+                    <option value="interviewing">Interviewing</option>
+                    <option value="offer">Offer</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Add</button>
+            </form>
+        </section>
+        <section class="dm-panel dm-pad">
+            <h2 class="dm-section-title">Roadmap goal</h2>
+            <form method="post" class="dm-stack" style="gap:0.6rem">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="goal">
+                <input name="title" class="dm-input" placeholder="Goal" required>
+                <select name="category" class="dm-select">
+                    <option value="learning">Learning</option>
+                    <option value="portfolio">Portfolio</option>
+                    <option value="application">Applications</option>
+                </select>
+                <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Add goal</button>
+            </form>
+        </section>
+    </div>
+
+    <section>
+        <h2 class="dm-section-title">Applications</h2>
+        <div class="dm-panel dm-pad">
+            {% for app in applications %}
+            <div class="dm-list-row">
+                <span>{{ app.role }} @ {{ app.company }}</span>
+                <span class="dm-tag">{{ app.get_status_display }}</span>
+            </div>
+            {% empty %}
+            <p class="dm-muted">No applications tracked.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="dm-section-title">Portfolio</h2>
+        <div class="dm-panel dm-pad">
+            {% for p in portfolio %}
+            <div class="dm-list-row">
+                <span>{{ p.name }}</span>
+                <span class="dm-tag">{{ p.get_status_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="dm-section-title">Roadmap</h2>
+        <div class="dm-panel dm-pad">
+            {% for g in goals %}
+            <div class="dm-list-row">
+                <span>{{ g.title }}</span>
+                <span class="dm-muted">{{ g.category }}</span>
+            </div>
+            {% empty %}
+            <p class="dm-muted">No goals yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

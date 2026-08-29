@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Start Your 90 Days — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise" style="max-width:32rem;margin:0 auto">
+    <header>
+        <p class="dm-kicker">Initialize program</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Choose your Day 1</h1>
+        <p class="dm-muted" style="margin:0.5rem 0 0">
+            Pick when you start the 90-day engineering mastery program. Your daily mission syncs to this date.
+        </p>
+    </header>
+    <form method="post" class="dm-panel dm-pad dm-stack" style="gap:1rem">
+        {% csrf_token %}
+        <label class="dm-stat-label">Program start date
+            <input type="date" name="program_start_date" class="dm-input" value="{{ today|date:'Y-m-d' }}" required>
+        </label>
+        <button type="submit" class="dm-btn dm-btn-primary">Initialize 90-day program</button>
+    </form>
+</div>
+{% endblock %}

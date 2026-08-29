@@ -1,0 +1,34 @@
+<div class="dm-lab-timer-wrap-inner" data-live-timer>
+    <div class="dm-lab-timer">
+        <span
+            class="dm-mono dm-lab-timer-clock"
+            data-timer-display
+            data-timer-mode="elapsed"
+            {% if timer_running and session.timer_started_at %}
+            data-started-at="{{ session.timer_started_at.isoformat }}"
+            {% endif %}
+            data-accumulated-seconds="{% widthratio session.accumulated_minutes 1 60 %}"
+            data-target-seconds="0"
+        >00:00</span>
+        <span class="dm-muted" style="font-size:0.8rem" data-timer-sub>elapsed</span>
+    </div>
+    {% if timer_running %}
+    <form
+        hx-post="{% url 'engineering_lab_timer_stop' challenge.id %}"
+        hx-target="#lab-timer"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <button type="submit" class="dm-btn dm-btn-sm">Stop timer</button>
+    </form>
+    {% else %}
+    <form
+        hx-post="{% url 'engineering_lab_timer_start' challenge.id %}"
+        hx-target="#lab-timer"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Start timer</button>
+    </form>
+    {% endif %}
+</div>

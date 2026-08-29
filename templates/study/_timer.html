@@ -1,23 +1,39 @@
-<div class="dm-timer">
+<div class="dm-timer" data-live-timer>
     {% if active_session %}
     <p class="dm-timer-status">
         <span class="dm-timer-live"></span>
-        Session active
+        {% if active_session.mode == "focus" %}Focus session{% else %}Session active{% endif %}
+    </p>
+    <div
+        class="dm-timer-clock {% if active_session.mode == 'focus' %}is-focus{% endif %}"
+        data-timer-display
+        data-timer-mode="{{ active_session.mode }}"
+        data-started-at="{{ active_session.started_at.isoformat }}"
+        data-target-seconds="{% if active_session.target_minutes %}{% widthratio active_session.target_minutes 1 60 %}{% else %}0{% endif %}"
+        data-accumulated-seconds="0"
+    >00:00</div>
+    <p class="dm-muted dm-timer-sub" data-timer-sub>
+        {% if active_session.mode == "focus" %}remaining{% else %}elapsed{% endif %}
     </p>
     {% if active_session.task %}
     <p class="dm-timer-task">{{ active_session.task.title }}</p>
     {% endif %}
-    <p class="dm-muted dm-timer-elapsed">Running {{ active_session.started_at|timesince }}</p>
-    <button
-        hx-post="{% url 'timer_stop' %}"
-        hx-target="#timer-widget"
-        hx-swap="innerHTML"
-        class="dm-btn dm-btn-danger">
-        <svg class="dm-ico" aria-hidden="true"><use href="#i-stop"/></svg>
-        Stop & save
-    </button>
+  <div class="dm-timer-actions">
+        {% if active_session.mode == "focus" %}
+        <a href="{% url 'focus_mode' %}" class="dm-btn dm-btn-ghost dm-btn-sm">Open focus view</a>
+        {% endif %}
+        <button
+            hx-post="{% url 'timer_stop' %}"
+            hx-target="#timer-widget"
+            hx-swap="innerHTML"
+            class="dm-btn dm-btn-danger dm-btn-sm">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-stop"/></svg>
+            Stop & save
+        </button>
+    </div>
     {% else %}
     <p class="dm-timer-status dm-timer-idle">Idle</p>
+    <div class="dm-timer-clock is-idle" data-timer-display>00:00</div>
     <p class="dm-muted dm-timer-hint">
         Start a focused block. Sessions feed streak, XP, and analytics.
     </p>

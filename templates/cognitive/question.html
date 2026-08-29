@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}#{{ question.order }} {{ type_label }}{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise dm-cognitive-question-page">
+    <header class="dm-cognitive-q-header">
+        <div class="dm-cognitive-q-meta">
+            <p class="dm-kicker">
+                <a href="{% url 'cognitive_hub' %}" class="dm-muted">Cognitive</a>
+                / <a href="{% url 'cognitive_list' type_slug %}" class="dm-muted">{{ type_label }}</a>
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.35rem">
+                <span class="dm-mono">#{{ question.order }}</span>
+                <span class="dm-tag">{{ question.category }}</span>
+                <span class="dm-tag">{{ question.get_difficulty_display }}</span>
+                <span class="dm-tag dm-tag-timer">{{ question.time_limit_label }} limit</span>
+            </div>
+        </div>
+
+        {% if not progress.revealed %}
+        <aside
+            class="dm-cognitive-countdown"
+            data-countdown
+            data-seconds="{{ question.time_limit_seconds }}"
+            data-auto-start="true"
+            data-storage-key="cog-{{ question.id }}"
+            aria-live="polite"
+        >
+            <div class="dm-cognitive-countdown-main">
+                <p class="dm-cognitive-countdown-label">Think fast</p>
+                <div class="dm-cognitive-countdown-clock" data-countdown-display>--</div>
+                <p class="dm-cognitive-countdown-sub" data-countdown-sub>starting…</p>
+            </div>
+            <div class="dm-cognitive-countdown-bar" aria-hidden="true">
+                <div class="dm-cognitive-countdown-fill" data-countdown-fill></div>
+            </div>
+            <div class="dm-cognitive-countdown-actions">
+                <button type="button" class="dm-btn dm-btn-ghost dm-btn-sm" data-countdown-pause>Pause</button>
+                <button type="button" class="dm-btn dm-btn-ghost dm-btn-sm" data-countdown-reset>Reset</button>
+            </div>
+            <p class="dm-cognitive-countdown-expired" data-countdown-expired hidden>
+                Time’s up — lock in your attempt and reveal.
+            </p>
+        </aside>
+        {% else %}
+        <aside class="dm-cognitive-countdown is-done">
+            <p class="dm-cognitive-countdown-label">Solved</p>
+            <p class="dm-muted" style="margin:0.25rem 0 0;font-size:0.85rem">Timer cleared after reveal</p>
+        </aside>
+        {% endif %}
+    </header>
+
+    <article class="dm-panel dm-pad-lg">
+        <h1 class="dm-display" style="font-size:1.5rem;margin:0;line-height:1.35">{{ question.question }}</h1>
+        {% if question.hints %}
+        <details style="margin-top:0.75rem">
+            <summary class="dm-muted" style="cursor:pointer;font-size:0.85rem">Hint (before revealing)</summary>
+            <p class="dm-muted" style="margin:0.35rem 0 0">{{ question.hints }}</p>
+        </details>
+        {% endif %}
+    </article>
+
+    {% if not progress.revealed %}
+    <form
+        id="cognitive-attempt-form"
+        class="dm-panel dm-pad"
+        hx-post="{% url 'cognitive_reveal' type_slug question.id %}"
+        hx-target="#cognitive-answer-area"
+        hx-swap="innerHTML"
+        data-countdown-form
+    >
+        {% csrf_token %}
+        <input type="hidden" name="time_spent_seconds" value="0" data-countdown-spent>
+        <p class="dm-stat-label">Your attempt (optional)</p>
+        <textarea name="attempted_answer" rows="4" class="dm-textarea" placeholder="Write your answer before revealing…" style="margin-top:0.5rem"></textarea>
+        <textarea name="notes" rows="2" class="dm-textarea" placeholder="Notes on your reasoning…" style="margin-top:0.5rem"></textarea>
+        <button type="submit" class="dm-btn dm-btn-primary" style="margin-top:0.75rem">
+            Reveal answer (+3 XP)
+        </button>
+    </form>
+    {% endif %}
+
+    <div id="cognitive-answer-area">
+        {% if progress.revealed %}
+        {% include "cognitive/_answer.html" %}
+        {% endif %}
+    </div>
+
+    <nav class="dm-cognitive-nav">
+        {% if prev_question %}
+        <a href="{% url 'cognitive_question' type_slug prev_question.id %}" class="dm-btn dm-btn-ghost dm-btn-sm">← #{{ prev_question.order }}</a>
+        {% endif %}
+        <a href="{% url 'cognitive_list' type_slug %}" class="dm-btn dm-btn-ghost dm-btn-sm">All questions</a>
+        {% if next_question %}
+        <a href="{% url 'cognitive_question' type_slug next_question.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Next #{{ next_question.order }} →</a>
+        {% endif %}
+    </nav>
+</div>
+{% endblock %}

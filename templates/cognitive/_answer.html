@@ -1,0 +1,25 @@
+<div class="dm-panel dm-pad dm-cognitive-answer dm-rise">
+    <p class="dm-kicker" style="color:var(--signal)">Answer revealed</p>
+    <div class="dm-cognitive-answer-text">
+        <strong>Answer:</strong> {{ question.answer }}
+    </div>
+    {% if question.explanation %}
+    <div style="margin-top:0.85rem">
+        <p class="dm-stat-label">Explanation</p>
+        <p class="dm-muted" style="margin:0.35rem 0 0;line-height:1.55">{{ question.explanation }}</p>
+    </div>
+    {% endif %}
+    {% if progress.attempted_answer %}
+    <div style="margin-top:0.85rem">
+        <p class="dm-stat-label">Your attempt</p>
+        <p class="dm-muted" style="margin:0.35rem 0 0">{{ progress.attempted_answer }}</p>
+    </div>
+    {% endif %}
+    {% if progress.time_spent_seconds %}
+    <p class="dm-muted dm-mono" style="font-size:0.8rem;margin:0.75rem 0 0">
+        Time spent: {{ progress.time_spent_seconds }}s
+        · Limit: {{ question.time_limit_label }}
+    </p>
+    {% endif %}
+    <p class="dm-muted" style="font-size:0.8rem;margin:0.75rem 0 0">Compare your reasoning with the solution. Retry similar category drills to build speed.</p>
+</div>

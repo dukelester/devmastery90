@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Mistakes — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Improve</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Mistake log</h1>
+        <p class="dm-muted">Record errors, spot patterns, auto-schedule spaced review.</p>
+    </header>
+
+    {% if repeated %}
+    <section class="dm-panel dm-pad dm-workload">
+        <h2 class="dm-section-title">Recurring mistakes</h2>
+        {% for m in repeated %}
+        <p style="margin:0.35rem 0">{{ m.description|truncatechars:80 }} <span class="dm-mono">×{{ m.count }}</span></p>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <form method="post" class="dm-panel dm-pad" hx-post="{% url 'mistakes' %}" hx-target="#mistake-list" hx-swap="innerHTML">
+        {% csrf_token %}
+        <h2 class="dm-section-title">Log new mistake</h2>
+        <textarea name="description" rows="3" class="dm-textarea" placeholder="What went wrong?" required></textarea>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem">
+            <select name="category" class="dm-select">
+                <option value="knowledge_gap">Knowledge gap</option>
+                <option value="algorithmic_error">Algorithmic error</option>
+                <option value="syntax_error">Syntax error</option>
+                <option value="time_management">Time management</option>
+            </select>
+            <select name="skill_id" class="dm-select">
+                <option value="">Skill (optional)</option>
+                {% for s in skills %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Save + schedule review</button>
+        </div>
+    </form>
+
+    <section>
+        <h2 class="dm-section-title">All mistakes</h2>
+        <div id="mistake-list" class="dm-panel dm-pad">
+            {% include "mistakes/_list.html" %}
+        </div>
+    </section>
+</div>
+{% endblock %}

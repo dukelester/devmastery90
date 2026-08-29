@@ -1,8 +1,17 @@
 """Data models for DevMastery 90 training platform."""
+import uuid
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
+
+
+class UUIDModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    class Meta:
+        abstract = True
 
 
 class SkillCategory(models.TextChoices):
@@ -50,6 +59,25 @@ class Difficulty(models.TextChoices):
     EXPERT = "expert", "Expert"
 
 
+class ProficiencyLevel(models.TextChoices):
+    BEGINNER = "beginner", "Beginner"
+    EASY = "easy", "Easy"
+    MEDIUM = "medium", "Medium"
+    HARD = "hard", "Hard"
+    EXPERT = "expert", "Expert"
+    ELITE = "elite", "Elite"
+
+
+PROFICIENCY_ORDER = [
+    ProficiencyLevel.BEGINNER,
+    ProficiencyLevel.EASY,
+    ProficiencyLevel.MEDIUM,
+    ProficiencyLevel.HARD,
+    ProficiencyLevel.EXPERT,
+    ProficiencyLevel.ELITE,
+]
+
+
 class Priority(models.TextChoices):
     LOW = "low", "Low"
     MEDIUM = "medium", "Medium"
@@ -64,7 +92,7 @@ class ProjectStatus(models.TextChoices):
     PAUSED = "paused", "Paused"
 
 
-class Skill(models.Model):
+class Skill(UUIDModel):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
     description = models.TextField(blank=True)
@@ -92,7 +120,7 @@ class Skill(models.Model):
         super().save(*args, **kwargs)
 
 
-class Phase(models.Model):
+class Phase(UUIDModel):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     order = models.PositiveSmallIntegerField(unique=True)
@@ -104,7 +132,7 @@ class Phase(models.Model):
         return self.name
 
 
-class Week(models.Model):
+class Week(UUIDModel):
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, related_name="weeks")
     week_number = models.PositiveSmallIntegerField()
     title = models.CharField(max_length=200)
@@ -121,7 +149,7 @@ class Week(models.Model):
         return f"Week {self.week_number}: {self.title}"
 
 
-class TrainingDay(models.Model):
+class TrainingDay(UUIDModel):
     week = models.ForeignKey(Week, on_delete=models.CASCADE, related_name="days")
     day_number = models.PositiveSmallIntegerField()
     date = models.DateField(null=True, blank=True)
@@ -147,7 +175,7 @@ class TrainingDay(models.Model):
         return f"Day {self.day_number}: {self.title}"
 
 
-class Task(models.Model):
+class Task(UUIDModel):
     training_day = models.ForeignKey(
         TrainingDay, on_delete=models.CASCADE, related_name="tasks"
     )
@@ -185,7 +213,7 @@ class Task(models.Model):
         return self.title
 
 
-class UserProfile(models.Model):
+class UserProfile(UUIDModel):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
@@ -196,6 +224,16 @@ class UserProfile(models.Model):
     last_activity_date = models.DateField(null=True, blank=True)
     program_start_date = models.DateField(null=True, blank=True)
     total_study_minutes = models.PositiveIntegerField(default=0)
+    display_name = models.CharField(max_length=120, blank=True)
+    bio = models.TextField(blank=True)
+    location = models.CharField(max_length=120, blank=True)
+    timezone = models.CharField(max_length=80, blank=True, default="UTC")
+    company = models.CharField(max_length=200, blank=True)
+    target_role = models.CharField(max_length=200, blank=True)
+    years_experience = models.PositiveSmallIntegerField(null=True, blank=True)
+    github_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    portfolio_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -252,8 +290,17 @@ class UserProfile(models.Model):
     def xp_display(self) -> str:
         return f"{self.xp:,}"
 
+    @property
+    def public_name(self) -> str:
+        if self.display_name:
+            return self.display_name
+        full = self.user.get_full_name().strip()
+        if full:
+            return full
+        return self.user.username
 
-class StudySession(models.Model):
+
+class StudySession(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="study_sessions"
     )
@@ -266,6 +313,12 @@ class StudySession(models.Model):
     started_at = models.DateTimeField()
     ended_at = models.DateTimeField(null=True, blank=True)
     duration_minutes = models.PositiveIntegerField(default=0)
+    mode = models.CharField(
+        max_length=10,
+        choices=[("elapsed", "Elapsed"), ("focus", "Focus")],
+        default="elapsed",
+    )
+    target_minutes = models.PositiveIntegerField(null=True, blank=True)
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=False)
 
@@ -280,7 +333,7 @@ class StudySession(models.Model):
         return f"Session {self.user.username} - {self.duration_minutes}m"
 
 
-class CodingProblem(models.Model):
+class CodingProblem(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="coding_problems"
     )
@@ -315,7 +368,7 @@ class CodingProblem(models.Model):
         return self.title
 
 
-class Assessment(models.Model):
+class Assessment(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assessments"
     )
@@ -344,7 +397,7 @@ class Assessment(models.Model):
         return f"{self.name} - {self.percentage}%"
 
 
-class AssessmentAttempt(models.Model):
+class AssessmentAttempt(UUIDModel):
     assessment = models.ForeignKey(
         Assessment, on_delete=models.CASCADE, related_name="attempts"
     )
@@ -362,7 +415,7 @@ class AssessmentAttempt(models.Model):
         return f"Attempt for {self.assessment.name}"
 
 
-class Mistake(models.Model):
+class Mistake(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mistakes"
     )
@@ -399,7 +452,7 @@ class Mistake(models.Model):
         return f"Mistake: {self.description[:50]}"
 
 
-class Project(models.Model):
+class Project(UUIDModel):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     status = models.CharField(
@@ -424,23 +477,81 @@ class Project(models.Model):
         return self.name
 
 
-class InterviewQuestion(models.Model):
+class InterviewQuestion(UUIDModel):
+    section_slug = models.SlugField(max_length=50, db_index=True, default="python")
     category = models.CharField(max_length=100)
+    order = models.PositiveIntegerField(default=1)
+    level = models.CharField(
+        max_length=10,
+        choices=ProficiencyLevel.choices,
+        default=ProficiencyLevel.BEGINNER,
+    )
     question = models.TextField()
+    buggy_code = models.TextField(
+        blank=True,
+        help_text="Broken code snippet for debugging exercises",
+    )
     ideal_topics = models.TextField(blank=True, help_text="Topics to cover in answer")
+    solution_code = models.TextField(blank=True, help_text="Reference solution with comments")
+    solution_explanation = models.TextField(blank=True)
+    hints = models.TextField(blank=True)
+    learning_objectives = models.TextField(blank=True)
+    time_estimate_minutes = models.PositiveSmallIntegerField(default=15)
+    min_pass_score = models.FloatField(
+        default=6.0, validators=[MinValueValidator(0), MaxValueValidator(10)]
+    )
     difficulty = models.CharField(
         max_length=10, choices=Difficulty.choices, default=Difficulty.MEDIUM
     )
 
     class Meta:
-        ordering = ["category", "difficulty"]
-        indexes = [models.Index(fields=["category"])]
+        ordering = ["section_slug", "order"]
+        indexes = [
+            models.Index(fields=["section_slug"]),
+            models.Index(fields=["section_slug", "order"]),
+            models.Index(fields=["category"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["section_slug", "order"],
+                name="unique_section_question_order",
+            ),
+        ]
 
     def __str__(self) -> str:
-        return f"{self.category}: {self.question[:60]}"
+        return f"{self.category} #{self.order}: {self.question[:60]}"
+
+    @property
+    def level_display(self) -> str:
+        return self.get_level_display()
+
+    @property
+    def ideal_topics_list(self) -> list[str]:
+        if not self.ideal_topics:
+            return []
+        return [part.strip() for part in self.ideal_topics.split(",") if part.strip()]
 
 
-class InterviewAttempt(models.Model):
+class PracticeProgress(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="practice_progress",
+    )
+    section_slug = models.SlugField(max_length=50)
+    unlocked_through_order = models.PositiveIntegerField(default=1)
+    completed_count = models.PositiveIntegerField(default=0)
+    last_activity_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ["user", "section_slug"]
+        indexes = [models.Index(fields=["user", "section_slug"])]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} — {self.section_slug} (unlocked #{self.unlocked_through_order})"
+
+
+class InterviewAttempt(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="interview_attempts"
     )
@@ -456,6 +567,7 @@ class InterviewAttempt(models.Model):
     )
     notes = models.TextField(blank=True)
     needs_review = models.BooleanField(default=False)
+    passed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -469,7 +581,7 @@ class InterviewAttempt(models.Model):
         return f"Interview attempt by {self.user.username}"
 
 
-class DailyReview(models.Model):
+class DailyReview(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_reviews"
     )
@@ -494,7 +606,7 @@ class DailyReview(models.Model):
         return f"Review Day {self.training_day.day_number} by {self.user.username}"
 
 
-class WeeklyReview(models.Model):
+class WeeklyReview(UUIDModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="weekly_reviews"
     )
@@ -519,3 +631,361 @@ class WeeklyReview(models.Model):
 
     def __str__(self) -> str:
         return f"Week {self.week.week_number} review by {self.user.username}"
+
+
+class ApplicationStatus(models.TextChoices):
+    WISHLIST = "wishlist", "Wishlist"
+    APPLIED = "applied", "Applied"
+    INTERVIEWING = "interviewing", "Interviewing"
+    OFFER = "offer", "Offer"
+    REJECTED = "rejected", "Rejected"
+
+
+class EngineeringChallengeType(models.TextChoices):
+    LAB = "lab", "Lab"
+    BENCHMARK = "benchmark", "Benchmark"
+    DEBUGGING = "debugging", "Debugging"
+    SYSTEM_DESIGN = "system_design", "System Design"
+
+
+class ReviewCard(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="review_cards"
+    )
+    skill = models.ForeignKey(
+        Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name="review_cards"
+    )
+    concept = models.CharField(max_length=200)
+    content = models.TextField()
+    next_review = models.DateField()
+    interval_days = models.PositiveIntegerField(default=1)
+    repetition = models.PositiveIntegerField(default=0)
+    ease_factor = models.FloatField(default=2.5)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["next_review"]
+        indexes = [
+            models.Index(fields=["user", "next_review"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.concept} (review {self.next_review})"
+
+
+class EngineeringChallenge(UUIDModel):
+    challenge_type = models.CharField(max_length=20, choices=EngineeringChallengeType.choices)
+    title = models.CharField(max_length=300)
+    description = models.TextField()
+    instructions = models.TextField(blank=True, help_text="Steps or code scaffold")
+    starter_code = models.TextField(blank=True, help_text="Editable starter code for the lab workspace")
+    lab_steps = models.JSONField(default=list, blank=True, help_text="Ordered checklist steps")
+    hints = models.TextField(blank=True, help_text="One hint per line, revealed progressively")
+    success_criteria = models.TextField(blank=True)
+    solution_notes = models.TextField(blank=True)
+    difficulty = models.CharField(
+        max_length=10, choices=Difficulty.choices, default=Difficulty.MEDIUM
+    )
+    estimated_minutes = models.PositiveIntegerField(default=45)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["challenge_type", "order"]
+        indexes = [models.Index(fields=["challenge_type"])]
+
+    def __str__(self) -> str:
+        return f"{self.get_challenge_type_display()}: {self.title}"
+
+
+class EngineeringAttempt(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="engineering_attempts",
+    )
+    challenge = models.ForeignKey(
+        EngineeringChallenge, on_delete=models.CASCADE, related_name="attempts"
+    )
+    score = models.FloatField(
+        default=0.0, validators=[MinValueValidator(0), MaxValueValidator(10)]
+    )
+    time_minutes = models.PositiveIntegerField(default=0)
+    completed = models.BooleanField(default=False)
+    code_submission = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["user", "created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.challenge.title} by {self.user.username}"
+
+
+class EngineeringLabSession(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="engineering_lab_sessions",
+    )
+    challenge = models.ForeignKey(
+        EngineeringChallenge, on_delete=models.CASCADE, related_name="lab_sessions"
+    )
+    code_workspace = models.TextField(blank=True)
+    completed_steps = models.JSONField(default=list)
+    hints_revealed = models.PositiveSmallIntegerField(default=0)
+    timer_started_at = models.DateTimeField(null=True, blank=True)
+    accumulated_minutes = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["user", "challenge"]
+        indexes = [models.Index(fields=["user", "challenge"])]
+
+    def __str__(self) -> str:
+        return f"Lab session: {self.challenge.title}"
+
+    @property
+    def step_progress_pct(self) -> float:
+        total = len(self.challenge.lab_steps) or 1
+        return round(len(self.completed_steps) / total * 100, 1)
+
+
+class JobApplication(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="job_applications",
+    )
+    company = models.CharField(max_length=200)
+    role = models.CharField(max_length=200)
+    status = models.CharField(
+        max_length=20,
+        choices=ApplicationStatus.choices,
+        default=ApplicationStatus.APPLIED,
+    )
+    applied_date = models.DateField(null=True, blank=True)
+    url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-applied_date", "-created_at"]
+        indexes = [models.Index(fields=["user", "status"])]
+
+    def __str__(self) -> str:
+        return f"{self.role} at {self.company}"
+
+
+class CareerGoal(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="career_goals",
+    )
+    title = models.CharField(max_length=300)
+    category = models.CharField(max_length=50, default="learning")
+    target_date = models.DateField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["completed", "target_date"]
+        indexes = [models.Index(fields=["user", "completed"])]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class MockInterviewRound(UUIDModel):
+    round_number = models.PositiveSmallIntegerField(unique=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    unlock_day = models.PositiveIntegerField()
+    period_end_day = models.PositiveIntegerField()
+    duration_minutes = models.PositiveIntegerField(default=90)
+    focus_areas = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["round_number"]
+
+    def __str__(self) -> str:
+        return f"Mock {self.round_number}: {self.title}"
+
+
+class MockInterviewQuestion(UUIDModel):
+    round = models.ForeignKey(
+        MockInterviewRound, on_delete=models.CASCADE, related_name="questions"
+    )
+    order = models.PositiveSmallIntegerField()
+    interview_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("behavioral", "Behavioral"),
+            ("technical", "Technical"),
+            ("coding", "Coding"),
+            ("system_design", "System Design"),
+        ],
+    )
+    difficulty = models.CharField(max_length=10, choices=Difficulty.choices)
+    question = models.TextField()
+    time_limit_minutes = models.PositiveSmallIntegerField(default=10)
+    rubric = models.TextField(blank=True)
+    sample_answer = models.TextField(blank=True)
+    hints = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["round", "order"]
+        unique_together = ["round", "order"]
+        indexes = [models.Index(fields=["round", "order"])]
+
+    def __str__(self) -> str:
+        return f"Mock {self.round.round_number} Q{self.order}"
+
+
+class MockInterviewSession(UUIDModel):
+    class Status(models.TextChoices):
+        IN_PROGRESS = "in_progress", "In Progress"
+        COMPLETED = "completed", "Completed"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="mock_interview_sessions",
+    )
+    round = models.ForeignKey(
+        MockInterviewRound, on_delete=models.CASCADE, related_name="sessions"
+    )
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.IN_PROGRESS
+    )
+    started_at = models.DateTimeField()
+    completed_at = models.DateTimeField(null=True, blank=True)
+    current_order = models.PositiveSmallIntegerField(default=1)
+    question_started_at = models.DateTimeField(null=True, blank=True)
+    total_score = models.FloatField(default=0.0)
+    max_score = models.FloatField(default=0.0)
+
+    class Meta:
+        ordering = ["-started_at"]
+        indexes = [
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["user", "round"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Mock session {self.round.round_number} — {self.user.username}"
+
+
+class MockInterviewResponse(UUIDModel):
+    session = models.ForeignKey(
+        MockInterviewSession, on_delete=models.CASCADE, related_name="responses"
+    )
+    question = models.ForeignKey(
+        MockInterviewQuestion, on_delete=models.CASCADE, related_name="responses"
+    )
+    order = models.PositiveSmallIntegerField()
+    answer = models.TextField(blank=True)
+    score = models.FloatField(
+        null=True, validators=[MinValueValidator(0), MaxValueValidator(10)]
+    )
+    confidence = models.FloatField(
+        default=5.0, validators=[MinValueValidator(0), MaxValueValidator(10)]
+    )
+    time_spent_seconds = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+        unique_together = ["session", "order"]
+
+    def __str__(self) -> str:
+        return f"Response Q{self.order} — {self.session_id}"
+
+
+class CognitiveQuestionType(models.TextChoices):
+    APTITUDE = "aptitude", "Aptitude"
+    BRAIN_TEASER = "brain_teaser", "Brain Teaser"
+
+
+class CognitiveQuestion(UUIDModel):
+    challenge_type = models.CharField(max_length=20, choices=CognitiveQuestionType.choices)
+    category = models.CharField(max_length=80)
+    order = models.PositiveIntegerField()
+    difficulty = models.CharField(
+        max_length=10, choices=Difficulty.choices, default=Difficulty.MEDIUM
+    )
+    question = models.TextField()
+    answer = models.TextField()
+    explanation = models.TextField(blank=True)
+    hints = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["challenge_type", "order"]
+        indexes = [
+            models.Index(fields=["challenge_type"]),
+            models.Index(fields=["challenge_type", "category"]),
+            models.Index(fields=["challenge_type", "order"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["challenge_type", "order"],
+                name="unique_cognitive_type_order",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.challenge_type} #{self.order}: {self.question[:50]}"
+
+    # Per-question think-fast limits (seconds) by type + difficulty.
+    TIME_LIMITS = {
+        "aptitude": {
+            "easy": 45,
+            "medium": 75,
+            "hard": 90,
+            "expert": 120,
+        },
+        "brain_teaser": {
+            "easy": 90,
+            "medium": 120,
+            "hard": 150,
+            "expert": 180,
+        },
+    }
+
+    @property
+    def time_limit_seconds(self) -> int:
+        by_type = self.TIME_LIMITS.get(self.challenge_type, self.TIME_LIMITS["aptitude"])
+        return by_type.get(self.difficulty, by_type["medium"])
+
+    @property
+    def time_limit_label(self) -> str:
+        secs = self.time_limit_seconds
+        if secs < 60:
+            return f"{secs}s"
+        mins, rem = divmod(secs, 60)
+        return f"{mins}m" if rem == 0 else f"{mins}m {rem}s"
+
+
+class CognitiveProgress(UUIDModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="cognitive_progress",
+    )
+    question = models.ForeignKey(
+        CognitiveQuestion, on_delete=models.CASCADE, related_name="progress"
+    )
+    revealed = models.BooleanField(default=False)
+    revealed_at = models.DateTimeField(null=True, blank=True)
+    attempted_answer = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    time_spent_seconds = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ["user", "question"]
+        indexes = [models.Index(fields=["user", "revealed"])]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} — {self.question_id}"

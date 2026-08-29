@@ -1,0 +1,46 @@
+<div class="dm-panel dm-pad">
+    {% if passed %}
+    <div class="dm-mission-done" style="margin-bottom:1rem">
+        <svg class="dm-ico" aria-hidden="true"><use href="#i-check"/></svg>
+        Passed — next question unlocked
+    </div>
+    {% else %}
+    <div class="dm-workload" style="margin-bottom:1rem">
+        <p style="margin:0">Score below {{ question.min_pass_score }}. Review and retry.</p>
+    </div>
+    {% endif %}
+
+    <p class="dm-muted" style="font-size:0.85rem;margin:0">Your score: {{ attempt.score }}/10 · Confidence: {{ attempt.confidence }}</p>
+
+    {% if passed and question.buggy_code %}
+    <div style="margin-top:1rem">
+        <p class="dm-stat-label">Broken code (reference)</p>
+        <pre class="dm-code-block dm-code-buggy"><code>{{ question.buggy_code }}</code></pre>
+    </div>
+    {% endif %}
+
+    {% if passed and question.solution_code %}
+    <div style="margin-top:1rem">
+        <p class="dm-stat-label">{% if question.buggy_code %}Corrected code{% else %}Reference solution{% endif %}</p>
+        <pre class="dm-code-block"><code>{{ question.solution_code }}</code></pre>
+    </div>
+    {% endif %}
+
+    {% if passed and question.solution_explanation %}
+    <div style="margin-top:0.85rem">
+        <p class="dm-stat-label">Explanation</p>
+        <p class="dm-muted" style="margin:0.35rem 0 0">{{ question.solution_explanation }}</p>
+    </div>
+    {% endif %}
+
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:1rem">
+        {% if passed %}
+        {% with next_order=question.order|add:1 %}
+        <a href="{% url 'practice_section' section_slug %}" class="dm-btn dm-btn-primary dm-btn-sm">View track</a>
+        {% endwith %}
+        {% else %}
+        <a href="{% url 'practice_question' section_slug question.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Retry</a>
+        {% endif %}
+        <a href="{% url 'practice_section' section_slug %}" class="dm-btn dm-btn-ghost dm-btn-sm">Section overview</a>
+    </div>
+</div>

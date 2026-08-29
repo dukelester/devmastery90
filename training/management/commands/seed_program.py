@@ -7,28 +7,7 @@ from django.utils.text import slugify
 from training.curriculum_data import DAYS, PHASES, SKILLS, WEEKS
 from training.models import InterviewQuestion, Phase, Project, Skill, Task, TrainingDay, Week
 
-INTERVIEW_QUESTIONS = [
-    ("Python", "Explain Python's object model and MRO.", "types, inheritance, MRO, super()", "medium"),
-    ("Python", "How do decorators work internally?", "closures, wrappers, functools", "hard"),
-    ("Python", "Difference between generators and iterators?", "yield, lazy evaluation, memory", "medium"),
-    ("Django", "Explain Django's request/response cycle.", "middleware, views, URLs", "medium"),
-    ("Django", "How do Django migrations work?", "schema changes, squashing, rollback", "medium"),
-    ("REST", "Design a RESTful API for a resource.", "resources, HTTP methods, status codes", "medium"),
-    ("REST", "How do you handle API versioning?", "URL, header, query param versioning", "medium"),
-    ("PostgreSQL", "Explain index types and when to use each.", "B-tree, GIN, GiST, partial indexes", "hard"),
-    ("PostgreSQL", "How do you optimize a slow query?", "EXPLAIN ANALYZE, indexes, query rewrite", "hard"),
-    ("System Design", "Design a URL shortener.", "hashing, storage, caching, scaling", "hard"),
-    ("System Design", "Design a real-time chat system.", "WebSockets, message queues, presence", "hard"),
-    ("System Design", "Design a payment processing system.", "idempotency, consistency, fraud", "hard"),
-    ("DSA", "Find the longest substring without repeating characters.", "sliding window, hash map", "medium"),
-    ("DSA", "Implement LRU cache.", "hash map, doubly linked list", "hard"),
-    ("Testing", "How do you test async code?", "pytest-asyncio, mocking, fixtures", "medium"),
-    ("DevOps", "Explain CI/CD pipeline stages.", "build, test, deploy, rollback", "medium"),
-    ("Cloud", "How does auto-scaling work on AWS?", "EC2, load balancers, CloudWatch", "medium"),
-    ("AI", "How do you integrate LLM APIs safely?", "rate limits, retries, cost control", "medium"),
-    ("Behavioral", "Describe a production incident you resolved.", "STAR method, root cause, prevention", "medium"),
-    ("Behavioral", "How do you handle technical disagreements?", "communication, data-driven decisions", "medium"),
-]
+INTERVIEW_QUESTIONS = []  # legacy — use seed_practice
 
 
 class Command(BaseCommand):
@@ -108,16 +87,13 @@ class Command(BaseCommand):
                     order=order,
                 )
 
-        self.stdout.write("Seeding interview questions...")
-        for category, question, topics, difficulty in INTERVIEW_QUESTIONS:
-            InterviewQuestion.objects.get_or_create(
-                question=question,
-                defaults={
-                    "category": category,
-                    "ideal_topics": topics,
-                    "difficulty": difficulty,
-                },
-            )
+        self.stdout.write("Seeding interview practice bank...")
+        from django.core.management import call_command
+
+        call_command("seed_practice", force=True)
+        call_command("seed_engineering")
+        call_command("seed_mock_interviews", force=True)
+        call_command("seed_cognitive", force=True)
 
         self.stdout.write("Seeding project...")
         Project.objects.get_or_create(

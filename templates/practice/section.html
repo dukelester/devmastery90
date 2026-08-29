@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ section.name }} Practice — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker"><a href="{% url 'interview' %}" class="dm-muted">Practice</a> / {{ section.name }}</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">{{ section.name }}</h1>
+        <p class="dm-muted" style="margin:0.4rem 0 0">{{ section.description }}</p>
+    </header>
+
+    <div class="dm-panel dm-pad dm-dash-metrics">
+        <div>
+            <div class="dm-stat-label">Progress</div>
+            <div class="dm-stat-value">{{ progress.completed_count }}/{{ progress.total }}</div>
+        </div>
+        <div>
+            <div class="dm-stat-label">Unlocked</div>
+            <div class="dm-stat-value">#{{ unlocked_order }}</div>
+        </div>
+        <div>
+            <div class="dm-stat-label">Complete</div>
+            <div class="dm-stat-value">{{ progress.percent }}%</div>
+        </div>
+    </div>
+
+    {% if current_question %}
+    <div class="dm-panel dm-pad dm-panel-ink">
+        <p class="dm-kicker" style="color:var(--signal)">Current question</p>
+        <p style="font-weight:600;margin:0.25rem 0 0">#{{ current_question.order }} · {{ current_question.level_display }}</p>
+        <p style="margin:0.5rem 0 0">{{ current_question.question|truncatewords:24 }}</p>
+        <a href="{% url 'practice_question' section.slug current_question.id %}" class="dm-btn dm-btn-primary dm-btn-sm" style="margin-top:0.85rem">
+            Continue
+        </a>
+    </div>
+    {% endif %}
+
+    <section>
+        <h2 class="dm-section-title">Proficiency levels</h2>
+        <div class="dm-practice-levels">
+            {% for lvl in level_stats %}
+            <div class="dm-practice-level">
+                <span class="dm-tag">{{ lvl.label }}</span>
+                <span class="dm-mono">{{ lvl.passed }}/{{ lvl.total }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="dm-section-title">All questions (sequential)</h2>
+        <div class="dm-practice-track">
+            {% for state in question_states %}
+            <a
+                href="{% if state.is_unlocked %}{% url 'practice_question' section.slug state.question.id %}{% else %}#{% endif %}"
+                class="dm-practice-node {% if state.is_passed %}is-passed{% elif state.is_current %}is-current{% elif not state.is_unlocked %}is-locked{% endif %}"
+                {% if not state.is_unlocked %}aria-disabled="true"{% endif %}
+            >
+                <span class="dm-mono">{{ state.question.order }}</span>
+                <span class="dm-practice-node-level">{{ state.question.level_display }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

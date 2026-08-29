@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Practice — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Sequential mastery</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Practice Questions</h1>
+        <p class="dm-muted" style="margin:0.4rem 0 0">
+            {{ total_questions }} questions across 12 sections · Beginner → Elite · solve in order
+        </p>
+    </header>
+
+    <div class="dm-grid-3">
+        {% for section in sections %}
+        <a href="{% url 'practice_section' section.slug %}" class="dm-panel dm-pad dm-practice-section-card">
+            <div class="dm-stat-label">{{ section.name }}</div>
+            <p class="dm-muted" style="font-size:0.8rem;margin:0.35rem 0 0">{{ section.description }}</p>
+            <div class="dm-practice-section-meta">
+                <span class="dm-mono">{{ section.completed_count }}/{{ section.total }}</span>
+                <span class="dm-muted">· {{ section.percent }}%</span>
+            </div>
+            <div class="dm-progress" style="margin-top:0.65rem">
+                <div class="dm-progress-bar" style="width:{{ section.percent }}%"></div>
+            </div>
+            {% if section.unlocked_order > 1 %}
+            <p class="dm-mono dm-muted" style="font-size:0.75rem;margin:0.5rem 0 0">
+                Next: #{{ section.unlocked_order }}
+            </p>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+
+    <section>
+        <h2 class="dm-section-title">Recent Attempts</h2>
+        <div id="attempts" class="dm-panel dm-pad">
+            {% for attempt in recent_attempts %}
+            {% include "interview/_attempt.html" %}
+            {% empty %}
+            <p class="dm-muted">No attempts yet. Pick a section and start with question #1.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

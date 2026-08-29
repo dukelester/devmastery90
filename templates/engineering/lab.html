@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ challenge.title }} — Lab{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise dm-lab-page">
+    <header class="dm-lab-header">
+        <div>
+            <p class="dm-kicker"><a href="{% url 'engineering' %}" class="dm-muted">Engineering</a> · {{ challenge.get_challenge_type_display }}</p>
+            <h1 class="dm-display" style="font-size:1.75rem;margin:0.35rem 0 0">{{ challenge.title }}</h1>
+            <p class="dm-muted" style="margin:0.35rem 0 0">{{ challenge.description }}</p>
+        </div>
+        <div id="lab-timer" class="dm-lab-timer-wrap">
+            {% include "engineering/_lab_timer.html" %}
+        </div>
+    </header>
+
+    <div class="dm-lab-grid">
+        <section class="dm-panel dm-pad dm-lab-editor-panel">
+            <div class="dm-lab-panel-head">
+                <h2 class="dm-section-title" style="margin:0">Workspace</h2>
+                <span id="save-status" class="dm-muted" style="font-size:0.8rem"></span>
+            </div>
+            <form
+                hx-post="{% url 'engineering_save_code' challenge.id %}"
+                hx-trigger="keyup changed delay:2s, blur"
+                hx-target="#save-status"
+                hx-swap="innerHTML"
+            >
+                {% csrf_token %}
+                <textarea
+                    name="code"
+                    class="dm-lab-editor"
+                    rows="18"
+                    spellcheck="false"
+                >{{ session.code_workspace }}</textarea>
+            </form>
+        </section>
+
+        <aside class="dm-stack" style="gap:0.75rem">
+            {% if challenge.lab_steps %}
+            <section class="dm-panel dm-pad" id="lab-steps">
+                {% include "engineering/_lab_steps.html" %}
+            </section>
+            {% endif %}
+
+            {% if hints %}
+            <section class="dm-panel dm-pad" id="lab-hints">
+                {% include "engineering/_lab_hints.html" %}
+            </section>
+            {% endif %}
+
+            {% if challenge.success_criteria %}
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title">Success criteria</h2>
+                <p class="dm-muted" style="margin:0.35rem 0 0;line-height:1.5">{{ challenge.success_criteria }}</p>
+            </section>
+            {% endif %}
+
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title">Submit attempt</h2>
+                <form
+                    method="post"
+                    action="{% url 'engineering_attempt' challenge.id %}"
+                    hx-post="{% url 'engineering_attempt' challenge.id %}"
+                    hx-target="#attempt-result"
+                    hx-swap="innerHTML"
+                    class="dm-stack"
+                    style="gap:0.5rem;margin-top:0.5rem"
+                >
+                    {% csrf_token %}
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                        <input name="score" type="number" min="0" max="10" step="0.5" class="dm-input" placeholder="Score /10" value="0" style="width:5rem">
+                        <input name="time_minutes" type="number" min="0" class="dm-input" placeholder="Minutes" value="{{ timer_minutes }}" style="width:5rem">
+                    </div>
+                    <textarea name="notes" class="dm-input" rows="2" placeholder="What did you learn?"></textarea>
+                    <label class="dm-muted" style="font-size:0.85rem"><input name="completed" type="checkbox"> Mark complete</label>
+                    <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Log attempt</button>
+                </form>
+                <div id="attempt-result" style="margin-top:0.5rem"></div>
+            </section>
+
+            {% if attempts %}
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title">Your attempts</h2>
+                <div class="dm-stack" style="gap:0.35rem;margin-top:0.5rem">
+                    {% for a in attempts %}
+                    <div class="dm-muted" style="font-size:0.85rem">
+                        <span class="dm-mono">{{ a.score }}/10</span> · {{ a.time_minutes }}m
+                        {% if a.completed %}<span class="dm-tag">done</span>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+{% endblock %}

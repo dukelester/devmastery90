@@ -10,6 +10,7 @@ from training.models import (
     InterviewQuestion,
     Mistake,
     Phase,
+    PracticeProgress,
     Project,
     Skill,
     StudySession,
@@ -103,13 +104,21 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(InterviewQuestion)
 class InterviewQuestionAdmin(admin.ModelAdmin):
-    list_display = ["category", "question", "difficulty"]
-    list_filter = ["category", "difficulty"]
+    list_display = ["section_slug", "order", "category", "level", "difficulty"]
+    list_filter = ["section_slug", "level", "difficulty"]
+    search_fields = ["question"]
+    ordering = ["section_slug", "order"]
+
+
+@admin.register(PracticeProgress)
+class PracticeProgressAdmin(admin.ModelAdmin):
+    list_display = ["user", "section_slug", "unlocked_through_order", "completed_count"]
+    list_filter = ["section_slug"]
 
 
 @admin.register(InterviewAttempt)
 class InterviewAttemptAdmin(admin.ModelAdmin):
-    list_display = ["user", "question", "score", "confidence", "needs_review"]
+    list_display = ["user", "question", "score", "confidence", "passed", "needs_review"]
 
 
 @admin.register(DailyReview)

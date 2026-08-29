@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Mock Interviews — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Bi-weekly checkpoints</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Mock Interviews</h1>
+        <p class="dm-muted" style="margin:0.4rem 0 0">
+            Timed simulations every 2 weeks — Easy → Medium → Hard → Hardest. Day {{ current_day }} of 90.
+        </p>
+    </header>
+
+    <div class="dm-panel dm-pad dm-mock-structure">
+        <p class="dm-stat-label">Each mock (≈88 min)</p>
+        <ol class="dm-mock-structure-list">
+            <li><span class="dm-tag">Easy</span> Behavioral warm-up · 5m</li>
+            <li><span class="dm-tag">Easy</span> Technical · 8m</li>
+            <li><span class="dm-tag">Easy</span> Coding · 10m</li>
+            <li><span class="dm-tag">Medium</span> Technical · 12m</li>
+            <li><span class="dm-tag">Medium</span> Coding · 15m</li>
+            <li><span class="dm-tag">Hard</span> Deep technical · 18m</li>
+            <li><span class="dm-tag dm-tag-warn">Hardest</span> System design · 20m</li>
+        </ol>
+    </div>
+
+    <section class="dm-stack" style="gap:0.75rem">
+        <h2 class="dm-section-title">Interview rounds</h2>
+        {% for card in round_cards %}
+        <article class="dm-panel dm-pad dm-mock-round-card {% if not card.unlocked %}is-locked{% endif %} {% if card.is_current_period %}is-current{% endif %}">
+            <div class="dm-mock-round-head">
+                <div>
+                    <p class="dm-kicker">Round {{ card.round.round_number }} · Days {{ card.round.unlock_day }}–{{ card.round.period_end_day }}</p>
+                    <h3 style="margin:0.25rem 0 0;font-size:1.1rem">{{ card.round.title }}</h3>
+                    <p class="dm-muted" style="margin:0.35rem 0 0;font-size:0.9rem">{{ card.round.description }}</p>
+                    <p class="dm-muted" style="margin:0.35rem 0 0;font-size:0.8rem">Focus: {{ card.round.focus_areas }}</p>
+                </div>
+                <div class="dm-mock-round-meta dm-mono" style="font-size:0.8rem;text-align:right">
+                    <div>{{ card.question_count }} questions</div>
+                    <div>{{ card.round.duration_minutes }} min</div>
+                </div>
+            </div>
+            <div style="margin-top:0.85rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+                {% if card.completed %}
+                <span class="dm-tag" style="background:var(--signal-soft);color:var(--signal-deep)">Completed</span>
+                <form method="post" action="{% url 'mock_interview_start' card.round.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Retake mock</button>
+                </form>
+                {% elif card.in_progress_session %}
+                <a href="{% url 'mock_interview_session' card.in_progress_session.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Continue mock →</a>
+                {% elif card.unlocked %}
+                <form method="post" action="{% url 'mock_interview_start' card.round.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Start timed mock →</button>
+                </form>
+                {% else %}
+                <span class="dm-muted" style="font-size:0.85rem">Unlocks on day {{ card.round.unlock_day }}</span>
+                {% endif %}
+                {% if card.is_current_period and not card.completed %}
+                <span class="dm-tag dm-tag-warn">Due this period</span>
+                {% endif %}
+            </div>
+        </article>
+        {% empty %}
+        <p class="dm-muted">Run: python manage.py seed_mock_interviews</p>
+        {% endfor %}
+    </section>
+
+    {% if recent_sessions %}
+    <section>
+        <h2 class="dm-section-title">Recent results</h2>
+        <div class="dm-panel dm-pad dm-stack" style="gap:0.5rem">
+            {% for s in recent_sessions %}
+            <div class="dm-list-row">
+                <span>{{ s.round.title }}</span>
+                <span class="dm-mono dm-muted">{{ s.total_score }}/{{ s.max_score }} · {{ s.completed_at|date:"M j" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

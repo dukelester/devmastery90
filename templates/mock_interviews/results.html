@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Mock {{ session.round.round_number }} Results{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker"><a href="{% url 'mock_interviews' %}" class="dm-muted">Mock interviews</a></p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Mock complete</h1>
+        <p class="dm-muted" style="margin:0.35rem 0 0">{{ session.round.title }}</p>
+    </header>
+
+    <div class="dm-panel dm-pad dm-dash-metrics">
+        <div>
+            <div class="dm-stat-label">Total score</div>
+            <div class="dm-stat-value">{{ session.total_score }}/{{ session.max_score }}</div>
+        </div>
+        <div>
+            <div class="dm-stat-label">Percentage</div>
+            <div class="dm-stat-value">{{ percent }}%</div>
+        </div>
+        <div>
+            <div class="dm-stat-label">Duration</div>
+            <div class="dm-stat-value">{{ session.completed_at|timesince:session.started_at }}</div>
+        </div>
+    </div>
+
+    <section>
+        <h2 class="dm-section-title">By difficulty</h2>
+        <div class="dm-grid-2">
+            {% for bucket in by_difficulty %}
+            <div class="dm-panel dm-pad">
+                <div class="dm-stat-label">{{ bucket.label }}</div>
+                <div class="dm-stat-value" style="font-size:1.35rem">{{ bucket.score }}/{{ bucket.max_score }}</div>
+                <p class="dm-muted" style="margin:0.35rem 0 0;font-size:0.85rem">{{ bucket.percent }}% · {{ bucket.count }} question{{ bucket.count|pluralize }}</p>
+                <div class="dm-progress" style="margin-top:0.5rem">
+                    <div class="dm-progress-bar" style="width:{{ bucket.percent }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="dm-section-title">Question breakdown</h2>
+        <div class="dm-stack" style="gap:0.65rem">
+            {% for resp in responses %}
+            <article class="dm-panel dm-pad">
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;margin-bottom:0.35rem">
+                    <span class="dm-mono">#{{ resp.order }}</span>
+                    <span class="dm-tag">{{ resp.question.get_interview_type_display }}</span>
+                    <span class="dm-tag">{% if resp.question.difficulty == 'expert' %}Hardest{% else %}{{ resp.question.get_difficulty_display }}{% endif %}</span>
+                    <span class="dm-mono dm-muted">{{ resp.score }}/10 · {{ resp.time_spent_seconds }}s</span>
+                </div>
+                <p style="font-weight:600;margin:0">{{ resp.question.question }}</p>
+                {% if resp.answer %}
+                <p class="dm-muted" style="margin:0.5rem 0 0;font-size:0.9rem"><strong>Your answer:</strong> {{ resp.answer|truncatewords:60 }}</p>
+                {% endif %}
+                <details style="margin-top:0.65rem">
+                    <summary class="dm-muted" style="cursor:pointer;font-size:0.85rem">Sample answer & rubric</summary>
+                    <pre class="dm-code-block" style="margin-top:0.5rem"><code>{{ resp.question.sample_answer }}</code></pre>
+                    <p class="dm-muted" style="margin:0.35rem 0 0;font-size:0.85rem">{{ resp.question.rubric }}</p>
+                </details>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        <a href="{% url 'mock_interviews' %}" class="dm-btn dm-btn-primary">Back to mock hub</a>
+        <a href="{% url 'analytics' %}" class="dm-btn dm-btn-ghost">View analytics</a>
+    </div>
+</div>
+{% endblock %}

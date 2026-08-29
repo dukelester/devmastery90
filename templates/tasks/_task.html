@@ -58,13 +58,20 @@
         </button>
         <button
             hx-post="{% url 'timer_start' %}"
-            hx-vals='{"task_id": "{{ task.id }}"}'
+            hx-vals='{"task_id": "{{ task.id }}", "mode": "elapsed"}'
             hx-target="#timer-widget"
             hx-swap="innerHTML"
             class="dm-btn dm-btn-ghost dm-btn-sm">
             <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-timer"/></svg>
             Timer
         </button>
+        <form method="post" action="{% url 'focus_start' task.id %}" class="dm-task-focus-form">
+            {% csrf_token %}
+            <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">
+                <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-zap"/></svg>
+                Focus {{ task.estimated_minutes }}m
+            </button>
+        </form>
     </div>
     {% endif %}
 </div>

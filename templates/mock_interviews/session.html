@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Mock {{ session.round.round_number }} — Live{% endblock %}
+{% block body_class %}dm-mock-active{% endblock %}
+{% block content %}
+<div class="dm-mock-session dm-rise" data-live-timer data-mock-timer>
+    <header class="dm-mock-session-head">
+        <div>
+            <p class="dm-kicker"><a href="{% url 'mock_interviews' %}" class="dm-muted">Mock interviews</a></p>
+            <h1 class="dm-display" style="font-size:1.5rem;margin:0.25rem 0 0">{{ session.round.title }}</h1>
+        </div>
+        <div class="dm-mock-timer-box">
+            <div
+                class="dm-mock-countdown"
+                data-timer-display
+                data-timer-mode="focus"
+                data-started-at="{{ session.question_started_at.isoformat }}"
+                data-target-seconds="{% widthratio question.time_limit_minutes 1 60 %}"
+                data-accumulated-seconds="0"
+            >00:00</div>
+            <p class="dm-mock-countdown-label" data-timer-sub>remaining</p>
+        </div>
+    </header>
+
+    <div class="dm-mock-progress">
+        <div class="dm-mock-progress-bar" style="width:{{ progress_pct }}%"></div>
+    </div>
+    <p class="dm-muted dm-mono" style="font-size:0.75rem;margin:0.35rem 0 0">
+        Question {{ session.current_order }} of {{ total_questions }}
+    </p>
+
+    <nav class="dm-mock-phases" aria-label="Interview structure">
+        {% for q in structure %}
+        <span class="dm-mock-phase {% if q.order == session.current_order %}is-current{% elif q.order < session.current_order %}is-done{% endif %}">
+            <span class="dm-mono">{{ q.order }}</span>
+            <span>{{ q.get_interview_type_display }}</span>
+            <span class="dm-tag">{% if q.difficulty == 'expert' %}Hardest{% else %}{{ q.get_difficulty_display }}{% endif %}</span>
+        </span>
+        {% endfor %}
+    </nav>
+
+    {% if question %}
+    <article class="dm-panel dm-pad dm-mock-question">
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem">
+            <span class="dm-tag">{{ question.get_interview_type_display }}</span>
+            <span class="dm-tag">{% if question.difficulty == 'expert' %}Hardest{% else %}{{ question.get_difficulty_display }}{% endif %}</span>
+            <span class="dm-tag dm-mono">{{ question.time_limit_minutes }}m limit</span>
+        </div>
+        <h2 style="margin:0;font-size:1.15rem;line-height:1.45">{{ question.question }}</h2>
+        {% if question.hints %}
+        <details style="margin-top:0.75rem">
+            <summary class="dm-muted" style="cursor:pointer;font-size:0.85rem">Hint</summary>
+            <p class="dm-muted" style="margin:0.35rem 0 0;font-size:0.9rem">{{ question.hints }}</p>
+        </details>
+        {% endif %}
+    </article>
+
+    <form method="post" action="{% url 'mock_interview_submit' session.id %}" class="dm-panel dm-pad dm-stack" style="gap:0.65rem" id="mock-submit-form">
+        {% csrf_token %}
+        <input type="hidden" name="time_spent_seconds" id="mock-time-spent" value="0">
+        <label class="dm-stat-label">Your answer</label>
+        <textarea name="answer" rows="8" class="dm-textarea" placeholder="Explain your thinking, tradeoffs, and solution…" required></textarea>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
+            <label class="dm-muted" style="font-size:0.85rem">
+                Self-score /10
+                <input name="score" type="number" min="0" max="10" step="0.5" value="6" class="dm-input" style="width:4.5rem;margin-left:0.35rem">
+            </label>
+            <label class="dm-muted" style="font-size:0.85rem">
+                Confidence
+                <input name="confidence" type="number" min="0" max="10" step="0.5" value="5" class="dm-input" style="width:4.5rem;margin-left:0.35rem">
+            </label>
+        </div>
+        <p class="dm-muted" style="font-size:0.8rem;margin:0">Use the rubric mentally: {{ question.rubric }}</p>
+        <button type="submit" class="dm-btn dm-btn-primary">
+            {% if session.current_order == total_questions %}Finish mock interview{% else %}Submit & next question{% endif %}
+        </button>
+    </form>
+    {% endif %}
+</div>
+<script>
+(function () {
+  const form = document.getElementById("mock-submit-form");
+  const display = document.querySelector("[data-mock-timer] [data-timer-display]");
+  const hidden = document.getElementById("mock-time-spent");
+  if (!form || !display || !hidden) return;
+  const startMs = Date.parse(display.dataset.startedAt);
+  form.addEventListener("submit", function () {
+    if (!Number.isNaN(startMs)) {
+      hidden.value = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+    }
+  });
+})();
+</script>
+{% endblock %}

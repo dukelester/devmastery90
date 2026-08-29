@@ -596,28 +596,749 @@ def get_coding_stats(user) -> dict[str, Any]:
 
 
 def get_interview_stats(user) -> dict[str, Any]:
-    """Get interview practice statistics."""
+    """Get interview/practice statistics for legacy template compatibility."""
+    return get_practice_hub_data(user)
+
+
+def get_unlocked_order(user, section_slug: str) -> int:
+    from training.models import PracticeProgress
+
+    progress = PracticeProgress.objects.filter(
+        user=user, section_slug=section_slug
+    ).first()
+    return progress.unlocked_through_order if progress else 1
+
+
+def can_access_practice_question(user, question) -> bool:
+    return question.order <= get_unlocked_order(user, question.section_slug)
+
+
+def get_section_progress(user, section_slug: str) -> dict[str, Any]:
+    from training.models import InterviewAttempt, InterviewQuestion, PracticeProgress
+
+    total = InterviewQuestion.objects.filter(section_slug=section_slug).count()
+    unlocked_order = get_unlocked_order(user, section_slug)
+    passed_orders = set(
+        InterviewAttempt.objects.filter(
+            user=user,
+            question__section_slug=section_slug,
+            passed=True,
+        ).values_list("question__order", flat=True)
+    )
+    completed_count = len(passed_orders)
+    progress = PracticeProgress.objects.filter(
+        user=user, section_slug=section_slug
+    ).first()
+
+    return {
+        "total": total,
+        "unlocked_order": unlocked_order,
+        "completed_count": completed_count,
+        "percent": round((completed_count / total * 100) if total else 0, 1),
+        "last_activity_at": progress.last_activity_at if progress else None,
+    }
+
+
+def get_practice_hub_data(user) -> dict[str, Any]:
     from training.models import InterviewAttempt, InterviewQuestion
+    from training.practice_bank.sections import PRACTICE_SECTIONS
 
     attempts = InterviewAttempt.objects.filter(user=user).select_related("question")
-    categories = InterviewQuestion.objects.values_list("category", flat=True).distinct()
-
-    category_stats = []
-    for category in categories:
-        cat_attempts = attempts.filter(question__category=category)
-        if cat_attempts.exists():
-            avg_score = cat_attempts.aggregate(avg=Avg("score"))["avg"] or 0
-            needs_review = cat_attempts.filter(needs_review=True).count()
-            category_stats.append({
-                "category": category,
-                "attempted": cat_attempts.count(),
-                "avg_score": round(avg_score, 1),
-                "needs_review": needs_review,
-            })
+    sections = []
+    for section in PRACTICE_SECTIONS:
+        prog = get_section_progress(user, section["slug"])
+        sections.append({**section, **prog})
 
     return {
         "total_attempts": attempts.count(),
-        "categories": category_stats,
-        "recent_attempts": attempts.order_by("-created_at")[:20],
-        "questions": InterviewQuestion.objects.all()[:50],
+        "sections": sections,
+        "recent_attempts": attempts.order_by("-created_at")[:15],
+        "total_questions": InterviewQuestion.objects.count(),
     }
+
+
+def get_practice_section_data(user, section_slug: str) -> dict[str, Any]:
+    from training.models import InterviewQuestion, ProficiencyLevel
+    from training.practice_bank.sections import PRACTICE_SECTIONS
+
+    section_meta = next(
+        (s for s in PRACTICE_SECTIONS if s["slug"] == section_slug), None
+    )
+    if not section_meta:
+        return {}
+
+    questions = list(
+        InterviewQuestion.objects.filter(section_slug=section_slug).order_by("order")
+    )
+    unlocked_order = get_unlocked_order(user, section_slug)
+    progress = get_section_progress(user, section_slug)
+
+    level_stats = []
+    from training.models import InterviewAttempt, ProficiencyLevel
+
+    for level in ProficiencyLevel:
+        level_qs = [q for q in questions if q.level == level]
+        if not level_qs:
+            continue
+        passed_count = InterviewAttempt.objects.filter(
+            user=user,
+            question__section_slug=section_slug,
+            question__level=level,
+            passed=True,
+        ).count()
+        level_stats.append({
+            "level": level,
+            "label": level.label,
+            "total": len(level_qs),
+            "passed": passed_count,
+        })
+
+    current_question = next(
+        (q for q in questions if q.order == unlocked_order),
+        None,
+    )
+
+    question_states = []
+    for q in questions:
+        question_states.append({
+            "question": q,
+            "is_unlocked": q.order <= unlocked_order,
+            "is_passed": q.order < unlocked_order,
+            "is_current": q.order == unlocked_order,
+        })
+
+    return {
+        "section": section_meta,
+        "progress": progress,
+        "level_stats": level_stats,
+        "current_question": current_question,
+        "question_states": question_states,
+        "unlocked_order": unlocked_order,
+    }
+
+
+def submit_practice_attempt(user, question, data: dict[str, Any]) -> dict[str, Any]:
+    from django.utils import timezone
+
+    from training.models import InterviewAttempt, PracticeProgress
+
+    if not can_access_practice_question(user, question):
+        return {"error": "Question is locked. Complete previous questions first.", "passed": False}
+
+    score = float(data.get("score", 0))
+    confidence = float(data.get("confidence", 5))
+    passed = score >= question.min_pass_score
+
+    attempt = InterviewAttempt.objects.create(
+        user=user,
+        question=question,
+        answer=data.get("answer", ""),
+        confidence=confidence,
+        score=score,
+        notes=data.get("notes", ""),
+        needs_review=data.get("needs_review", False) or (not passed),
+        passed=passed,
+    )
+
+    if passed:
+        progress, _ = PracticeProgress.objects.get_or_create(
+            user=user,
+            section_slug=question.section_slug,
+            defaults={"unlocked_through_order": 1},
+        )
+        if question.order >= progress.unlocked_through_order:
+            progress.unlocked_through_order = question.order + 1
+        progress.completed_count = InterviewAttempt.objects.filter(
+            user=user,
+            question__section_slug=question.section_slug,
+            passed=True,
+        ).count()
+        progress.last_activity_at = timezone.now()
+        progress.save()
+        award_xp(user, 15)
+        update_streak_on_activity(user)
+
+    return {
+        "attempt": attempt,
+        "passed": passed,
+        "unlocked_order": get_unlocked_order(user, question.section_slug),
+        "error": None,
+    }
+
+
+def needs_onboarding(user) -> bool:
+    profile = get_or_create_profile(user)
+    return profile.program_start_date is None
+
+
+def get_repeated_mistakes(user, limit: int = 5) -> list[dict[str, Any]]:
+    rows = (
+        Mistake.objects.filter(user=user, resolved=False)
+        .values("description", "category")
+        .annotate(count=Count("id"))
+        .filter(count__gte=2)
+        .order_by("-count")[:limit]
+    )
+    return list(rows)
+
+
+def get_improvement_snapshot(user) -> dict[str, Any]:
+    """Compare recent vs prior window for assessments, study, and tasks."""
+    now = timezone.now()
+    week_ago = now - timedelta(days=7)
+    two_weeks = now - timedelta(days=14)
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+
+    recent_assess = Assessment.objects.filter(
+        user=user, completed_at__gte=week_ago
+    ).aggregate(avg=Avg("percentage"), count=Count("id"))
+    prior_assess = Assessment.objects.filter(
+        user=user, completed_at__gte=two_weeks, completed_at__lt=week_ago
+    ).aggregate(avg=Avg("percentage"), count=Count("id"))
+
+    study_recent = StudySession.objects.filter(
+        user=user, ended_at__isnull=False, started_at__gte=week_ago
+    ).aggregate(total=Sum("duration_minutes"))["total"] or 0
+    study_prior = StudySession.objects.filter(
+        user=user,
+        ended_at__isnull=False,
+        started_at__gte=two_weeks,
+        started_at__lt=week_ago,
+    ).aggregate(total=Sum("duration_minutes"))["total"] or 0
+
+    tasks_recent = Task.objects.filter(
+        completed=True, completed_at__gte=week_ago
+    ).count()
+    tasks_prior = Task.objects.filter(
+        completed=True,
+        completed_at__gte=two_weeks,
+        completed_at__lt=week_ago,
+    ).count()
+
+    assess_delta = None
+    if recent_assess["avg"] and prior_assess["avg"]:
+        assess_delta = round(recent_assess["avg"] - prior_assess["avg"], 1)
+
+    study_delta = study_recent - study_prior
+    task_delta = tasks_recent - tasks_prior
+
+    signals = []
+    if assess_delta is not None and assess_delta > 0:
+        signals.append(f"Assessment scores up {assess_delta}% vs last week")
+    if study_delta > 30:
+        signals.append(f"Study time up {study_delta} min vs last week")
+    if task_delta > 0:
+        signals.append(f"{task_delta} more tasks completed than last week")
+
+    profile = get_or_create_profile(user)
+    is_improving = bool(signals) or profile.current_streak >= 3
+
+    return {
+        "is_improving": is_improving,
+        "signals": signals,
+        "assessment_avg_recent": round(recent_assess["avg"] or 0, 1),
+        "assessment_avg_prior": round(prior_assess["avg"] or 0, 1),
+        "assessment_delta": assess_delta,
+        "study_minutes_recent": study_recent,
+        "study_minutes_prior": study_prior,
+        "tasks_recent": tasks_recent,
+        "tasks_prior": tasks_prior,
+        "streak": profile.current_streak,
+    }
+
+
+SKILL_PRACTICE_SLUG: dict[str, str] = {
+    "python": "python",
+    "algorithms-data-structures": "dsa",
+    "django": "django",
+    "postgresql": "postgresql",
+    "system-design": "system-design",
+    "testing": "testing",
+    "aws": "cloud",
+    "redis": "devops",
+}
+
+
+def get_coaching_briefing(user) -> dict[str, Any]:
+    """Answer the seven daily coaching questions in one structured briefing."""
+    progress = calculate_progress(user)
+    training_day = get_today_training_day(user)
+    recommendations = get_daily_recommendations(user)
+    weaknesses = get_top_weaknesses(user, limit=3)
+    repeated = get_repeated_mistakes(user)
+    improving = get_improvement_snapshot(user)
+
+    today_tasks = []
+    if training_day:
+        for task in training_day.tasks.filter(completed=False, skipped=False).select_related(
+            "skill"
+        )[:6]:
+            today_tasks.append({
+                "id": task.id,
+                "title": task.title,
+                "minutes": task.estimated_minutes,
+                "type": task.task_type,
+                "skill": task.skill.name if task.skill else "",
+            })
+
+    primary_rec = recommendations[0] if recommendations else None
+    phase_name = ""
+    if training_day and training_day.week_id:
+        phase_name = training_day.week.phase.name
+
+    performance_summary = (
+        f"{progress['completed_tasks']} tasks done · "
+        f"{progress['study_hours']}h studied · "
+        f"Day {progress['current_day']} of 90"
+    )
+
+    recent_assess = Assessment.objects.filter(user=user).order_by("-completed_at").first()
+    if recent_assess:
+        performance_summary += f" · Last assessment {recent_assess.percentage}%"
+
+    next_actions = []
+    from django.urls import reverse
+
+    for rec in recommendations[:4]:
+        action = {
+            "title": rec["title"],
+            "reason": rec["reason"],
+            "minutes": rec.get("minutes"),
+            "priority": rec["priority"],
+            "type": rec.get("type"),
+            "url": None,
+        }
+        if rec.get("task_id"):
+            action["url"] = reverse("today")
+        elif rec.get("type") == "weakness":
+            slug = rec.get("skill_slug", "python")
+            section = SKILL_PRACTICE_SLUG.get(slug, "python")
+            action["url"] = reverse("practice_section", kwargs={"section_slug": section})
+        elif rec.get("type") == "mistake":
+            action["url"] = reverse("mistakes")
+        elif rec.get("type") == "assessment":
+            action["url"] = reverse("assessments")
+        else:
+            action["url"] = reverse("today")
+        next_actions.append(action)
+
+    return {
+        "what_today": {
+            "tasks": today_tasks,
+            "primary": primary_rec,
+            "mission_title": training_day.title if training_day else "Rest / review day",
+            "target_minutes": training_day.target_minutes if training_day else 0,
+        },
+        "why": {
+            "focus": training_day.focus if training_day else "",
+            "objectives": training_day.objectives if training_day else "",
+            "phase": phase_name,
+            "day_number": progress["current_day"],
+        },
+        "performance": {
+            "summary": performance_summary,
+            "progress": progress,
+            "recent_assessment": recent_assess,
+        },
+        "weaknesses": weaknesses,
+        "repeated_mistakes": repeated,
+        "improving": improving,
+        "next_actions": next_actions,
+    }
+
+
+def get_due_review_cards(user) -> list:
+    from training.models import ReviewCard
+
+    return list(
+        ReviewCard.objects.filter(user=user, next_review__lte=date.today())
+        .select_related("skill")
+        .order_by("next_review")[:20]
+    )
+
+
+def schedule_review_card(user, concept: str, content: str, skill=None) -> "ReviewCard":
+    from training.models import ReviewCard
+
+    return ReviewCard.objects.create(
+        user=user,
+        skill=skill,
+        concept=concept,
+        content=content,
+        next_review=date.today(),
+        interval_days=1,
+    )
+
+
+def process_review_quality(user, card_id, quality: int) -> dict[str, Any]:
+    """SM-2 style interval update. Quality 0-5."""
+    from training.models import ReviewCard
+
+    card = ReviewCard.objects.get(id=card_id, user=user)
+    q = max(0, min(5, quality))
+
+    if q < 3:
+        card.repetition = 0
+        card.interval_days = 1
+    else:
+        if card.repetition == 0:
+            card.interval_days = 1
+        elif card.repetition == 1:
+            card.interval_days = 3
+        else:
+            card.interval_days = max(1, int(card.interval_days * card.ease_factor))
+        card.repetition += 1
+        card.ease_factor = max(
+            1.3, card.ease_factor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+        )
+
+    card.next_review = date.today() + timedelta(days=card.interval_days)
+    card.save()
+    award_xp(user, 5)
+    update_streak_on_activity(user)
+    return {"card": card, "next_review": card.next_review}
+
+
+def create_mistake_from_form(user, data: dict[str, Any]) -> Mistake:
+    mistake = Mistake.objects.create(
+        user=user,
+        description=data["description"],
+        category=data.get("category", "knowledge_gap"),
+        severity=data.get("severity", "medium"),
+        skill_id=data.get("skill_id") or None,
+    )
+    schedule_review_card(
+        user,
+        concept=data["description"][:200],
+        content=f"Mistake to review: {data['description']}",
+        skill=mistake.skill,
+    )
+    return mistake
+
+
+def get_mock_interview_hub(user) -> dict[str, Any]:
+    from training.models import MockInterviewRound, MockInterviewSession
+
+    current_day = get_current_day_number(user)
+    rounds = list(
+        MockInterviewRound.objects.prefetch_related("questions").order_by("round_number")
+    )
+    sessions = MockInterviewSession.objects.filter(user=user).select_related("round")
+    completed_ids = {
+        s.round_id
+        for s in sessions
+        if s.status == MockInterviewSession.Status.COMPLETED
+    }
+    in_progress = {
+        s.round_id: s
+        for s in sessions
+        if s.status == MockInterviewSession.Status.IN_PROGRESS
+    }
+
+    round_cards = []
+    for rnd in rounds:
+        round_cards.append(
+            {
+                "round": rnd,
+                "unlocked": current_day >= rnd.unlock_day,
+                "completed": rnd.id in completed_ids,
+                "in_progress_session": in_progress.get(rnd.id),
+                "is_current_period": rnd.unlock_day <= current_day <= rnd.period_end_day,
+                "question_count": rnd.questions.count(),
+            }
+        )
+
+    recent_sessions = sessions.filter(
+        status=MockInterviewSession.Status.COMPLETED
+    ).order_by("-completed_at")[:6]
+
+    return {
+        "round_cards": round_cards,
+        "current_day": current_day,
+        "recent_sessions": recent_sessions,
+    }
+
+
+def start_mock_session(user, round_id) -> tuple[Any, str | None]:
+    from training.models import MockInterviewRound, MockInterviewSession
+
+    try:
+        rnd = MockInterviewRound.objects.prefetch_related("questions").get(id=round_id)
+    except MockInterviewRound.DoesNotExist:
+        return None, "not_found"
+    current_day = get_current_day_number(user)
+    if current_day < rnd.unlock_day:
+        return None, "not_unlocked"
+
+    existing = MockInterviewSession.objects.filter(
+        user=user,
+        round=rnd,
+        status=MockInterviewSession.Status.IN_PROGRESS,
+    ).first()
+    if existing:
+        return existing, None
+
+    q_count = rnd.questions.count()
+    session = MockInterviewSession.objects.create(
+        user=user,
+        round=rnd,
+        started_at=timezone.now(),
+        question_started_at=timezone.now(),
+        max_score=float(q_count * 10),
+    )
+    return session, None
+
+
+def get_mock_session_state(session) -> dict[str, Any]:
+    from training.models import MockInterviewSession
+
+    total = session.round.questions.count()
+    question = session.round.questions.filter(order=session.current_order).first()
+    responses = list(
+        session.responses.select_related("question").order_by("order")
+    )
+    structure = list(session.round.questions.order_by("order"))
+    return {
+        "session": session,
+        "question": question,
+        "total_questions": total,
+        "responses": responses,
+        "structure": structure,
+        "progress_pct": round(
+            (session.current_order - 1) / total * 100, 1
+        ) if total else 0,
+        "is_complete": session.status == MockInterviewSession.Status.COMPLETED,
+    }
+
+
+def submit_mock_response(
+    user,
+    session_id,
+    answer: str,
+    score: float,
+    confidence: float,
+    time_spent_seconds: int,
+) -> dict[str, Any]:
+    from training.models import MockInterviewResponse, MockInterviewSession
+
+    session = MockInterviewSession.objects.select_related("round").get(
+        id=session_id, user=user
+    )
+    if session.status == MockInterviewSession.Status.COMPLETED:
+        return {"session": session, "completed": True}
+
+    question = session.round.questions.filter(order=session.current_order).first()
+    if not question:
+        return {"session": session, "completed": True}
+
+    MockInterviewResponse.objects.update_or_create(
+        session=session,
+        order=session.current_order,
+        defaults={
+            "question": question,
+            "answer": answer,
+            "score": score,
+            "confidence": confidence,
+            "time_spent_seconds": time_spent_seconds,
+        },
+    )
+    session.total_score += score
+
+    total = session.round.questions.count()
+    if session.current_order >= total:
+        session.status = MockInterviewSession.Status.COMPLETED
+        session.completed_at = timezone.now()
+        session.save()
+
+        pct = round((session.total_score / session.max_score) * 100, 1) if session.max_score else 0
+        Assessment.objects.create(
+            user=user,
+            name=f"Mock Interview {session.round.round_number}: {session.round.title}",
+            category="mock_interview",
+            score=session.total_score,
+            maximum_score=session.max_score,
+            percentage=pct,
+            duration_minutes=max(
+                1,
+                int((session.completed_at - session.started_at).total_seconds() / 60),
+            ),
+            completed_at=session.completed_at,
+            notes=f"Bi-weekly mock round {session.round.round_number}",
+        )
+        award_xp(user, 50)
+        update_streak_on_activity(user)
+        return {"session": session, "completed": True}
+
+    session.current_order += 1
+    session.question_started_at = timezone.now()
+    session.save()
+    return {"session": session, "completed": False}
+
+
+def get_mock_results_breakdown(session) -> dict[str, Any]:
+    responses = list(
+        session.responses.select_related("question").order_by("order")
+    )
+    by_difficulty: dict[str, dict[str, Any]] = {}
+    for resp in responses:
+        diff = resp.question.difficulty
+        bucket = by_difficulty.setdefault(
+            diff, {"total_score": 0.0, "max_score": 0.0, "count": 0, "items": []}
+        )
+        bucket["total_score"] += resp.score or 0
+        bucket["max_score"] += 10
+        bucket["count"] += 1
+        bucket["items"].append(resp)
+
+    summary = []
+    for diff in ["easy", "medium", "hard", "expert"]:
+        if diff in by_difficulty:
+            b = by_difficulty[diff]
+            pct = round(b["total_score"] / b["max_score"] * 100, 1) if b["max_score"] else 0
+            summary.append(
+                {
+                    "difficulty": diff,
+                    "label": "Hardest" if diff == "expert" else diff.capitalize(),
+                    "score": b["total_score"],
+                    "max_score": b["max_score"],
+                    "percent": pct,
+                    "count": b["count"],
+                }
+            )
+
+    pct = round(
+        (session.total_score / session.max_score) * 100, 1
+    ) if session.max_score else 0
+
+    return {
+        "session": session,
+        "responses": responses,
+        "by_difficulty": summary,
+        "percent": pct,
+    }
+
+
+COGNITIVE_TYPE_SLUGS = {
+    "aptitude": "aptitude",
+    "brain-teasers": "brain_teaser",
+}
+
+
+def get_cognitive_hub(user) -> dict[str, Any]:
+    from training.cognitive_bank import COGNITIVE_COUNTS
+    from training.models import CognitiveProgress, CognitiveQuestion
+
+    revealed = CognitiveProgress.objects.filter(user=user, revealed=True).count()
+    aptitude_revealed = CognitiveProgress.objects.filter(
+        user=user, revealed=True, question__challenge_type="aptitude"
+    ).count()
+    teaser_revealed = CognitiveProgress.objects.filter(
+        user=user, revealed=True, question__challenge_type="brain_teaser"
+    ).count()
+    return {
+        "counts": COGNITIVE_COUNTS,
+        "revealed_total": revealed,
+        "aptitude_revealed": aptitude_revealed,
+        "teaser_revealed": teaser_revealed,
+        "aptitude_categories": (
+            CognitiveQuestion.objects.filter(challenge_type="aptitude")
+            .values("category")
+            .annotate(count=Count("id"))
+            .order_by("category")
+        ),
+        "teaser_categories": (
+            CognitiveQuestion.objects.filter(challenge_type="brain_teaser")
+            .values("category")
+            .annotate(count=Count("id"))
+            .order_by("category")
+        ),
+    }
+
+
+def get_cognitive_list_data(
+    user, challenge_type: str, category: str | None = None, difficulty: str | None = None
+) -> dict[str, Any]:
+    from training.models import CognitiveProgress, CognitiveQuestion
+
+    qs = CognitiveQuestion.objects.filter(challenge_type=challenge_type)
+    if category:
+        qs = qs.filter(category=category)
+    if difficulty:
+        qs = qs.filter(difficulty=difficulty)
+
+    revealed_ids = set(
+        CognitiveProgress.objects.filter(user=user, revealed=True).values_list(
+            "question_id", flat=True
+        )
+    )
+    questions = list(qs.order_by("order"))
+    for q in questions:
+        q.is_revealed = q.id in revealed_ids
+
+    categories = (
+        CognitiveQuestion.objects.filter(challenge_type=challenge_type)
+        .values_list("category", flat=True)
+        .distinct()
+        .order_by("category")
+    )
+    return {
+        "questions": questions,
+        "challenge_type": challenge_type,
+        "category_filter": category,
+        "difficulty_filter": difficulty,
+        "categories": categories,
+        "revealed_count": sum(1 for q in questions if q.is_revealed),
+    }
+
+
+def get_cognitive_question_data(user, question_id) -> dict[str, Any]:
+    from training.models import CognitiveProgress, CognitiveQuestion
+
+    question = CognitiveQuestion.objects.get(id=question_id)
+    progress, _ = CognitiveProgress.objects.get_or_create(
+        user=user, question=question
+    )
+    prev_q = (
+        CognitiveQuestion.objects.filter(
+            challenge_type=question.challenge_type, order__lt=question.order
+        )
+        .order_by("-order")
+        .first()
+    )
+    next_q = (
+        CognitiveQuestion.objects.filter(
+            challenge_type=question.challenge_type, order__gt=question.order
+        )
+        .order_by("order")
+        .first()
+    )
+    return {
+        "question": question,
+        "progress": progress,
+        "prev_question": prev_q,
+        "next_question": next_q,
+    }
+
+
+def reveal_cognitive_answer(
+    user, question_id, attempted_answer: str = "", notes: str = "", time_spent_seconds: int = 0
+) -> dict[str, Any]:
+    from training.models import CognitiveProgress, CognitiveQuestion
+
+    question = CognitiveQuestion.objects.get(id=question_id)
+    progress, _ = CognitiveProgress.objects.get_or_create(
+        user=user, question=question
+    )
+    progress.revealed = True
+    progress.revealed_at = timezone.now()
+    if attempted_answer:
+        progress.attempted_answer = attempted_answer
+    if notes:
+        progress.notes = notes
+    if time_spent_seconds > 0:
+        progress.time_spent_seconds = min(time_spent_seconds, 3600)
+    progress.save()
+    update_streak_on_activity(user)
+    award_xp(user, 3)
+    return {"question": question, "progress": progress}

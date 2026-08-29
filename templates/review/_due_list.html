@@ -1,0 +1,16 @@
+{% for card in due_cards %}
+<article class="dm-panel dm-pad">
+    <p class="dm-kicker">{{ card.skill.name|default:"Concept" }}</p>
+    <h3 style="margin:0.25rem 0 0;font-size:1.05rem">{{ card.concept }}</h3>
+    <p class="dm-muted" style="margin:0.5rem 0 0">{{ card.content }}</p>
+    <form hx-post="{% url 'review_submit' card.id %}" hx-target="#due-cards" hx-swap="innerHTML" style="margin-top:0.75rem;display:flex;gap:0.5rem;align-items:center">
+        {% csrf_token %}
+        <label class="dm-muted" style="font-size:0.8rem">Recall quality (0–5)
+            <input type="number" name="quality" min="0" max="5" value="4" class="dm-input" style="width:4rem;margin-left:0.35rem">
+        </label>
+        <button type="submit" class="dm-btn dm-btn-primary dm-btn-sm">Reviewed</button>
+    </form>
+</article>
+{% empty %}
+<p class="dm-panel dm-pad dm-muted">No cards due — log mistakes or complete practice to build your review deck.</p>
+{% endfor %}

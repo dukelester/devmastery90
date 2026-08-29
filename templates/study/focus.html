@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Focus — {{ session.task.title }}{% endblock %}
+{% block body_class %}dm-focus-active{% endblock %}
+{% block content %}
+<div class="dm-focus-shell dm-rise" data-live-timer>
+    <header class="dm-focus-top">
+        <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost dm-btn-sm">← Exit focus</a>
+        <span class="dm-kicker">Focus mode</span>
+    </header>
+
+    <div class="dm-focus-main">
+        {% if session.task %}
+        <h1 class="dm-focus-task">{{ session.task.title }}</h1>
+        {% if session.task.description %}
+        <p class="dm-muted dm-focus-desc">{{ session.task.description }}</p>
+        {% endif %}
+        <p class="dm-focus-meta dm-mono">
+            {{ session.task.estimated_minutes }} min block
+            {% if session.task.skill %} · {{ session.task.skill.name }}{% endif %}
+        </p>
+        {% endif %}
+
+        <div
+            class="dm-focus-clock"
+            data-timer-display
+            data-timer-mode="focus"
+            data-started-at="{{ session.started_at.isoformat }}"
+            data-target-seconds="{% widthratio session.target_minutes 1 60 %}"
+            data-accumulated-seconds="0"
+        >00:00</div>
+        <p class="dm-focus-clock-label" data-timer-sub>remaining</p>
+
+        <div class="dm-focus-progress">
+            <div class="dm-focus-progress-bar" data-focus-progress></div>
+        </div>
+    </div>
+
+    <footer class="dm-focus-actions">
+        <form method="post" action="{% url 'timer_stop' %}">
+            {% csrf_token %}
+            <input type="hidden" name="redirect" value="today">
+            <button type="submit" class="dm-btn dm-btn-danger">
+                <svg class="dm-ico" aria-hidden="true"><use href="#i-stop"/></svg>
+                Stop & save session
+            </button>
+        </form>
+        {% if session.task and not session.task.completed %}
+        <form method="post" action="{% url 'task_complete' session.task.id %}">
+            {% csrf_token %}
+            <button type="submit" class="dm-btn dm-btn-primary">
+                <svg class="dm-ico" aria-hidden="true"><use href="#i-check"/></svg>
+                Mark task complete
+            </button>
+        </form>
+        {% endif %}
+    </footer>
+</div>
+<script>
+(function () {
+  const bar = document.querySelector("[data-focus-progress]");
+  const display = document.querySelector(".dm-focus-clock[data-timer-display]");
+  if (!bar || !display) return;
+  const target = parseInt(display.dataset.targetSeconds || "0", 10);
+  if (!target) return;
+  const startMs = Date.parse(display.dataset.startedAt);
+  function updateBar() {
+    const elapsed = (Date.now() - startMs) / 1000;
+    const pct = Math.min(100, (elapsed / target) * 100);
+    bar.style.width = pct + "%";
+  }
+  updateBar();
+  setInterval(updateBar, 1000);
+})();
+</script>
+{% endblock %}

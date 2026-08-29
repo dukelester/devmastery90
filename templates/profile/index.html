@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Profile — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise dm-profile">
+    <header class="dm-profile-hero dm-panel dm-pad">
+        <div class="dm-profile-hero-main">
+            <div class="dm-profile-avatar" aria-hidden="true">{{ profile.public_name|slice:":1"|upper }}</div>
+            <div>
+                <p class="dm-kicker">Your training identity</p>
+                <h1 class="dm-display" style="font-size:clamp(1.8rem,4vw,2.4rem);margin:0.35rem 0 0">{{ profile.public_name }}</h1>
+                <p class="dm-soft" style="margin:0.45rem 0 0">
+                    {% if profile.target_role %}{{ profile.target_role }}{% else %}Engineer in training{% endif %}
+                    {% if profile.location %} · {{ profile.location }}{% endif %}
+                </p>
+                {% if profile.bio %}
+                <p class="dm-muted" style="margin:0.65rem 0 0;max-width:36rem;line-height:1.55">{{ profile.bio }}</p>
+                {% endif %}
+                <div class="dm-profile-links">
+                    {% if profile.github_url %}<a href="{{ profile.github_url }}" target="_blank" rel="noopener noreferrer">GitHub</a>{% endif %}
+                    {% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener noreferrer">LinkedIn</a>{% endif %}
+                    {% if profile.portfolio_url %}<a href="{{ profile.portfolio_url }}" target="_blank" rel="noopener noreferrer">Portfolio</a>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="dm-profile-stats">
+            <div class="dm-profile-stat">
+                <span class="dm-stat-label">Level</span>
+                <span class="dm-stat-value">{{ user_level_display }}</span>
+            </div>
+            <div class="dm-profile-stat">
+                <span class="dm-stat-label">XP</span>
+                <span class="dm-stat-value">{{ user_xp_display }}</span>
+            </div>
+            <div class="dm-profile-stat">
+                <span class="dm-stat-label">Streak</span>
+                <span class="dm-stat-value">{{ profile.current_streak }}d</span>
+            </div>
+            <div class="dm-profile-stat">
+                <span class="dm-stat-label">Study</span>
+                <span class="dm-stat-value">{{ profile.total_study_minutes }}m</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dm-profile-tabs" role="tablist" aria-label="Profile sections">
+        <a href="{% url 'profile' %}?tab=profile" class="dm-profile-tab{% if tab == 'profile' %} is-active{% endif %}">Details</a>
+        <a href="{% url 'profile' %}?tab=security" class="dm-profile-tab{% if tab == 'security' %} is-active{% endif %}">Security</a>
+    </div>
+
+    {% if tab == 'security' %}
+    <section class="dm-panel dm-pad dm-form-stack">
+        <h2 class="dm-section-title"><span class="dm-sec-num">01</span> Change password</h2>
+        <form method="post" class="dm-form-stack" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="password">
+            {% include "partials/form_field.html" with field=password_form.old_password %}
+            {% include "partials/form_field.html" with field=password_form.new_password1 %}
+            {% include "partials/form_field.html" with field=password_form.new_password2 %}
+            <button type="submit" class="dm-btn dm-btn-primary">Update password</button>
+        </form>
+    </section>
+    {% else %}
+    <div class="dm-profile-grid">
+        <section class="dm-panel dm-pad dm-form-stack">
+            <h2 class="dm-section-title"><span class="dm-sec-num">01</span> Account</h2>
+            <form method="post" id="profile-form" class="dm-form-stack" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="profile">
+                <div class="dm-form-row">
+                    {% include "partials/form_field.html" with field=account_form.first_name %}
+                    {% include "partials/form_field.html" with field=account_form.last_name %}
+                </div>
+                {% include "partials/form_field.html" with field=account_form.username %}
+                {% include "partials/form_field.html" with field=account_form.email %}
+                <h2 class="dm-section-title" style="margin-top:1.25rem"><span class="dm-sec-num">02</span> Profile</h2>
+                {% include "partials/form_field.html" with field=profile_form.display_name %}
+                {% include "partials/form_field.html" with field=profile_form.bio %}
+                <div class="dm-form-row">
+                    {% include "partials/form_field.html" with field=profile_form.location %}
+                    {% include "partials/form_field.html" with field=profile_form.timezone %}
+                </div>
+                <div class="dm-form-row">
+                    {% include "partials/form_field.html" with field=profile_form.company %}
+                    {% include "partials/form_field.html" with field=profile_form.target_role %}
+                </div>
+                {% include "partials/form_field.html" with field=profile_form.years_experience %}
+                {% include "partials/form_field.html" with field=profile_form.github_url %}
+                {% include "partials/form_field.html" with field=profile_form.linkedin_url %}
+                {% include "partials/form_field.html" with field=profile_form.portfolio_url %}
+                <button type="submit" class="dm-btn dm-btn-primary">Save profile</button>
+            </form>
+        </section>
+
+        <aside class="dm-stack">
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title"><span class="dm-sec-num">03</span> Program</h2>
+                <div class="dm-list-row">
+                    <span>Start date</span>
+                    <span class="dm-mono">{{ profile.program_start_date|default:"Not set" }}</span>
+                </div>
+                <div class="dm-list-row">
+                    <span>Progress</span>
+                    <span class="dm-mono">{{ progress.completed_days }}/{{ progress.total_days }} days</span>
+                </div>
+                <div class="dm-list-row">
+                    <span>Longest streak</span>
+                    <span class="dm-mono">{{ profile.longest_streak }}d</span>
+                </div>
+                <div class="dm-list-row">
+                    <span>Member since</span>
+                    <span class="dm-mono">{{ profile.created_at|date:"M j, Y" }}</span>
+                </div>
+            </section>
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title"><span class="dm-sec-num">04</span> Milestones</h2>
+                {% for m in user_milestones %}
+                <div class="dm-list-row">
+                    <span>{{ m.label }}</span>
+                    <span class="{% if m.earned %}dm-tag{% else %}dm-muted{% endif %}">
+                        {% if m.earned %}Earned{% else %}—{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </section>
+        </aside>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -12,7 +12,7 @@
         {% for day in days %}
         <button
             type="button"
-            hx-get="{% url 'calendar_day' day.day_number %}"
+            hx-get="{% url 'calendar_day' day.id %}"
             hx-target="#day-detail"
             hx-swap="innerHTML"
             class="dm-cal-day

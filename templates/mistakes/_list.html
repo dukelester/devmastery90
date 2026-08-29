@@ -1,0 +1,19 @@
+{% for m in mistakes %}
+<div class="dm-list-row">
+    <div>
+        <div style="font-weight:600">{{ m.description|truncatechars:100 }}</div>
+        <p class="dm-muted" style="font-size:0.8rem;margin:0.25rem 0 0">
+            {{ m.get_category_display }} · {{ m.skill.name|default:"General" }}
+            {% if m.resolved %} · resolved{% endif %}
+        </p>
+    </div>
+    {% if not m.resolved %}
+    <form hx-post="{% url 'mistake_resolve' m.id %}" hx-target="#mistake-list" hx-swap="innerHTML">
+        {% csrf_token %}
+        <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Resolve</button>
+    </form>
+    {% endif %}
+</div>
+{% empty %}
+<p class="dm-muted">No mistakes logged yet.</p>
+{% endfor %}

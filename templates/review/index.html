@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Spaced Review — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Improve</p>
+        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Concept review</h1>
+        <p class="dm-muted">Spaced repetition queue — review due cards to strengthen memory.</p>
+    </header>
+
+    <section>
+        <h2 class="dm-section-title">Due today ({{ due_cards|length }})</h2>
+        <div id="due-cards" class="dm-stack" style="gap:0.75rem">
+            {% include "review/_due_list.html" %}
+        </div>
+    </section>
+
+    {% if upcoming %}
+    <section>
+        <h2 class="dm-section-title">Upcoming</h2>
+        <div class="dm-panel dm-pad">
+            {% for card in upcoming %}
+            <p class="dm-muted" style="margin:0.35rem 0">{{ card.concept }} — {{ card.next_review }}</p>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

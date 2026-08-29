@@ -1,17 +1,13 @@
-<div class="dm-panel dm-pad dm-skill-grid">
-    {% for s in skill_scores|slice:":12" %}
-    <div class="dm-skill-cell">
-        <div class="dm-skill-top">
-            <span class="dm-skill-name">{{ s.skill.name }}</span>
-            <span class="dm-mono dm-skill-score">
-                <span class="dm-muted">{{ s.trend }}</span> {{ s.score }}
-            </span>
-        </div>
-        <div class="dm-score-track {% if s.score < 7 %}is-weak{% endif %}" style="width:100%">
+<div class="dm-skill-row">
+    {% for s in weakest_skills %}
+    <div class="dm-skill-chip">
+        <span class="dm-skill-name">{{ s.skill.name }}</span>
+        <span class="dm-mono">{{ s.trend }} {{ s.score }}</span>
+        <div class="dm-score-track {% if s.score < 7 %}is-weak{% endif %}">
             <i style="width: {{ s.score|floatformat:0 }}0%"></i>
         </div>
     </div>
     {% empty %}
-    <p class="dm-muted">Skills will appear after seeding the curriculum.</p>
+    <p class="dm-muted">Skills appear after curriculum seed.</p>
     {% endfor %}
 </div>

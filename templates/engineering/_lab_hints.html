@@ -1,0 +1,21 @@
+<h2 class="dm-section-title">Hints</h2>
+<ul class="dm-lab-hints">
+    {% for hint in hints %}
+    {% if forloop.counter <= session.hints_revealed %}
+    <li>{{ hint }}</li>
+    {% endif %}
+    {% endfor %}
+</ul>
+{% if session.hints_revealed < hints|length %}
+<form
+    hx-post="{% url 'engineering_reveal_hint' challenge.id %}"
+    hx-target="#lab-hints"
+    hx-swap="innerHTML"
+    style="margin-top:0.5rem"
+>
+    {% csrf_token %}
+    <button type="submit" class="dm-btn dm-btn-sm">Reveal hint {{ session.hints_revealed|add:1 }}</button>
+</form>
+{% else %}
+<p class="dm-muted" style="font-size:0.8rem;margin:0.35rem 0 0">All hints revealed.</p>
+{% endif %}

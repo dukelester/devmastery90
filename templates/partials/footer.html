@@ -1,0 +1,31 @@
+<footer class="dm-footer" role="contentinfo">
+    <div class="dm-footer-inner">
+        <div class="dm-footer-brand">
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="dm-footer-logo">
+                DevMastery <span>90</span>
+            </a>
+            <p class="dm-footer-tagline">Ninety days of deliberate engineering practice.</p>
+        </div>
+        <nav class="dm-footer-nav" aria-label="Footer">
+            {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'today' %}">Today</a>
+            <a href="{% url 'profile' %}">Profile</a>
+            <a href="{% url 'analytics' %}">Analytics</a>
+            {% else %}
+            <a href="{% url 'login' %}">Sign in</a>
+            <a href="{% url 'register' %}">Create account</a>
+            <a href="{% url 'password_reset' %}">Reset password</a>
+            {% endif %}
+        </nav>
+        <div class="dm-footer-meta">
+            {% if user.is_authenticated %}
+            <span class="dm-footer-stat">{{ user_level_display }} · {{ user_xp_display }} XP</span>
+            {% if user_streak %}
+            <span class="dm-footer-stat">{{ user_streak }}-day streak</span>
+            {% endif %}
+            {% endif %}
+            <span class="dm-footer-copy">&copy; {% now "Y" %} DevMastery</span>
+        </div>
+    </div>
+</footer>

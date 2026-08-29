@@ -9,9 +9,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script src="{% static 'js/timer.js' %}" defer></script>
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
-<body class="dm-shell {% if user.is_authenticated %}has-dock{% endif %}">
+<body class="dm-shell {% block body_class %}{% endblock %} {% if user.is_authenticated %}has-dock{% endif %}">
+    <div class="dm-bg" aria-hidden="true">
+        <div class="dm-bg-gradient"></div>
+        <div class="dm-bg-orb dm-bg-orb-1"></div>
+        <div class="dm-bg-orb dm-bg-orb-2"></div>
+        <div class="dm-bg-orb dm-bg-orb-3"></div>
+        <div class="dm-bg-mesh"></div>
+        <div class="dm-bg-grid"></div>
+        <div class="dm-bg-noise"></div>
+        <div class="dm-bg-vignette"></div>
+    </div>
     {% include "partials/icons.svg.html" %}
     <script>
         document.body.addEventListener('htmx:configRequest', (e) => {
@@ -38,7 +49,15 @@
                 </a>
                 <a href="{% url 'interview' %}" {% if request.resolver_match.url_name == 'interview' %}class="is-active"{% endif %}>
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
-                    Interview
+                    Practice
+                </a>
+                <a href="{% url 'mock_interviews' %}" {% if 'mock_interview' in request.resolver_match.url_name or request.resolver_match.url_name == 'mock_interviews' %}class="is-active"{% endif %}>
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
+                    Mocks
+                </a>
+                <a href="{% url 'cognitive_hub' %}" {% if 'cognitive' in request.resolver_match.url_name %}class="is-active"{% endif %}>
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
+                    Cognitive
                 </a>
                 <a href="{% url 'analytics' %}" {% if request.resolver_match.url_name == 'analytics' %}class="is-active"{% endif %}>
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
@@ -60,6 +79,10 @@
                     {{ user_streak }} day streak
                 </div>
                 {% endif %}
+                <a href="{% url 'profile' %}" class="dm-profile-link" aria-label="Profile" title="Profile">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
+                    <span class="dm-profile-link-text">Profile</span>
+                </a>
                 <a href="{% url 'logout' %}" class="dm-logout" aria-label="Logout" title="Logout">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg>
                     <span class="dm-logout-text">Logout</span>
@@ -96,7 +119,7 @@
         </a>
         <a href="{% url 'interview' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'interview' %}is-active{% endif %}">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
-            <span>Interview</span>
+            <span>Practice</span>
         </a>
         <a href="{% url 'analytics' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'analytics' %}is-active{% endif %}">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
@@ -108,5 +131,7 @@
         </a>
     </nav>
     {% endif %}
+
+    {% include "partials/footer.html" %}
 </body>
 </html>
