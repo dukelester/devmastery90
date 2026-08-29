@@ -68,6 +68,7 @@ urlpatterns = [
         name="practice_submit",
     ),
     path("analytics/", views.analytics_view, name="analytics"),
+    path("reports/", views.analytics_view, name="reports"),
     path("calendar/", views.calendar_view, name="calendar"),
     path("calendar/<uuid:day_id>/", views.calendar_day_detail, name="calendar_day"),
     path("weekly-review/<int:week_number>/", views.weekly_review_view, name="weekly_review"),

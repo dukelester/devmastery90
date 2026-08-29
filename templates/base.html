@@ -83,7 +83,7 @@
                     <div class="dm-nav-more-menu" role="menu">
                         <a href="{% url 'analytics' %}" role="menuitem" {% if request.resolver_match.url_name == 'analytics' %}class="is-active"{% endif %}>
                             <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
-                            Analytics
+                            Reports
                         </a>
                         <a href="{% url 'calendar' %}" role="menuitem" {% if request.resolver_match.url_name == 'calendar' %}class="is-active"{% endif %}>
                             <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
@@ -104,7 +104,8 @@
             <div class="dm-nav-meta">
                 <div class="dm-rank" title="{{ user_level_display }} · {{ user_xp_display }} XP">
                     <div class="dm-rank-level">{{ user_level_display }}</div>
-                    <div class="dm-rank-xp">{{ user_xp_display }} XP</div>
+                    <div class="dm-rank-xp">{{ user_xp_display }} XP · {{ user_milestones_earned }}/{{ user_milestones_total }}</div>
+                    <div class="dm-rank-xp-track" aria-hidden="true"><i style="width:{{ user_xp_pct }}%"></i></div>
                 </div>
                 {% if user_streak %}
                 <div class="dm-streak" title="{{ user_streak }} day streak">
@@ -179,7 +180,7 @@
         </a>
         <a href="{% url 'analytics' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'analytics' %}is-active{% endif %}">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
-            <span>Stats</span>
+            <span>Reports</span>
         </a>
         <a href="{% url 'profile' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'profile' %}is-active{% endif %}">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-user"/></svg>

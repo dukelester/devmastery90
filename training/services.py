@@ -146,6 +146,85 @@ def award_xp(user, amount: int) -> UserProfile:
     return profile
 
 
+def build_milestones(user, profile: UserProfile | None = None) -> dict[str, Any]:
+    """Computed achievement milestones for gamification UI."""
+    profile = profile or get_or_create_profile(user)
+    current_day = get_current_day_number(user)
+    coding_solved = CodingProblem.objects.filter(user=user, solved=True).count()
+    from training.models import MockInterviewSession
+
+    mocks_done = MockInterviewSession.objects.filter(
+        user=user, status=MockInterviewSession.Status.COMPLETED
+    ).count()
+    study_hours = profile.total_study_minutes / 60
+    tasks_done = Task.objects.filter(completed=True).count()
+
+    milestones = [
+        {"key": "week1", "label": "Week 1", "hint": "Reach day 7", "earned": current_day >= 7},
+        {"key": "month1", "label": "Month 1", "hint": "Reach day 30", "earned": current_day >= 30},
+        {"key": "month2", "label": "Month 2", "hint": "Reach day 60", "earned": current_day >= 60},
+        {"key": "day90", "label": "Day 90", "hint": "Finish the program", "earned": current_day >= 90},
+        {
+            "key": "streak7",
+            "label": "7-day streak",
+            "hint": "Stay consistent for a week",
+            "earned": profile.current_streak >= 7 or profile.longest_streak >= 7,
+        },
+        {
+            "key": "streak14",
+            "label": "14-day streak",
+            "hint": "Two weeks locked in",
+            "earned": profile.current_streak >= 14 or profile.longest_streak >= 14,
+        },
+        {
+            "key": "streak30",
+            "label": "30-day streak",
+            "hint": "A full month of fire",
+            "earned": profile.current_streak >= 30 or profile.longest_streak >= 30,
+        },
+        {"key": "xp1k", "label": "1K XP", "hint": "Earn 1,000 XP", "earned": profile.xp >= 1000},
+        {"key": "xp3k", "label": "3K XP", "hint": "Earn 3,000 XP", "earned": profile.xp >= 3000},
+        {"key": "xp5k", "label": "5K XP", "hint": "Earn 5,000 XP", "earned": profile.xp >= 5000},
+        {
+            "key": "study10h",
+            "label": "10h studied",
+            "hint": "Log 10 hours of focus",
+            "earned": study_hours >= 10,
+        },
+        {
+            "key": "study50h",
+            "label": "50h studied",
+            "hint": "Log 50 hours of focus",
+            "earned": study_hours >= 50,
+        },
+        {
+            "key": "coding10",
+            "label": "10 solves",
+            "hint": "Solve 10 coding problems",
+            "earned": coding_solved >= 10,
+        },
+        {
+            "key": "mock1",
+            "label": "First mock",
+            "hint": "Complete a mock interview",
+            "earned": mocks_done >= 1,
+        },
+        {
+            "key": "tasks50",
+            "label": "50 tasks",
+            "hint": "Complete 50 curriculum tasks",
+            "earned": tasks_done >= 50,
+        },
+    ]
+    earned = sum(1 for m in milestones if m["earned"])
+    return {
+        "items": milestones,
+        "earned_count": earned,
+        "total_count": len(milestones),
+        "earned_pct": round((earned / len(milestones)) * 100, 1) if milestones else 0,
+    }
+
+
 def get_day_planned_minutes(training_day: TrainingDay | None) -> int:
     """Planned workload for a day: max of target vs sum of task estimates."""
     if training_day is None:
@@ -491,11 +570,16 @@ def get_daily_recommendations(user) -> list[dict[str, Any]]:
 
 
 def get_analytics_data(user) -> dict[str, Any]:
-    """Get comprehensive analytics data."""
+    """Get comprehensive analytics / reports data with visual progress series."""
+    from training.models import MockInterviewSession, Week, WeeklyReview
+
     profile = get_or_create_profile(user)
     today = date.today()
     week_start = today - timedelta(days=today.weekday())
     month_start = today.replace(day=1)
+    progress = calculate_progress(user)
+    streak_data = calculate_streak(user)
+    milestones = build_milestones(user, profile)
 
     daily_minutes = StudySession.objects.filter(
         user=user, started_at__date=today, ended_at__isnull=False
@@ -519,11 +603,22 @@ def get_analytics_data(user) -> dict[str, Any]:
     )
     coding_rate = (
         (coding_stats["solved"] / coding_stats["total"] * 100)
-        if coding_stats["total"] else 0
+        if coding_stats["total"]
+        else 0
     )
 
     mistake_count = Mistake.objects.filter(user=user, resolved=False).count()
-    streak_data = calculate_streak(user)
+    mistake_total = Mistake.objects.filter(user=user).count()
+    mistake_resolved = Mistake.objects.filter(user=user, resolved=True).count()
+
+    mocks = MockInterviewSession.objects.filter(user=user)
+    mocks_completed = mocks.filter(status=MockInterviewSession.Status.COMPLETED).count()
+    completed_mocks = mocks.filter(
+        status=MockInterviewSession.Status.COMPLETED, max_score__gt=0
+    )
+    mock_avg = completed_mocks.aggregate(avg=Avg("total_score"))["avg"] or 0
+    mock_max_avg = completed_mocks.aggregate(avg=Avg("max_score"))["avg"] or 0
+    mock_pct = round((mock_avg / mock_max_avg) * 100, 1) if mock_max_avg else 0
 
     # Weekly study hours for chart (last 8 weeks)
     weekly_hours = []
@@ -536,7 +631,95 @@ def get_analytics_data(user) -> dict[str, Any]:
             started_at__date__lte=we,
             ended_at__isnull=False,
         ).aggregate(total=Sum("duration_minutes"))["total"] or 0
-        weekly_hours.append({"week": ws.isoformat(), "hours": round(mins / 60, 1)})
+        weekly_hours.append(
+            {
+                "week": ws.isoformat(),
+                "label": f"W{ws.isocalendar()[1]}",
+                "hours": round(mins / 60, 1),
+            }
+        )
+    max_week_h = max((w["hours"] for w in weekly_hours), default=0) or 1
+    for w in weekly_hours:
+        w["height_pct"] = max(4, round((w["hours"] / max_week_h) * 100)) if w["hours"] else 2
+
+    # Daily study minutes (last 14 days)
+    daily_chart = []
+    for i in range(13, -1, -1):
+        d = today - timedelta(days=i)
+        mins = StudySession.objects.filter(
+            user=user, started_at__date=d, ended_at__isnull=False
+        ).aggregate(total=Sum("duration_minutes"))["total"] or 0
+        daily_chart.append(
+            {
+                "date": d.isoformat(),
+                "label": d.strftime("%a"),
+                "day_num": d.day,
+                "minutes": mins,
+                "hours": round(mins / 60, 1),
+            }
+        )
+    max_day_m = max((d["minutes"] for d in daily_chart), default=0) or 1
+    for d in daily_chart:
+        d["height_pct"] = max(4, round((d["minutes"] / max_day_m) * 100)) if d["minutes"] else 2
+
+    # Activity heatmap (last 28 days)
+    heatmap = []
+    for i in range(27, -1, -1):
+        d = today - timedelta(days=i)
+        mins = StudySession.objects.filter(
+            user=user, started_at__date=d, ended_at__isnull=False
+        ).aggregate(total=Sum("duration_minutes"))["total"] or 0
+        if mins <= 0:
+            level = 0
+        elif mins < 30:
+            level = 1
+        elif mins < 90:
+            level = 2
+        elif mins < 180:
+            level = 3
+        else:
+            level = 4
+        heatmap.append(
+            {
+                "date": d.isoformat(),
+                "label": d.strftime("%b %d"),
+                "minutes": mins,
+                "level": level,
+            }
+        )
+
+    skill_scores = get_skill_scores(user)
+    for s in skill_scores:
+        score = float(s.get("score") or 0)
+        s["bar_pct"] = max(0, min(100, round(score * 10)))
+
+    # Weekly review links (current + recent)
+    current_week_num = max(1, min(13, ((progress["current_day"] - 1) // 7) + 1))
+    weeks = list(Week.objects.order_by("week_number")[:13])
+    reviews_by_week = {
+        r.week_id: r
+        for r in WeeklyReview.objects.filter(user=user).select_related("week")
+    }
+    week_reports = []
+    for week in weeks:
+        review = reviews_by_week.get(week.id)
+        week_reports.append(
+            {
+                "week_number": week.week_number,
+                "title": week.title,
+                "is_current": week.week_number == current_week_num,
+                "has_review": bool(
+                    review
+                    and (
+                        review.learned
+                        or review.went_well
+                        or review.improve
+                        or review.next_week_focus
+                    )
+                ),
+                "study_minutes": review.study_minutes if review else 0,
+            }
+        )
 
     return {
         "daily_hours": round(daily_minutes / 60, 1),
@@ -548,9 +731,30 @@ def get_analytics_data(user) -> dict[str, Any]:
         "coding_solved": coding_stats["solved"],
         "coding_rate": round(coding_rate, 1),
         "mistake_count": mistake_count,
+        "mistake_total": mistake_total,
+        "mistake_resolved": mistake_resolved,
         "streak": streak_data["current_streak"],
+        "longest_streak": streak_data["longest_streak"],
         "weekly_hours_chart": weekly_hours,
-        "skill_scores": get_skill_scores(user),
+        "daily_chart": daily_chart,
+        "heatmap": heatmap,
+        "skill_scores": skill_scores,
+        "progress": progress,
+        "milestones": milestones,
+        "mocks_completed": mocks_completed,
+        "mock_pct": mock_pct,
+        "week_reports": week_reports,
+        "current_week_num": current_week_num,
+        "report_generated": today.isoformat(),
+        "xp": profile.xp,
+        "xp_display": profile.xp_display,
+        "xp_into_level": profile.xp_into_level,
+        "xp_to_next": profile.xp_to_next_level,
+        "xp_pct": profile.xp_progress_pct,
+        "level": profile.level,
+        "level_title": profile.level_title,
+        "level_display": profile.level_display,
+        "next_level_title": profile.next_level_title,
     }
 
 

@@ -1,74 +1,232 @@
 {% extends "base.html" %}
-{% block title %}Analytics — DevMastery 90{% endblock %}
+{% block title %}Reports — DevMastery 90{% endblock %}
 {% block content %}
-<div class="dm-stack dm-rise">
-    <header>
-        <p class="dm-kicker">Signal over noise</p>
-        <h1 class="dm-display" style="font-size:clamp(1.8rem,4vw,2.6rem);margin:0.45rem 0 0">Analytics</h1>
-        <p class="dm-soft" style="margin:0.55rem 0 0;max-width:34rem;line-height:1.5">Study volume, consistency, and skill trajectory.</p>
+<div class="dm-stack dm-rise dm-reports">
+    <header class="dm-reports-hero dm-panel dm-pad">
+        <div class="dm-reports-hero-copy">
+            <p class="dm-kicker">Progress reports</p>
+            <h1 class="dm-display" style="font-size:clamp(1.8rem,4vw,2.6rem);margin:0.45rem 0 0">Your training report</h1>
+            <p class="dm-soft" style="margin:0.55rem 0 0;max-width:36rem;line-height:1.5">
+                Track program pace, XP, consistency, and skill trajectory — then open a weekly review when you need a written readout.
+            </p>
+            <div class="dm-reports-actions">
+                <a href="{% url 'weekly_review' current_week_num %}" class="dm-btn dm-btn-primary">Week {{ current_week_num }} review</a>
+                <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost">Continue today</a>
+                <button type="button" class="dm-btn dm-btn-ghost" onclick="window.print()">Print report</button>
+            </div>
+        </div>
+        <div class="dm-reports-rank">
+            <div class="dm-xp-wrap dm-xp-wrap-lg" title="{{ xp_into_level }} / 1000 XP into level">
+                <div class="dm-xp-ring dm-xp-ring-lg" style="--pct: {{ xp_pct }}">
+                    <span class="dm-xp-ring-label">L{{ level }}</span>
+                </div>
+            </div>
+            <div>
+                <div class="dm-reports-rank-title">{{ level_display }}</div>
+                <div class="dm-mono dm-muted" style="margin-top:0.35rem">{{ xp_display }} XP · {{ xp_to_next }} to {{ next_level_title }}</div>
+                <div class="dm-progress dm-reports-xp-bar" style="margin-top:0.75rem">
+                    <span style="width:{{ xp_pct }}%"></span>
+                </div>
+                <div class="dm-reports-streaks">
+                    <span class="dm-tag is-ember">{{ streak }}d streak</span>
+                    <span class="dm-tag">Best {{ longest_streak }}d</span>
+                    <span class="dm-tag">{{ milestones.earned_count }}/{{ milestones.total_count }} badges</span>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <div class="dm-grid-4">
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">Today</div>
-            <div class="dm-stat-value">{{ daily_hours }}h</div>
-        </div>
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">This week</div>
-            <div class="dm-stat-value">{{ weekly_hours }}h</div>
-        </div>
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">This month</div>
-            <div class="dm-stat-value">{{ monthly_hours }}h</div>
-        </div>
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">Total</div>
-            <div class="dm-stat-value">{{ total_hours }}h</div>
-        </div>
-    </div>
-
-    <div class="dm-grid-3">
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">Assessment avg</div>
-            <div class="dm-stat-value">{{ assessment_avg }}%</div>
-        </div>
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">Coding success</div>
-            <div class="dm-stat-value">{{ coding_rate }}%</div>
-        </div>
-        <div class="dm-panel dm-metric">
-            <div class="dm-stat-label">Consistency chain</div>
-            <div class="dm-stat-value" style="color:var(--ember)">{{ streak }}d</div>
-        </div>
-    </div>
-
-    <section>
-        <h2 class="dm-section-title">Weekly Study Hours</h2>
-        <div class="dm-panel dm-pad">
-            <div style="display:flex;align-items:flex-end;gap:0.5rem;height:8rem">
-                {% for w in weekly_hours_chart %}
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
-                    <div style="width:100%;background:var(--signal);border-radius:3px 3px 0 0;min-height:2px;height:{{ w.hours|floatformat:0 }}0%;max-height:100%;opacity:0.85"></div>
-                    <span class="dm-mono dm-muted" style="font-size:0.65rem;margin-top:0.35rem">{{ w.hours }}h</span>
+    <section class="dm-reports-progress-grid">
+        <div class="dm-panel dm-pad dm-reports-ring-card">
+            <h2 class="dm-section-title dm-section-title-sm">Program progress</h2>
+            <div class="dm-reports-rings">
+                <div class="dm-progress-ring" style="--pct: {{ progress.day_progress }}">
+                    <span class="dm-progress-ring-value">{{ progress.day_progress|floatformat:0 }}%</span>
+                    <span class="dm-progress-ring-label">Days</span>
                 </div>
-                {% endfor %}
+                <div class="dm-progress-ring is-ember" style="--pct: {{ progress.task_progress }}">
+                    <span class="dm-progress-ring-value">{{ progress.task_progress|floatformat:0 }}%</span>
+                    <span class="dm-progress-ring-label">Tasks</span>
+                </div>
+            </div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Current day</span>
+                <span class="dm-mono">{{ progress.current_day }} / 90</span>
+            </div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Remaining</span>
+                <span class="dm-mono">{{ progress.days_remaining }}d</span>
+            </div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Tasks done</span>
+                <span class="dm-mono">{{ progress.completed_tasks }} / {{ progress.total_tasks }}</span>
+            </div>
+        </div>
+
+        <div class="dm-panel dm-pad">
+            <h2 class="dm-section-title dm-section-title-sm">Study volume</h2>
+            <div class="dm-grid-2 dm-reports-metrics">
+                <div>
+                    <div class="dm-stat-label">Today</div>
+                    <div class="dm-stat-value">{{ daily_hours }}h</div>
+                </div>
+                <div>
+                    <div class="dm-stat-label">This week</div>
+                    <div class="dm-stat-value">{{ weekly_hours }}h</div>
+                </div>
+                <div>
+                    <div class="dm-stat-label">This month</div>
+                    <div class="dm-stat-value">{{ monthly_hours }}h</div>
+                </div>
+                <div>
+                    <div class="dm-stat-label">Total</div>
+                    <div class="dm-stat-value">{{ total_hours }}h</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dm-panel dm-pad">
+            <h2 class="dm-section-title dm-section-title-sm">Performance</h2>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Assessment avg</span>
+                <span class="dm-mono" style="font-weight:650">{{ assessment_avg }}%</span>
+            </div>
+            <div class="dm-progress" style="margin:0.35rem 0 0.85rem"><span style="width:{{ assessment_avg }}%"></span></div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Coding success</span>
+                <span class="dm-mono" style="font-weight:650">{{ coding_rate }}%</span>
+            </div>
+            <div class="dm-progress" style="margin:0.35rem 0 0.85rem"><span style="width:{{ coding_rate }}%"></span></div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Coding solved</span>
+                <span class="dm-mono">{{ coding_solved }}/{{ coding_total }}</span>
+            </div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Mocks completed</span>
+                <span class="dm-mono">{{ mocks_completed }}{% if mock_pct %} · {{ mock_pct }}%{% endif %}</span>
+            </div>
+            <div class="dm-list-row dm-list-row-tight">
+                <span>Mistakes</span>
+                <span class="dm-mono">{{ mistake_resolved }}/{{ mistake_total }} resolved · {{ mistake_count }} open</span>
             </div>
         </div>
     </section>
 
     <section>
-        <h2 class="dm-section-title">Skill Trends</h2>
+        <h2 class="dm-section-title">Activity heatmap</h2>
+        <p class="dm-muted" style="margin:-0.35rem 0 0.75rem;font-size:0.85rem">Last 28 days of logged study. Darker = more minutes.</p>
         <div class="dm-panel dm-pad">
-            {% for s in skill_scores %}
-            <div class="dm-list-row">
-                <span>{{ s.skill.name }} <span class="dm-muted">{{ s.trend }}</span></span>
-                <span class="dm-mono" style="font-weight:600">{{ s.score }}</span>
+            <div class="dm-heatmap" role="img" aria-label="28-day study activity heatmap">
+                {% for day in heatmap %}
+                <div
+                    class="dm-heatmap-cell is-l{{ day.level }}"
+                    title="{{ day.label }}: {{ day.minutes }}m"
+                ></div>
+                {% endfor %}
+            </div>
+            <div class="dm-heatmap-legend">
+                <span class="dm-muted">Less</span>
+                <i class="dm-heatmap-cell is-l0"></i>
+                <i class="dm-heatmap-cell is-l1"></i>
+                <i class="dm-heatmap-cell is-l2"></i>
+                <i class="dm-heatmap-cell is-l3"></i>
+                <i class="dm-heatmap-cell is-l4"></i>
+                <span class="dm-muted">More</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="dm-grid-2">
+        <section>
+            <h2 class="dm-section-title">Daily study (14d)</h2>
+            <div class="dm-panel dm-pad">
+                <div class="dm-bar-chart" style="--bars: {{ daily_chart|length }}">
+                    {% for d in daily_chart %}
+                    <div class="dm-bar-col" title="{{ d.date }}: {{ d.hours }}h">
+                        <div class="dm-bar" style="height:{{ d.height_pct }}%"></div>
+                        <span class="dm-bar-label">{{ d.label|slice:":1" }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2 class="dm-section-title">Weekly study (8w)</h2>
+            <div class="dm-panel dm-pad">
+                <div class="dm-bar-chart" style="--bars: {{ weekly_hours_chart|length }}">
+                    {% for w in weekly_hours_chart %}
+                    <div class="dm-bar-col" title="{{ w.week }}: {{ w.hours }}h">
+                        <div class="dm-bar is-alt" style="height:{{ w.height_pct }}%"></div>
+                        <span class="dm-bar-label">{{ w.label }}</span>
+                        <span class="dm-bar-value">{{ w.hours }}h</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section>
+        <div class="dm-dash-head dm-dash-head-tight">
+            <h2 class="dm-section-title" style="margin:0">Achievements</h2>
+            <span class="dm-mono dm-muted">{{ milestones.earned_pct }}% unlocked</span>
+        </div>
+        <div class="dm-progress" style="margin-bottom:0.85rem">
+            <span style="width:{{ milestones.earned_pct }}%"></span>
+        </div>
+        <div class="dm-milestone-grid">
+            {% for m in milestones.items %}
+            <div class="dm-milestone-card{% if m.earned %} is-earned{% endif %}" title="{{ m.hint }}">
+                <span class="dm-milestone-mark" aria-hidden="true">{% if m.earned %}✓{% else %}○{% endif %}</span>
+                <div>
+                    <div class="dm-milestone-title">{{ m.label }}</div>
+                    <div class="dm-muted dm-milestone-hint">{{ m.hint }}</div>
+                </div>
             </div>
             {% endfor %}
         </div>
-        <p class="dm-muted" style="font-size:0.8rem;margin-top:0.75rem">
-            Open mistakes: {{ mistake_count }} · Coding: {{ coding_solved }}/{{ coding_total }} solved
-        </p>
     </section>
+
+    <section>
+        <h2 class="dm-section-title">Skill trends</h2>
+        <div class="dm-panel dm-pad">
+            {% for s in skill_scores %}
+            <div class="dm-skill-report-row">
+                <div class="dm-skill-report-head">
+                    <span class="dm-weak-name">{{ s.skill.name }}</span>
+                    <span class="dm-mono">
+                        <span class="dm-muted">{{ s.trend }}</span>
+                        {{ s.score }}
+                    </span>
+                </div>
+                <div class="dm-score-track {% if s.score < 7 %}is-weak{% endif %}" style="width:100%">
+                    <i style="width:{{ s.bar_pct }}%"></i>
+                </div>
+            </div>
+            {% empty %}
+            <p class="dm-muted">Skills appear after curriculum seed.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="dm-section-title">Weekly reports</h2>
+        <p class="dm-muted" style="margin:-0.35rem 0 0.75rem;font-size:0.85rem">Open a week to write or update your retrospective.</p>
+        <div class="dm-week-report-grid">
+            {% for w in week_reports %}
+            <a href="{% url 'weekly_review' w.week_number %}" class="dm-week-report-card dm-panel{% if w.is_current %} is-current{% endif %}{% if w.has_review %} is-done{% endif %}">
+                <span class="dm-stat-label">Week {{ w.week_number }}</span>
+                <span class="dm-week-report-title">{{ w.title|truncatechars:36 }}</span>
+                <span class="dm-mono dm-muted" style="font-size:0.72rem">
+                    {% if w.has_review %}Review saved{% elif w.is_current %}Current week{% else %}Open report{% endif %}
+                </span>
+            </a>
+            {% empty %}
+            <p class="dm-muted">Seed the curriculum to unlock weekly reports.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <p class="dm-muted dm-reports-foot">Report snapshot · {{ report_generated }}</p>
 </div>
 {% endblock %}

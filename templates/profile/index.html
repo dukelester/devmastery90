@@ -112,15 +112,24 @@
                 </div>
             </section>
             <section class="dm-panel dm-pad">
-                <h2 class="dm-section-title"><span class="dm-sec-num">04</span> Milestones</h2>
-                {% for m in user_milestones %}
-                <div class="dm-list-row">
-                    <span>{{ m.label }}</span>
-                    <span class="{% if m.earned %}dm-tag{% else %}dm-muted{% endif %}">
-                        {% if m.earned %}Earned{% else %}—{% endif %}
-                    </span>
+                <div class="dm-dash-head dm-dash-head-tight">
+                    <h2 class="dm-section-title" style="margin:0"><span class="dm-sec-num">04</span> Achievements</h2>
+                    <span class="dm-mono dm-muted">{{ user_milestones_earned }}/{{ user_milestones_total }}</span>
                 </div>
-                {% endfor %}
+                <div class="dm-progress" style="margin:0.55rem 0 0.85rem">
+                    <span style="width:{{ user_milestones_pct }}%"></span>
+                </div>
+                <div class="dm-milestone-grid" style="grid-template-columns:1fr">
+                    {% for m in user_milestones %}
+                    <div class="dm-milestone-card{% if m.earned %} is-earned{% endif %}" title="{{ m.hint }}">
+                        <span class="dm-milestone-mark" aria-hidden="true">{% if m.earned %}✓{% else %}○{% endif %}</span>
+                        <div>
+                            <div class="dm-milestone-title">{{ m.label }}</div>
+                            <div class="dm-muted dm-milestone-hint">{{ m.hint }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </section>
         </aside>
     </div>

@@ -1,5 +1,5 @@
 """Context processors for DevMastery templates."""
-from training.services import assess_workload, get_or_create_profile
+from training.services import assess_workload, build_milestones, get_or_create_profile
 
 
 def gamification(request):
@@ -7,22 +7,7 @@ def gamification(request):
         return {}
 
     profile = get_or_create_profile(request.user)
-    current_day = 1
-    if profile.program_start_date:
-        from datetime import date
-
-        current_day = max(1, min((date.today() - profile.program_start_date).days + 1, 90))
-
-    milestones = [
-        {"key": "week1", "label": "Week 1", "earned": current_day >= 7},
-        {"key": "month1", "label": "Month 1", "earned": current_day >= 30},
-        {"key": "month2", "label": "Month 2", "earned": current_day >= 60},
-        {"key": "streak7", "label": "7-day streak", "earned": profile.current_streak >= 7 or profile.longest_streak >= 7},
-        {"key": "streak14", "label": "14-day streak", "earned": profile.current_streak >= 14 or profile.longest_streak >= 14},
-        {"key": "xp1k", "label": "1K XP", "earned": profile.xp >= 1000},
-        {"key": "xp5k", "label": "5K XP", "earned": profile.xp >= 5000},
-        {"key": "day90", "label": "Day 90", "earned": current_day >= 90},
-    ]
+    milestones = build_milestones(request.user, profile)
 
     return {
         "user_xp": profile.xp,
@@ -36,6 +21,9 @@ def gamification(request):
         "user_xp_to_next": profile.xp_to_next_level,
         "user_xp_pct": profile.xp_progress_pct,
         "user_next_level_title": profile.next_level_title,
-        "user_milestones": milestones,
+        "user_milestones": milestones["items"],
+        "user_milestones_earned": milestones["earned_count"],
+        "user_milestones_total": milestones["total_count"],
+        "user_milestones_pct": milestones["earned_pct"],
         "workload": assess_workload(request.user),
     }
