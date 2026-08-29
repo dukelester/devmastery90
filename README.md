@@ -173,6 +173,15 @@ Cloud providers: open **TCP 80** in the security group / firewall for the instan
 
 HTTPS later: put a domain on the IP, terminate TLS (Caddy/Certbot/Cloudflare), then set `SECURE_SSL_REDIRECT=True`, `SESSION_COOKIE_SECURE=True`, `CSRF_COOKIE_SECURE=True`, and `CSRF_TRUSTED_ORIGINS=https://your.domain`.
 
+## Progressive Web App
+
+Installable on mobile/desktop:
+- Manifest: `/static/manifest.webmanifest`
+- Service worker: `/sw.js` (caches shell + static assets)
+- Icons under `/static/icons/`
+
+On a phone: open the site over HTTPS (or localhost), use **Add to Home Screen** / **Install app**.
+
 ## Curriculum Structure
 
 - **Phase 1** (Days 1–30): Python + Problem Solving

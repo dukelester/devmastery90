@@ -6,11 +6,13 @@ from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
-from django.http import HttpRequest, HttpResponse
+from django.contrib.staticfiles import finders
+from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_POST
 
 from training.models import (
     Assessment,
@@ -79,6 +81,21 @@ from training.forms import (
     ProfileDetailsForm,
     UserAccountForm,
 )
+
+
+@require_GET
+@never_cache
+def service_worker(request: HttpRequest) -> HttpResponse:
+    """Serve the PWA service worker from the site root so scope covers `/`."""
+    path = finders.find("js/sw.js")
+    if not path:
+        return HttpResponseNotFound("service worker missing")
+    with open(path, encoding="utf-8") as fh:
+        body = fh.read()
+    response = HttpResponse(body, content_type="application/javascript; charset=utf-8")
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
