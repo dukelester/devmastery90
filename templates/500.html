@@ -1,0 +1,17 @@
+{% extends "errors/base_error.html" %}
+{% block title %}500 — Server error · DevMastery 90{% endblock %}
+{% block error_body %}
+<p class="dm-kicker">Systems fault</p>
+<p class="dm-error-code is-ember" aria-hidden="true">500</p>
+<h1 class="dm-error-title">Something broke on our side</h1>
+<p class="dm-error-copy">
+    The request hit an unexpected failure. It’s been logged so we can investigate.
+    Try again in a moment — your progress is safe.
+</p>
+<div class="dm-error-actions">
+    <a href="/" class="dm-btn dm-btn-primary">Go home</a>
+    <a href="/dashboard/" class="dm-btn dm-btn-ghost">Dashboard</a>
+    <button type="button" class="dm-btn dm-btn-ghost" onclick="window.location.reload()">Retry</button>
+</div>
+<p class="dm-error-foot">If this keeps happening, note the time and path you were on.</p>
+{% endblock %}

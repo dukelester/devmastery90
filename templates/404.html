@@ -1,0 +1,25 @@
+{% extends "errors/base_error.html" %}
+{% block title %}404 — Page not found · DevMastery 90{% endblock %}
+{% block error_body %}
+<p class="dm-kicker">Signal lost</p>
+<p class="dm-error-code" aria-hidden="true">404</p>
+<h1 class="dm-error-title">This route isn’t on the map</h1>
+<p class="dm-error-copy">
+    The page you’re looking for was moved, renamed, or never existed.
+    Your training day is still waiting — pick a safe path below.
+</p>
+{% if request_path %}
+<p class="dm-error-path"><span class="dm-mono">{{ request_path }}</span></p>
+{% endif %}
+<div class="dm-error-actions">
+    {% if user_authenticated %}
+    <a href="{% url 'dashboard' %}" class="dm-btn dm-btn-primary">Dashboard</a>
+    <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost">Today</a>
+    {% else %}
+    <a href="{% url 'home' %}" class="dm-btn dm-btn-primary">Home</a>
+    <a href="{% url 'login' %}" class="dm-btn dm-btn-ghost">Sign in</a>
+    {% endif %}
+    <a href="{% url 'features' %}" class="dm-btn dm-btn-ghost">Features</a>
+</div>
+<p class="dm-error-foot">DevMastery 90 · LestertechLabs LTD</p>
+{% endblock %}

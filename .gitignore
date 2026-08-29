@@ -22,6 +22,8 @@ wheels/
 
 # Django
 *.log
+logs/*
+!logs/.gitkeep
 local_settings.py
 db.sqlite3
 media/

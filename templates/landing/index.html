@@ -1,29 +1,58 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}DevMastery 90 — Deliberate engineering mastery{% endblock %}
 {% block body_class %}dm-landing-page{% endblock %}
 {% block content %}
 <div class="dm-landing">
-    <section class="dm-landing-hero dm-rise">
-        <div class="dm-landing-hero-copy">
-            <p class="dm-kicker">LestertechLabs training platform</p>
-            <h1 class="dm-brand-hero">DevMastery <span>90</span></h1>
-            <p class="dm-landing-lead">
-                Ninety days of deliberate practice — curriculum, mocks, labs, projects, and reports built for engineers who ship.
-            </p>
-            <div class="dm-landing-cta">
-                <a href="{% url 'register' %}" class="dm-btn dm-btn-primary">Start training</a>
-                <a href="{% url 'features' %}" class="dm-btn dm-btn-ghost">Explore features</a>
-                <a href="{% url 'login' %}" class="dm-btn dm-btn-ghost">Sign in</a>
+    <section class="dm-landing-hero" aria-label="DevMastery 90">
+        <div class="dm-eng-stage" aria-hidden="true">
+            <canvas class="dm-eng-canvas" data-eng-canvas></canvas>
+            <div class="dm-eng-scan"></div>
+            <div class="dm-eng-vignette"></div>
+            <div class="dm-eng-tokens">
+                <span style="--i:0">async</span>
+                <span style="--i:1">def</span>
+                <span style="--i:2">SELECT</span>
+                <span style="--i:3">redis</span>
+                <span style="--i:4">pytest</span>
+                <span style="--i:5">HTTP/2</span>
+                <span style="--i:6">O(n)</span>
+                <span style="--i:7">Celery</span>
+                <span style="--i:8">git push</span>
+                <span style="--i:9">SLO</span>
             </div>
         </div>
-        <aside class="dm-qotd dm-panel dm-pad" aria-label="Quote of the day">
+
+        <div class="dm-landing-hero-inner">
+            <div class="dm-landing-hero-copy dm-rise">
+                <p class="dm-kicker">LestertechLabs · training platform</p>
+                <h1 class="dm-brand-hero">DevMastery <span>90</span></h1>
+                <p class="dm-landing-lead">
+                    Ninety days of deliberate practice for engineers who ship — curriculum, mocks, labs, and projects with real acceptance criteria.
+                </p>
+                <div class="dm-landing-cta">
+                    <a href="{% url 'register' %}" class="dm-btn dm-btn-primary">Start training</a>
+                    <a href="{% url 'features' %}" class="dm-btn dm-btn-ghost">Explore features</a>
+                    <a href="{% url 'login' %}" class="dm-btn dm-btn-ghost">Sign in</a>
+                </div>
+                <ul class="dm-landing-proof" aria-label="Highlights">
+                    <li><strong>90</strong> day roadmap</li>
+                    <li><strong>Mocks</strong> + coding sandboxes</li>
+                    <li><strong>Projects</strong> with pass criteria</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="dm-qotd-band dm-rise dm-rise-delay-1" aria-label="Quote of the day">
+        <div class="dm-qotd-band-inner">
             <p class="dm-stat-label">Quote of the day</p>
             <blockquote class="dm-qotd-text">“{{ quote_of_the_day.text }}”</blockquote>
             <cite class="dm-qotd-author">— {{ quote_of_the_day.author }}</cite>
-        </aside>
+        </div>
     </section>
 
-    <section class="dm-quote-rail dm-rise dm-rise-delay-1" aria-label="Motivational quotes">
+    <section class="dm-quote-rail" aria-label="Motivational quotes">
         <div class="dm-quote-track" data-quote-carousel>
             {% for q in carousel_quotes %}
             <figure class="dm-quote-card">
@@ -40,12 +69,13 @@
         </div>
     </section>
 
-    <section class="dm-landing-section dm-rise dm-rise-delay-1">
-        <h2 class="dm-section-title">Why DevMastery</h2>
-        <p class="dm-soft" style="max-width:36rem;margin:0 0 1.25rem">One system for the work that actually moves interviews and production judgment — not random tutorials.</p>
+    <section class="dm-landing-section dm-rise">
+        <h2 class="dm-section-title">Built for serious practice</h2>
+        <p class="dm-soft dm-landing-section-lead">One operating system for interviews and production judgment — not random tutorials.</p>
         <div class="dm-landing-grid">
             {% for f in feature_highlights %}
             <article class="dm-panel dm-pad dm-landing-card">
+                <span class="dm-landing-card-idx">{{ forloop.counter|stringformat:"02d" }}</span>
                 <h3 class="dm-landing-card-title">{{ f.title }}</h3>
                 <p class="dm-muted">{{ f.copy }}</p>
             </article>
@@ -59,7 +89,7 @@
             <div class="dm-landing-step">
                 <span class="dm-sec-num">01</span>
                 <h3>Execute daily</h3>
-                <p class="dm-muted">Follow the curriculum with timers, tasks, and a sustainable workload guardrail.</p>
+                <p class="dm-muted">Curriculum tasks, timers, and a workload guardrail that protects sustainability.</p>
             </div>
             <div class="dm-landing-step">
                 <span class="dm-sec-num">02</span>
@@ -69,7 +99,7 @@
             <div class="dm-landing-step">
                 <span class="dm-sec-num">03</span>
                 <h3>Build & prove</h3>
-                <p class="dm-muted">Ship labs and catalog projects against written acceptance criteria.</p>
+                <p class="dm-muted">Labs and catalog projects with written NFRs and passing criteria.</p>
             </div>
             <div class="dm-landing-step">
                 <span class="dm-sec-num">04</span>
@@ -87,7 +117,7 @@
         </div>
         <div class="dm-landing-grid">
             {% for p in featured_projects %}
-            <article class="dm-panel dm-pad">
+            <article class="dm-panel dm-pad dm-landing-card">
                 <p class="dm-stat-label">{{ p.get_difficulty_display }} · {{ p.estimated_hours }}h</p>
                 <h3 class="dm-landing-card-title">{{ p.name }}</h3>
                 <p class="dm-muted">{{ p.tagline }}</p>
@@ -103,13 +133,14 @@
         <a href="{% url 'register' %}" class="dm-btn dm-btn-primary">Create account</a>
     </section>
 </div>
+<script src="{% static 'js/landing-bg.js' %}" defer></script>
 <script>
 (function () {
   var track = document.querySelector("[data-quote-carousel]");
   if (!track || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   var x = 0;
   function tick() {
-    x -= 0.35;
+    x -= 0.4;
     if (Math.abs(x) > track.scrollWidth / 2) x = 0;
     track.style.transform = "translateX(" + x + "px)";
     requestAnimationFrame(tick);

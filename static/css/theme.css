@@ -5035,3 +5035,90 @@ body.dm-nav-open .dm-nav-backdrop {
 body.dm-landing-page .dm-dock {
   display: none !important;
 }
+
+.dm-logout-form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+.dm-logout-form .dm-icon-btn,
+.dm-logout-form .dm-btn {
+  font: inherit;
+}
+
+/* ——— Error pages (404 / 500) ——— */
+
+.dm-error-page .dm-main {
+  padding: 0;
+}
+
+.dm-error-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1.25rem;
+}
+
+.dm-error-card {
+  width: min(36rem, 100%);
+  text-align: left;
+}
+
+.dm-error-code {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(4.5rem, 16vw, 7rem);
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+  color: var(--signal);
+  opacity: 0.9;
+}
+
+.dm-error-code.is-ember {
+  color: var(--ember);
+}
+
+.dm-error-title {
+  margin: 0.85rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 3.5vw, 2rem);
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.dm-error-copy {
+  margin: 0.85rem 0 0;
+  max-width: 32rem;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.dm-error-path {
+  margin: 1rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  overflow-wrap: anywhere;
+}
+
+.dm-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.5rem;
+}
+
+.dm-error-foot {
+  margin: 1.5rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}

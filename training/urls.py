@@ -19,7 +19,11 @@ urlpatterns = [
     path("projects/", views.projects_view, name="projects"),
     path("projects/<uuid:project_id>/", views.project_detail, name="project_detail"),
     path("login/", views.login_view, name="login"),
-    path("logout/", LogoutView.as_view(), name="logout"),
+    path(
+        "logout/",
+        LogoutView.as_view(next_page="home"),
+        name="logout",
+    ),
     path("register/", views.register_view, name="register"),
     path(
         "password-reset/",

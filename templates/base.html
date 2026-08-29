@@ -141,9 +141,12 @@
                 <a href="{% url 'profile' %}" class="dm-icon-btn dm-nav-meta-desktop" aria-label="Profile" title="Profile">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-user"/></svg>
                 </a>
-                <a href="{% url 'logout' %}" class="dm-icon-btn dm-nav-meta-desktop" aria-label="Logout" title="Logout">
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg>
-                </a>
+                <form method="post" action="{% url 'logout' %}" class="dm-logout-form dm-nav-meta-desktop">
+                    {% csrf_token %}
+                    <button type="submit" class="dm-icon-btn" aria-label="Logout" title="Logout">
+                        <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg>
+                    </button>
+                </form>
             </div>
         </div>
     </header>
@@ -212,9 +215,12 @@
         </nav>
         <div class="dm-nav-drawer-foot">
             <button type="button" class="dm-btn dm-btn-ghost dm-btn-sm" data-theme-toggle>Theme</button>
-            <a href="{% url 'logout' %}" class="dm-btn dm-btn-ghost dm-btn-sm">
-                <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg> Logout
-            </a>
+            <form method="post" action="{% url 'logout' %}" class="dm-logout-form">
+                {% csrf_token %}
+                <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg> Logout
+                </button>
+            </form>
         </div>
     </aside>
     {% else %}
