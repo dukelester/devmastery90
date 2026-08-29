@@ -119,13 +119,59 @@ training/        Main app
 templates/       Django templates with HTMX partials
 ```
 
-## Production
+## Production (server IP, web access)
+
+Deploy with Docker so the app is reachable at `http://YOUR_SERVER_IP/` on port 80.
+
+### 1. On the server
 
 ```bash
-DJANGO_SETTINGS_MODULE=config.settings.production docker compose up
+# Install Docker + Compose plugin, then clone/copy the project
+git clone <your-repo-url> DevMastery && cd DevMastery
+
+# One-shot deploy (writes .env, builds, starts nginx + app + db)
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh YOUR_SERVER_IP
 ```
 
-Set `SECRET_KEY`, `DEBUG=False`, and secure cookie settings in `.env`.
+Or manually:
+
+```bash
+cp .env.production.example .env
+# Edit .env — set SECRET_KEY, POSTGRES_PASSWORD, and replace YOUR_SERVER_IP
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
+```
+
+### 2. Firewall
+
+Allow inbound HTTP (and SSH):
+
+```bash
+# ufw example
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw enable
+```
+
+Cloud providers: open **TCP 80** in the security group / firewall for the instance.
+
+### 3. Verify
+
+- Browser: `http://YOUR_SERVER_IP/`
+- Health / logs: `docker compose -f docker-compose.prod.yml logs -f web nginx`
+
+### Important `.env` values
+
+| Variable | Purpose |
+|----------|---------|
+| `ALLOWED_HOSTS` | Must include the server IP |
+| `CSRF_TRUSTED_ORIGINS` | `http://YOUR_SERVER_IP` (required for login forms) |
+| `SECRET_KEY` | Long random string |
+| `POSTGRES_PASSWORD` | Strong password |
+| `SECURE_SSL_REDIRECT` | Keep `False` until you add HTTPS |
+
+HTTPS later: put a domain on the IP, terminate TLS (Caddy/Certbot/Cloudflare), then set `SECURE_SSL_REDIRECT=True`, `SESSION_COOKIE_SECURE=True`, `CSRF_COOKIE_SECURE=True`, and `CSRF_TRUSTED_ORIGINS=https://your.domain`.
 
 ## Curriculum Structure
 
