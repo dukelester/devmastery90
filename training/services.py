@@ -696,6 +696,7 @@ def get_analytics_data(user) -> dict[str, Any]:
     # Weekly review links (current + recent)
     current_week_num = max(1, min(13, ((progress["current_day"] - 1) // 7) + 1))
     weeks = list(Week.objects.order_by("week_number")[:13])
+    current_week = next((w for w in weeks if w.week_number == current_week_num), weeks[0] if weeks else None)
     reviews_by_week = {
         r.week_id: r
         for r in WeeklyReview.objects.filter(user=user).select_related("week")
@@ -705,6 +706,7 @@ def get_analytics_data(user) -> dict[str, Any]:
         review = reviews_by_week.get(week.id)
         week_reports.append(
             {
+                "id": week.id,
                 "week_number": week.week_number,
                 "title": week.title,
                 "is_current": week.week_number == current_week_num,
@@ -745,6 +747,7 @@ def get_analytics_data(user) -> dict[str, Any]:
         "mock_pct": mock_pct,
         "week_reports": week_reports,
         "current_week_num": current_week_num,
+        "current_week_id": current_week.id if current_week else None,
         "report_generated": today.isoformat(),
         "xp": profile.xp,
         "xp_display": profile.xp_display,

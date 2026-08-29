@@ -71,7 +71,7 @@ urlpatterns = [
     path("reports/", views.analytics_view, name="reports"),
     path("calendar/", views.calendar_view, name="calendar"),
     path("calendar/<uuid:day_id>/", views.calendar_day_detail, name="calendar_day"),
-    path("weekly-review/<int:week_number>/", views.weekly_review_view, name="weekly_review"),
+    path("weekly-review/<uuid:week_id>/", views.weekly_review_view, name="weekly_review"),
     # HTMX task endpoints
     path("tasks/<uuid:task_id>/complete/", views.task_complete, name="task_complete"),
     path("tasks/<uuid:task_id>/skip/", views.task_skip, name="task_skip"),

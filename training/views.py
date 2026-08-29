@@ -544,20 +544,23 @@ def calendar_day_detail(request: HttpRequest, day_id: UUID) -> HttpResponse:
 
 
 @login_required
-def weekly_review_view(request: HttpRequest, week_number: int) -> HttpResponse:
+@login_required
+def weekly_review_view(request: HttpRequest, week_id: UUID) -> HttpResponse:
     from training.models import Week
-    from django.db.models import Sum, Count
+    from django.db.models import Sum
 
-    week = get_object_or_404(Week, week_number=week_number)
+    week = get_object_or_404(Week, id=week_id)
     days = week.days.prefetch_related("tasks")
     tasks_total = Task.objects.filter(training_day__week=week).count()
     tasks_completed = Task.objects.filter(training_day__week=week, completed=True).count()
-    study_minutes = StudySession.objects.filter(
-        user=request.user,
-        started_at__date__gte=week.start_date,
-        started_at__date__lte=week.end_date,
-        ended_at__isnull=False,
-    ).aggregate(total=Sum("duration_minutes"))["total"] or 0
+    study_minutes = 0
+    if week.start_date and week.end_date:
+        study_minutes = StudySession.objects.filter(
+            user=request.user,
+            started_at__date__gte=week.start_date,
+            started_at__date__lte=week.end_date,
+            ended_at__isnull=False,
+        ).aggregate(total=Sum("duration_minutes"))["total"] or 0
 
     skills = get_skill_scores(request.user)
     strongest = max(skills, key=lambda s: s["score"]) if skills else None
@@ -584,7 +587,7 @@ def weekly_review_view(request: HttpRequest, week_number: int) -> HttpResponse:
         review.study_minutes = study_minutes
         review.save()
         messages.success(request, "Weekly review saved.")
-        return redirect("weekly_review", week_number=week_number)
+        return redirect("weekly_review", week_id=week.id)
     return render(request, "weekly_review/index.html", context)
 
 

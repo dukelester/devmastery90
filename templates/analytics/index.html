@@ -10,7 +10,9 @@
                 Track program pace, XP, consistency, and skill trajectory — then open a weekly review when you need a written readout.
             </p>
             <div class="dm-reports-actions">
-                <a href="{% url 'weekly_review' current_week_num %}" class="dm-btn dm-btn-primary">Week {{ current_week_num }} review</a>
+                {% if current_week_id %}
+                <a href="{% url 'weekly_review' current_week_id %}" class="dm-btn dm-btn-primary">Week {{ current_week_num }} review</a>
+                {% endif %}
                 <a href="{% url 'today' %}" class="dm-btn dm-btn-ghost">Continue today</a>
                 <button type="button" class="dm-btn dm-btn-ghost" onclick="window.print()">Print report</button>
             </div>
@@ -214,7 +216,7 @@
         <p class="dm-muted" style="margin:-0.35rem 0 0.75rem;font-size:0.85rem">Open a week to write or update your retrospective.</p>
         <div class="dm-week-report-grid">
             {% for w in week_reports %}
-            <a href="{% url 'weekly_review' w.week_number %}" class="dm-week-report-card dm-panel{% if w.is_current %} is-current{% endif %}{% if w.has_review %} is-done{% endif %}">
+            <a href="{% url 'weekly_review' w.id %}" class="dm-week-report-card dm-panel{% if w.is_current %} is-current{% endif %}{% if w.has_review %} is-done{% endif %}">
                 <span class="dm-stat-label">Week {{ w.week_number }}</span>
                 <span class="dm-week-report-title">{{ w.title|truncatechars:36 }}</span>
                 <span class="dm-mono dm-muted" style="font-size:0.72rem">
