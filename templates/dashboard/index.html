@@ -62,14 +62,17 @@
             </section>
             {% endif %}
 
-            <nav class="dm-quick-links dm-panel dm-pad dm-panel-compact">
-                <a href="{% url 'review' %}">Spaced review</a>
-                <a href="{% url 'mistakes' %}">Mistakes</a>
-                <a href="{% url 'engineering' %}">Labs</a>
-                <a href="{% url 'interview' %}">Practice</a>
-                <a href="{% url 'career' %}">Career</a>
-                <a href="{% url 'mock_interviews' %}">Mock interviews</a>
-                <a href="{% url 'cognitive_hub' %}">Aptitude & teasers</a>
+            <nav class="dm-quick-links dm-panel dm-pad dm-panel-compact" aria-label="Quick links">
+                <p class="dm-stat-label">Jump to</p>
+                <div class="dm-quick-links-grid">
+                    <a href="{% url 'review' %}">Spaced review</a>
+                    <a href="{% url 'mistakes' %}">Mistakes</a>
+                    <a href="{% url 'engineering' %}">Labs</a>
+                    <a href="{% url 'interview' %}">Practice</a>
+                    <a href="{% url 'career' %}">Career</a>
+                    <a href="{% url 'mock_interviews' %}">Mock interviews</a>
+                    <a href="{% url 'cognitive_hub' %}">Aptitude & teasers</a>
+                </div>
             </nav>
         </aside>
     </div>
