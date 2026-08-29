@@ -44,6 +44,7 @@
             <span class="dm-tag">{{ question.get_interview_type_display }}</span>
             <span class="dm-tag">{% if question.difficulty == 'expert' %}Hardest{% else %}{{ question.get_difficulty_display }}{% endif %}</span>
             <span class="dm-tag dm-mono">{{ question.time_limit_minutes }}m limit</span>
+            {% if question.is_runnable %}<span class="dm-tag dm-tag-timer">Runnable</span>{% endif %}
         </div>
         <h2 style="margin:0;font-size:1.15rem;line-height:1.45">{{ question.question }}</h2>
         {% if question.hints %}
@@ -54,6 +55,93 @@
         {% endif %}
     </article>
 
+    {% if question.is_runnable %}
+    <div class="dm-mock-coding-grid">
+        <section class="dm-panel dm-pad dm-mock-coding-editor">
+            <div class="dm-lab-panel-head">
+                <p class="dm-stat-label" style="margin:0">Your code — <span class="dm-mono">{{ question.function_name }}()</span></p>
+            </div>
+            <form method="post" action="{% url 'mock_interview_run' session.id %}" id="mock-run-form">
+                {% csrf_token %}
+                <textarea
+                    name="code"
+                    id="mock-code-editor"
+                    class="dm-lab-editor dm-mock-code-editor"
+                    rows="16"
+                    spellcheck="false"
+                    required
+                >{% if editor_code %}{{ editor_code }}{% else %}{{ question.starter_code }}{% endif %}</textarea>
+                <div class="dm-mock-coding-actions">
+                    <button type="submit" class="dm-btn dm-btn-ghost">Run tests</button>
+                </div>
+            </form>
+            <form method="post" action="{% url 'mock_interview_submit' session.id %}" id="mock-submit-form" class="dm-mock-coding-submit">
+                {% csrf_token %}
+                <input type="hidden" name="time_spent_seconds" id="mock-time-spent" value="0">
+                <input type="hidden" name="code" id="mock-submit-code" value="">
+                <input type="hidden" name="answer" id="mock-submit-answer" value="">
+                <label class="dm-muted" style="font-size:0.85rem">
+                    Confidence
+                    <input name="confidence" type="number" min="0" max="10" step="0.5" value="5" class="dm-input" style="width:4.5rem;margin-left:0.35rem">
+                </label>
+                <p class="dm-muted" style="font-size:0.8rem;margin:0.5rem 0 0">
+                    Submit runs all tests (including hidden) and auto-scores out of 10.
+                </p>
+                <button type="submit" class="dm-btn dm-btn-primary" style="margin-top:0.65rem">
+                    {% if session.current_order == total_questions %}Submit &amp; finish{% else %}Submit &amp; next{% endif %}
+                </button>
+            </form>
+        </section>
+
+        <aside class="dm-stack" style="gap:0.85rem">
+            <section class="dm-panel dm-pad">
+                <p class="dm-stat-label">Public test cases</p>
+                <ul class="dm-mock-test-list">
+                    {% for case in question.public_test_cases %}
+                    <li class="dm-mock-test-case">
+                        <span class="dm-mono dm-mock-test-name">{{ case.name }}</span>
+                        <div class="dm-mock-test-io">
+                            <span class="dm-muted">args</span> <code>{{ case.args }}</code>
+                            {% if case.kwargs %}<span class="dm-muted">kwargs</span> <code>{{ case.kwargs }}</code>{% endif %}
+                            {% if case.take %}<span class="dm-muted">take</span> <code>{{ case.take }}</code>{% endif %}
+                            <span class="dm-muted">→</span> <code>{{ case.expected }}</code>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="dm-muted">No public cases.</li>
+                    {% endfor %}
+                </ul>
+                <p class="dm-muted" style="font-size:0.75rem;margin:0.65rem 0 0">Hidden cases run only on submit.</p>
+            </section>
+
+            <section class="dm-panel dm-pad" id="mock-run-results">
+                <p class="dm-stat-label">Last run</p>
+                {% if run_result %}
+                    {% if run_result.error %}
+                    <p class="dm-mock-run-error">{{ run_result.error }}</p>
+                    {% endif %}
+                    {% if run_result.total %}
+                    <p class="dm-mono" style="margin:0.35rem 0 0.65rem;font-weight:650">
+                        {{ run_result.passed }}/{{ run_result.total }} passed
+                        · preview score {{ run_result.score }}/10
+                    </p>
+                    {% endif %}
+                    <ul class="dm-mock-test-results">
+                        {% for r in run_result.results %}
+                        <li class="dm-mock-test-result {% if r.passed %}is-pass{% else %}is-fail{% endif %}">
+                            <span class="dm-mono">{{ r.name }}</span>
+                            <span>{% if r.passed %}Pass{% else %}Fail{% endif %}</span>
+                            {% if r.message %}<span class="dm-muted" style="display:block;font-size:0.78rem;margin-top:0.2rem">{{ r.message }}</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                <p class="dm-muted" style="margin:0.35rem 0 0">Click <strong>Run tests</strong> to check against public cases.</p>
+                {% endif %}
+            </section>
+        </aside>
+    </div>
+    {% else %}
     <form method="post" action="{% url 'mock_interview_submit' session.id %}" class="dm-panel dm-pad dm-stack" style="gap:0.65rem" id="mock-submit-form">
         {% csrf_token %}
         <input type="hidden" name="time_spent_seconds" id="mock-time-spent" value="0">
@@ -75,19 +163,41 @@
         </button>
     </form>
     {% endif %}
+    {% endif %}
 </div>
 <script>
 (function () {
-  const form = document.getElementById("mock-submit-form");
   const display = document.querySelector("[data-mock-timer] [data-timer-display]");
-  const hidden = document.getElementById("mock-time-spent");
-  if (!form || !display || !hidden) return;
-  const startMs = Date.parse(display.dataset.startedAt);
-  form.addEventListener("submit", function () {
-    if (!Number.isNaN(startMs)) {
+  const startMs = display ? Date.parse(display.dataset.startedAt) : NaN;
+
+  function stampTime(form) {
+    const hidden = form.querySelector("#mock-time-spent") || document.getElementById("mock-time-spent");
+    if (hidden && !Number.isNaN(startMs)) {
       hidden.value = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
     }
-  });
+  }
+
+  const submitForm = document.getElementById("mock-submit-form");
+  const editor = document.getElementById("mock-code-editor");
+  if (submitForm) {
+    submitForm.addEventListener("submit", function () {
+      stampTime(submitForm);
+      if (editor) {
+        const code = editor.value;
+        const codeField = document.getElementById("mock-submit-code");
+        const answerField = document.getElementById("mock-submit-answer");
+        if (codeField) codeField.value = code;
+        if (answerField) answerField.value = code;
+      }
+    });
+  }
+
+  const runForm = document.getElementById("mock-run-form");
+  if (runForm) {
+    runForm.addEventListener("submit", function () {
+      stampTime(runForm);
+    });
+  }
 })();
 </script>
 {% endblock %}

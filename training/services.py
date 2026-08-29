@@ -1120,6 +1120,7 @@ def submit_mock_response(
     confidence: float,
     time_spent_seconds: int,
 ) -> dict[str, Any]:
+    from training.code_runner import score_from_full_suite
     from training.models import MockInterviewResponse, MockInterviewSession
 
     session = MockInterviewSession.objects.select_related("round").get(
@@ -1132,18 +1133,35 @@ def submit_mock_response(
     if not question:
         return {"session": session, "completed": True}
 
+    tests_passed = None
+    tests_total = None
+    auto_scored = False
+    final_score = float(score)
+
+    if question.is_runnable:
+        run = score_from_full_suite(
+            answer, question.function_name, question.test_cases or []
+        )
+        tests_passed = run["passed"]
+        tests_total = run["total"]
+        auto_scored = True
+        final_score = float(run["score"])
+
     MockInterviewResponse.objects.update_or_create(
         session=session,
         order=session.current_order,
         defaults={
             "question": question,
             "answer": answer,
-            "score": score,
+            "score": final_score,
             "confidence": confidence,
             "time_spent_seconds": time_spent_seconds,
+            "tests_passed": tests_passed,
+            "tests_total": tests_total,
+            "auto_scored": auto_scored,
         },
     )
-    session.total_score += score
+    session.total_score += final_score
 
     total = session.round.questions.count()
     if session.current_order >= total:
@@ -1168,12 +1186,39 @@ def submit_mock_response(
         )
         award_xp(user, 50)
         update_streak_on_activity(user)
-        return {"session": session, "completed": True}
+        return {"session": session, "completed": True, "score": final_score}
 
     session.current_order += 1
     session.question_started_at = timezone.now()
     session.save()
-    return {"session": session, "completed": False}
+    return {"session": session, "completed": False, "score": final_score}
+
+
+def run_mock_coding_tests(user, session_id, code: str) -> dict[str, Any]:
+    """Run public tests for the current coding question in a live session."""
+    from training.code_runner import run_coding_tests
+    from training.models import MockInterviewSession
+
+    session = MockInterviewSession.objects.select_related("round").get(
+        id=session_id, user=user
+    )
+    if session.status == MockInterviewSession.Status.COMPLETED:
+        return {"ok": False, "error": "Session already completed.", "results": []}
+
+    question = session.round.questions.filter(order=session.current_order).first()
+    if not question or not question.is_runnable:
+        return {
+            "ok": False,
+            "error": "Current question is not a runnable coding problem.",
+            "results": [],
+        }
+
+    return run_coding_tests(
+        code,
+        question.function_name,
+        question.test_cases or [],
+        include_hidden=False,
+    )
 
 
 def get_mock_results_breakdown(session) -> dict[str, Any]:

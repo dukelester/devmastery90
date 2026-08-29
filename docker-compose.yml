@@ -26,9 +26,7 @@ services:
   web:
     build: .
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py seed_program &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload"
+      gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload
     volumes:
       - .:/app
     ports:
@@ -41,6 +39,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
+      # Set FORCE_SEED=1 to reseed practice/labs/mocks/cognitive on every start
+      FORCE_SEED: ${FORCE_SEED:-0}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.development}
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,11 +61,15 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
+      SKIP_SEED: "1"
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.development}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      web:
+        condition: service_started
 
   nginx:
     image: nginx:alpine

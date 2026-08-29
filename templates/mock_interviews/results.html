@@ -49,10 +49,17 @@
                     <span class="dm-tag">{{ resp.question.get_interview_type_display }}</span>
                     <span class="dm-tag">{% if resp.question.difficulty == 'expert' %}Hardest{% else %}{{ resp.question.get_difficulty_display }}{% endif %}</span>
                     <span class="dm-mono dm-muted">{{ resp.score }}/10 · {{ resp.time_spent_seconds }}s</span>
+                    {% if resp.auto_scored %}
+                    <span class="dm-tag">Auto {{ resp.tests_passed }}/{{ resp.tests_total }} tests</span>
+                    {% endif %}
                 </div>
                 <p style="font-weight:600;margin:0">{{ resp.question.question }}</p>
                 {% if resp.answer %}
+                {% if resp.question.is_runnable %}
+                <pre class="dm-code-block" style="margin-top:0.5rem"><code>{{ resp.answer }}</code></pre>
+                {% else %}
                 <p class="dm-muted" style="margin:0.5rem 0 0;font-size:0.9rem"><strong>Your answer:</strong> {{ resp.answer|truncatewords:60 }}</p>
+                {% endif %}
                 {% endif %}
                 <details style="margin-top:0.65rem">
                     <summary class="dm-muted" style="cursor:pointer;font-size:0.85rem">Sample answer & rubric</summary>

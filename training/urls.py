@@ -106,6 +106,11 @@ urlpatterns = [
         name="mock_interview_session",
     ),
     path(
+        "mock-interviews/session/<uuid:session_id>/run/",
+        views.mock_interview_run,
+        name="mock_interview_run",
+    ),
+    path(
         "mock-interviews/session/<uuid:session_id>/submit/",
         views.mock_interview_submit,
         name="mock_interview_submit",

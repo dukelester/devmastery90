@@ -103,6 +103,14 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "sample_answer": "def sum_positive(nums):\n    return sum(x for x in nums if x > 0)",
             "rubric": "Correct logic, handles empty list, clean code (0–10).",
             "hints": "Filter before sum; watch edge cases with zero.",
+            "function_name": "sum_positive",
+            "starter_code": "def sum_positive(nums):\n    \"\"\"Return the sum of all positive integers in nums.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {"name": "mixed", "args": [[1, -2, 3, 0, 4]], "expected": 8},
+                {"name": "empty", "args": [[]], "expected": 0},
+                {"name": "all_negative", "args": [[-1, -5]], "expected": 0, "hidden": True},
+                {"name": "zeros", "args": [[0, 0, 5]], "expected": 5, "hidden": True},
+            ],
         },
         4: {
             "question": "What are mutable vs immutable types in Python? How does mutability affect function arguments?",
@@ -115,6 +123,13 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "sample_answer": "return sorted(set(words))",
             "rubric": "Correct dedup + sort, discuss set vs sorted uniqueness (0–10).",
             "hints": "set() then sorted(); mention case sensitivity if asked.",
+            "function_name": "unique_sorted",
+            "starter_code": "def unique_sorted(words):\n    \"\"\"Return unique words sorted alphabetically.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {"name": "basic", "args": [["banana", "apple", "banana"]], "expected": ["apple", "banana"]},
+                {"name": "empty", "args": [[]], "expected": []},
+                {"name": "already_unique", "args": [["c", "a", "b"]], "expected": ["a", "b", "c"], "hidden": True},
+            ],
         },
         6: {
             "question": "Explain how Python's GIL affects multithreading for CPU-bound vs I/O-bound work.",
@@ -147,6 +162,13 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "sample_answer": "a,b=0,1; while True: yield a; a,b=b,a+b",
             "rubric": "Generator syntax, infinite sequence, memory efficiency note (0–10).",
             "hints": "Use yield in a loop, not recursion.",
+            "function_name": "fibonacci",
+            "starter_code": "def fibonacci():\n    \"\"\"Yield Fibonacci numbers forever: 0, 1, 1, 2, 3, …\"\"\"\n    # TODO: implement with yield\n    pass\n",
+            "test_cases": [
+                {"name": "first_7", "args": [], "take": 7, "expected": [0, 1, 1, 2, 3, 5, 8]},
+                {"name": "first_1", "args": [], "take": 1, "expected": [0]},
+                {"name": "first_10", "args": [], "take": 10, "expected": [0, 1, 1, 2, 3, 5, 8, 13, 21, 34], "hidden": True},
+            ],
         },
         4: {
             "question": "Explain type hints, `Optional`, and when static analysis helps in a Django project.",
@@ -155,10 +177,32 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Mention mypy and service layer typing.",
         },
         5: {
-            "question": "Write `group_by(items, key)` returning a dict of lists grouped by key function.",
-            "sample_answer": "defaultdict(list); for item in items: d[key(item)].append(item)",
-            "rubric": "Correct grouping, defaultdict or setdefault, key function (0–10).",
-            "hints": "from collections import defaultdict",
+            "question": "Write `group_by(items, key)` returning a dict of lists grouped by a string field name on each dict item.",
+            "sample_answer": "d={}; for item in items: d.setdefault(item[key], []).append(item); return d",
+            "rubric": "Correct grouping, setdefault/defaultdict, key field (0–10).",
+            "hints": "Use setdefault or defaultdict(list).",
+            "function_name": "group_by",
+            "starter_code": "def group_by(items, key):\n    \"\"\"Group dict items by items[i][key]. Return {key_value: [items…]}.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {
+                    "name": "by_type",
+                    "args": [
+                        [{"type": "a", "n": 1}, {"type": "b", "n": 2}, {"type": "a", "n": 3}],
+                        "type",
+                    ],
+                    "expected": {
+                        "a": [{"type": "a", "n": 1}, {"type": "a", "n": 3}],
+                        "b": [{"type": "b", "n": 2}],
+                    },
+                },
+                {"name": "empty", "args": [[], "type"], "expected": {}},
+                {
+                    "name": "single",
+                    "args": [[{"k": "x"}], "k"],
+                    "expected": {"x": [{"k": "x"}]},
+                    "hidden": True,
+                },
+            ],
         },
         6: {
             "question": "Explain context managers and write a context manager that temporarily changes a config dict.",
@@ -187,10 +231,17 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Give algorithm names for each complexity.",
         },
         3: {
-            "question": "Given an integer array, return indices of two numbers that add to target (one solution).",
+            "question": "Given an integer array, return indices of two numbers that add to target (one solution). Function: `two_sum(nums, target)`.",
             "sample_answer": "Hash map of value→index; for each x check target-x in map; O(n) time.",
             "rubric": "Correct algorithm, hash map, complexity (0–10).",
             "hints": "One-pass hash map beats O(n²) pairs.",
+            "function_name": "two_sum",
+            "starter_code": "def two_sum(nums, target):\n    \"\"\"Return [i, j] such that nums[i] + nums[j] == target (i != j).\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {"name": "basic", "args": [[2, 7, 11, 15], 9], "expected": [0, 1]},
+                {"name": "later", "args": [[3, 2, 4], 6], "expected": [1, 2]},
+                {"name": "duplicates", "args": [[3, 3], 6], "expected": [0, 1], "hidden": True},
+            ],
         },
         4: {
             "question": "When would you use a stack vs a queue vs a heap for a problem?",
@@ -199,10 +250,30 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Link structure to classic algorithms.",
         },
         5: {
-            "question": "Implement BFS to find shortest path length in an unweighted graph adjacency list.",
-            "sample_answer": "deque queue, visited set, distance dict; pop, enqueue neighbors distance+1.",
+            "question": "Implement `shortest_path(graph, start, end)` — BFS distance in an unweighted adjacency-list graph. Return -1 if unreachable.",
+            "sample_answer": "deque queue, visited set; pop, enqueue neighbors distance+1.",
             "rubric": "BFS structure, visited handling, correct distance (0–10).",
-            "hints": "Use collections.deque for O(1) pops.",
+            "hints": "Use a queue; track distance as you enqueue.",
+            "function_name": "shortest_path",
+            "starter_code": "def shortest_path(graph, start, end):\n    \"\"\"graph: dict[node] -> list[neighbors]. Return hop count start→end, or -1.\"\"\"\n    # TODO: implement BFS\n    pass\n",
+            "test_cases": [
+                {
+                    "name": "direct",
+                    "args": [{"A": ["B"], "B": ["C"], "C": []}, "A", "C"],
+                    "expected": 2,
+                },
+                {
+                    "name": "same_node",
+                    "args": [{"A": ["B"], "B": []}, "A", "A"],
+                    "expected": 0,
+                },
+                {
+                    "name": "unreachable",
+                    "args": [{"A": ["B"], "B": [], "C": []}, "A", "C"],
+                    "expected": -1,
+                    "hidden": True,
+                },
+            ],
         },
         6: {
             "question": "Explain dynamic programming with the classic coin change problem (min coins).",
@@ -231,10 +302,52 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Give a duplicate POST vs PUT example.",
         },
         3: {
-            "question": "Write a Django view or DRF viewset action that lists a user's orders with pagination.",
-            "sample_answer": "Order.objects.filter(user=request.user).select_related(...).order_by('-created')[:page_size]",
-            "rubric": "Auth scoping, queryset optimization, pagination (0–10).",
-            "hints": "Filter by request.user; mention select_related.",
+            "question": "Write `user_orders(orders, user_id, page, page_size)` returning a paginated list of that user's orders (dicts with user_id), newest first by `created` descending.",
+            "sample_answer": "Filter by user_id, sort by created desc, slice for page.",
+            "rubric": "Auth scoping analog, sort, pagination math (0–10).",
+            "hints": "offset = (page-1)*page_size; sort before slice.",
+            "function_name": "user_orders",
+            "starter_code": "def user_orders(orders, user_id, page, page_size):\n    \"\"\"Return page of orders for user_id, sorted by created descending.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {
+                    "name": "page1",
+                    "args": [
+                        [
+                            {"user_id": 1, "id": 1, "created": 10},
+                            {"user_id": 1, "id": 2, "created": 30},
+                            {"user_id": 2, "id": 3, "created": 40},
+                            {"user_id": 1, "id": 4, "created": 20},
+                        ],
+                        1,
+                        1,
+                        2,
+                    ],
+                    "expected": [
+                        {"user_id": 1, "id": 2, "created": 30},
+                        {"user_id": 1, "id": 4, "created": 20},
+                    ],
+                },
+                {
+                    "name": "empty_user",
+                    "args": [[{"user_id": 2, "id": 1, "created": 1}], 1, 1, 10],
+                    "expected": [],
+                },
+                {
+                    "name": "page2",
+                    "args": [
+                        [
+                            {"user_id": 1, "id": 1, "created": 10},
+                            {"user_id": 1, "id": 2, "created": 30},
+                            {"user_id": 1, "id": 4, "created": 20},
+                        ],
+                        1,
+                        2,
+                        2,
+                    ],
+                    "expected": [{"user_id": 1, "id": 1, "created": 10}],
+                    "hidden": True,
+                },
+            ],
         },
         4: {
             "question": "How does Django ORM lazy evaluation work? When does a queryset hit the database?",
@@ -243,10 +356,30 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Mention that slicing can add LIMIT but still lazy until consumed.",
         },
         5: {
-            "question": "Implement idempotent POST /payments with an idempotency-key header (pseudocode or Python).",
-            "sample_answer": "Store key→response; on duplicate key return stored response; process in transaction before side effects.",
-            "rubric": "Idempotency store, transaction order, duplicate handling (0–10).",
-            "hints": "Process only if key not seen; store result before returning.",
+            "question": "Implement `process_payment(store, key, amount)` — idempotent payment: first call with a key processes and stores result; duplicate key returns the stored result without double-charging.",
+            "sample_answer": "If key in store return store[key]; else compute, store, return.",
+            "rubric": "Idempotency store, no double process, return cached (0–10).",
+            "hints": "Check key before side effects; store result before return.",
+            "function_name": "process_payment",
+            "starter_code": "def process_payment(store, key, amount):\n    \"\"\"store is a dict. Return {'key': key, 'amount': amount, 'status': 'ok'}.\n    Duplicate keys must return the original result unchanged.\n    \"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {
+                    "name": "first",
+                    "args": [{}, "k1", 50],
+                    "expected": {"key": "k1", "amount": 50, "status": "ok"},
+                },
+                {
+                    "name": "idempotent",
+                    "args": [{"k1": {"key": "k1", "amount": 50, "status": "ok"}}, "k1", 999],
+                    "expected": {"key": "k1", "amount": 50, "status": "ok"},
+                },
+                {
+                    "name": "new_key",
+                    "args": [{"k1": {"key": "k1", "amount": 1, "status": "ok"}}, "k2", 7],
+                    "expected": {"key": "k2", "amount": 7, "status": "ok"},
+                    "hidden": True,
+                },
+            ],
         },
         6: {
             "question": "Explain JWT vs session auth tradeoffs for a multi-service SaaS API.",
@@ -275,10 +408,47 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Mention covering indexes and left-prefix rule.",
         },
         3: {
-            "question": "Write SQL to find users who placed more than 5 orders in the last 30 days.",
-            "sample_answer": "SELECT user_id, COUNT(*) FROM orders WHERE created_at >= NOW()-INTERVAL '30 days' GROUP BY user_id HAVING COUNT(*)>5",
-            "rubric": "Correct filter, GROUP BY, HAVING (0–10).",
-            "hints": "HAVING not WHERE for aggregate condition.",
+            "question": "Write `heavy_users(orders, days, min_count)` — given orders as dicts with user_id and day (int days ago, 0=today), return sorted user_ids with more than min_count orders in the last `days` days.",
+            "sample_answer": "Filter day < days, count per user, keep counts > min_count, sort.",
+            "rubric": "Correct filter window, group counts, threshold (0–10).",
+            "hints": "Analog of GROUP BY / HAVING in Python.",
+            "function_name": "heavy_users",
+            "starter_code": "def heavy_users(orders, days, min_count):\n    \"\"\"Return sorted list of user_ids with > min_count orders where day < days.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {
+                    "name": "basic",
+                    "args": [
+                        [
+                            {"user_id": 1, "day": 1},
+                            {"user_id": 1, "day": 2},
+                            {"user_id": 1, "day": 3},
+                            {"user_id": 2, "day": 1},
+                            {"user_id": 1, "day": 40},
+                        ],
+                        30,
+                        2,
+                    ],
+                    "expected": [1],
+                },
+                {"name": "none", "args": [[{"user_id": 1, "day": 1}], 30, 5], "expected": []},
+                {
+                    "name": "tie",
+                    "args": [
+                        [
+                            {"user_id": 2, "day": 0},
+                            {"user_id": 2, "day": 1},
+                            {"user_id": 2, "day": 2},
+                            {"user_id": 1, "day": 0},
+                            {"user_id": 1, "day": 1},
+                            {"user_id": 1, "day": 2},
+                        ],
+                        7,
+                        2,
+                    ],
+                    "expected": [1, 2],
+                    "hidden": True,
+                },
+            ],
         },
         4: {
             "question": "Compare Redis use cases: cache, session store, rate limiter, pub/sub.",
@@ -287,10 +457,22 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Note pub/sub is fire-and-forget.",
         },
         5: {
-            "question": "Implement a Redis sliding-window rate limiter (pseudocode) for 100 req/min per user.",
-            "sample_answer": "ZSET with timestamp members; ZREMRANGEBYSCORE old; ZADD; ZCARD vs limit; EXPIRE key.",
-            "rubric": "Window logic, atomicity note, cleanup (0–10).",
-            "hints": "Sorted set of request timestamps per user.",
+            "question": "Implement `allow_request(timestamps, now, limit, window)` — sliding-window rate limit. `timestamps` is a list of prior request times; return (allowed: bool, new_timestamps: list).",
+            "sample_answer": "Drop timestamps older than now-window; if len < limit append now and allow.",
+            "rubric": "Window trim, limit check, append on allow (0–10).",
+            "hints": "Keep only timestamps within [now-window, now].",
+            "function_name": "allow_request",
+            "starter_code": "def allow_request(timestamps, now, limit, window):\n    \"\"\"Return (allowed, updated_timestamps) for a sliding window limiter.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {"name": "first", "args": [[], 100, 3, 60], "expected": [True, [100]]},
+                {"name": "at_limit", "args": [[90, 95, 99], 100, 3, 60], "expected": [False, [90, 95, 99]]},
+                {
+                    "name": "expire_old",
+                    "args": [[10, 95], 100, 3, 60],
+                    "expected": [True, [95, 100]],
+                    "hidden": True,
+                },
+            ],
         },
         6: {
             "question": "Explain ACID vs BASE and when you'd accept eventual consistency.",
@@ -319,10 +501,17 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "pytest-django and factory_boy examples.",
         },
         3: {
-            "question": "Write a pytest test that asserts an API returns 403 for unauthenticated users.",
-            "sample_answer": "client.get(url); assert response.status_code == 403; or use APIClient without force_authenticate.",
-            "rubric": "Correct client, assertion, isolation (0–10).",
-            "hints": "Django Client or DRF APIClient.",
+            "question": "Write `assert_forbidden(status_code)` that returns True only when status_code is 403 (simulating an authz test helper).",
+            "sample_answer": "return status_code == 403",
+            "rubric": "Correct assertion helper, clarity (0–10).",
+            "hints": "Keep it a pure predicate used by tests.",
+            "function_name": "assert_forbidden",
+            "starter_code": "def assert_forbidden(status_code):\n    \"\"\"Return True iff status_code means forbidden (403).\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {"name": "forbidden", "args": [403], "expected": True},
+                {"name": "ok", "args": [200], "expected": False},
+                {"name": "unauthorized", "args": [401], "expected": False, "hidden": True},
+            ],
         },
         4: {
             "question": "What metrics and logs would you add before launching a new API endpoint?",
@@ -331,10 +520,25 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Mention p95 latency not just average.",
         },
         5: {
-            "question": "Outline a CI pipeline for a Django app: lint, test, build image, deploy staging.",
-            "sample_answer": "GitHub Actions: ruff/pytest with services postgres; docker build; push; deploy with health check gate.",
-            "rubric": "Stages, parallelization, failure gates, secrets (0–10).",
-            "hints": "Tests must block deploy.",
+            "question": "Implement `pipeline_ok(stages)` — given a list of stage dicts `{name, ok: bool}`, return True only if every stage passed (CI gate).",
+            "sample_answer": "return all(s['ok'] for s in stages)",
+            "rubric": "Fail-fast semantics, empty pipeline (0–10).",
+            "hints": "Empty list of stages should return True (nothing failed).",
+            "function_name": "pipeline_ok",
+            "starter_code": "def pipeline_ok(stages):\n    \"\"\"Return True if every stage has ok=True.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {
+                    "name": "all_pass",
+                    "args": [[{"name": "lint", "ok": True}, {"name": "test", "ok": True}]],
+                    "expected": True,
+                },
+                {
+                    "name": "fail",
+                    "args": [[{"name": "lint", "ok": True}, {"name": "test", "ok": False}]],
+                    "expected": False,
+                },
+                {"name": "empty", "args": [[]], "expected": True, "hidden": True},
+            ],
         },
         6: {
             "question": "Explain how you'd debug memory growth in a long-running Celery worker.",
@@ -363,10 +567,17 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Cover signup, login, logout, password reset.",
         },
         3: {
-            "question": "Code: merge two sorted linked lists into one sorted list.",
-            "sample_answer": "Dummy head, two pointers, append smaller, O(n+m) time O(1) space.",
+            "question": "Code: merge two sorted lists into one sorted list. Function: `merge_sorted(a, b)`.",
+            "sample_answer": "Two pointers, append smaller, O(n+m) time.",
             "rubric": "Correct merge, edge cases, complexity (0–10).",
-            "hints": "Dummy node simplifies head handling.",
+            "hints": "Handle when one list empties first.",
+            "function_name": "merge_sorted",
+            "starter_code": "def merge_sorted(a, b):\n    \"\"\"Merge two sorted lists into one sorted list.\"\"\"\n    # TODO: implement\n    pass\n",
+            "test_cases": [
+                {"name": "basic", "args": [[1, 3, 5], [2, 4, 6]], "expected": [1, 2, 3, 4, 5, 6]},
+                {"name": "empty_a", "args": [[], [1, 2]], "expected": [1, 2]},
+                {"name": "dupes", "args": [[1, 1], [1, 2]], "expected": [1, 1, 1, 2], "hidden": True},
+            ],
         },
         4: {
             "question": "Deep dive: explain Django request lifecycle from URL to response.",
@@ -375,10 +586,60 @@ THEME_QUESTIONS: dict[str, dict[int, dict]] = {
             "hints": "Mention WSGI/ASGI entry separately if asked.",
         },
         5: {
-            "question": "Implement LRU cache with O(1) get and put (capacity bounded).",
-            "sample_answer": "OrderedDict or hashmap + doubly linked list; move to end on get; pop oldest on overflow.",
+            "question": "Implement LRU cache with O(1) get and put. Class `LRUCache` with `__init__(capacity)`, `get(key)`, `put(key, value)`. For tests, use helper `run_lru(ops)` that applies a list of ops and returns results.",
+            "sample_answer": "OrderedDict; move to end on get; pop oldest on overflow.",
             "rubric": "O(1) operations, correct eviction, tests (0–10).",
-            "hints": "collections.OrderedDict popitem(last=False).",
+            "hints": "Use a dict + track order, or OrderedDict.",
+            "function_name": "run_lru",
+            "starter_code": (
+                "class LRUCache:\n"
+                "    def __init__(self, capacity):\n"
+                "        self.capacity = capacity\n"
+                "        # TODO: implement storage\n"
+                "\n"
+                "    def get(self, key):\n"
+                "        # Return value or -1 if missing\n"
+                "        pass\n"
+                "\n"
+                "    def put(self, key, value):\n"
+                "        # Insert/update; evict LRU if over capacity\n"
+                "        pass\n"
+                "\n"
+                "def run_lru(capacity, ops):\n"
+                "    \"\"\"ops: list of ['get', key] or ['put', key, value]. Return list of get results (-1 if miss).\"\"\"\n"
+                "    cache = LRUCache(capacity)\n"
+                "    out = []\n"
+                "    for op in ops:\n"
+                "        if op[0] == 'get':\n"
+                "            out.append(cache.get(op[1]))\n"
+                "        else:\n"
+                "            cache.put(op[1], op[2])\n"
+                "    return out\n"
+            ),
+            "test_cases": [
+                {
+                    "name": "basic",
+                    "args": [
+                        2,
+                        [["put", 1, 1], ["put", 2, 2], ["get", 1], ["put", 3, 3], ["get", 2], ["get", 3]],
+                    ],
+                    "expected": [1, -1, 3],
+                },
+                {
+                    "name": "update",
+                    "args": [1, [["put", 1, 1], ["put", 1, 2], ["get", 1]]],
+                    "expected": [2],
+                },
+                {
+                    "name": "evict",
+                    "args": [
+                        2,
+                        [["put", 1, 10], ["put", 2, 20], ["get", 1], ["put", 3, 30], ["get", 1], ["get", 2]],
+                    ],
+                    "expected": [10, 10, -1],
+                    "hidden": True,
+                },
+            ],
         },
         6: {
             "question": "Hard: explain distributed transaction options across payment + inventory services.",
@@ -417,6 +678,9 @@ def build_mock_questions_for_round(round_meta: dict) -> list[dict]:
                 "sample_answer": tpl["sample_answer"],
                 "rubric": tpl["rubric"],
                 "hints": tpl.get("hints", ""),
+                "starter_code": tpl.get("starter_code", ""),
+                "function_name": tpl.get("function_name", ""),
+                "test_cases": tpl.get("test_cases", []),
             }
         )
     return questions

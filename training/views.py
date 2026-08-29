@@ -58,6 +58,7 @@ from training.services import (
     get_mock_session_state,
     submit_mock_response,
     get_mock_results_breakdown,
+    run_mock_coding_tests,
     get_cognitive_hub,
     get_cognitive_list_data,
     get_cognitive_question_data,
@@ -1008,18 +1009,39 @@ def mock_interview_session(request: HttpRequest, session_id: UUID) -> HttpRespon
 
 @login_required
 @require_POST
+def mock_interview_run(request: HttpRequest, session_id: UUID) -> HttpResponse:
+    session = get_object_or_404(
+        MockInterviewSession.objects.select_related("round"),
+        id=session_id,
+        user=request.user,
+    )
+    if session.status == MockInterviewSession.Status.COMPLETED:
+        return redirect("mock_interview_results", session_id=session.id)
+
+    result = run_mock_coding_tests(
+        request.user, session_id, request.POST.get("code", "")
+    )
+    state = get_mock_session_state(session)
+    state["run_result"] = result
+    state["editor_code"] = request.POST.get("code", "")
+    return render(request, "mock_interviews/session.html", state)
+
+
+@login_required
+@require_POST
 def mock_interview_submit(request: HttpRequest, session_id: UUID) -> HttpResponse:
     session = get_object_or_404(
         MockInterviewSession.objects.select_related("round"),
         id=session_id,
         user=request.user,
     )
+    answer = request.POST.get("answer") or request.POST.get("code", "")
     result = submit_mock_response(
         request.user,
         session_id,
-        request.POST.get("answer", ""),
-        float(request.POST.get("score", 5)),
-        float(request.POST.get("confidence", 5)),
+        answer,
+        float(request.POST.get("score", 5) or 5),
+        float(request.POST.get("confidence", 5) or 5),
         int(request.POST.get("time_spent_seconds", 0) or 0),
     )
     if result["completed"]:

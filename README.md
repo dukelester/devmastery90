@@ -23,12 +23,21 @@ A production-quality Django + HTMX adaptive software engineering training platfo
 
 ```bash
 cp .env.example .env
-docker compose up
+docker compose up --build
 ```
 
 The app runs at http://localhost:8000 (or http://localhost via Nginx).
 
-On first start, migrations and `seed_program` run automatically.
+On every web container start the entrypoint automatically:
+1. Waits for PostgreSQL
+2. Runs `migrate`
+3. Runs `seed_program` (curriculum + practice + engineering labs + mock interviews + cognitive)
+
+Idempotent by default. To force-refresh content banks:
+
+```bash
+FORCE_SEED=1 docker compose up web
+```
 
 ### Local Development
 
@@ -40,14 +49,28 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 
-# Start PostgreSQL and create database
-createdb devmastery  # or use docker compose up postgres redis
+# Start PostgreSQL (and Redis) — e.g. docker compose up postgres redis -d
+./scripts/bootstrap.sh          # migrate + seed everything
+# or: ./scripts/seed_all.sh --force
 
-python manage.py migrate
-python manage.py seed_program
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
+Equivalent one-liner:
+
+```bash
+python manage.py migrate && python manage.py seed_program
+```
+
+`seed_program` seeds all of:
+- 90-day curriculum (phases, weeks, days, tasks, skills)
+- Practice interview bank (`seed_practice`)
+- Engineering labs (`seed_engineering`)
+- Mock interviews (`seed_mock_interviews`)
+- Aptitude & brain teasers (`seed_cognitive`)
+
+Flags: `--force` (refresh content banks), `--content-only`, `--curriculum-only`.
 
 ## Usage
 

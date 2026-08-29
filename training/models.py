@@ -835,6 +835,9 @@ class MockInterviewQuestion(UUIDModel):
     rubric = models.TextField(blank=True)
     sample_answer = models.TextField(blank=True)
     hints = models.TextField(blank=True)
+    starter_code = models.TextField(blank=True)
+    function_name = models.CharField(max_length=80, blank=True)
+    test_cases = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["round", "order"]
@@ -843,6 +846,18 @@ class MockInterviewQuestion(UUIDModel):
 
     def __str__(self) -> str:
         return f"Mock {self.round.round_number} Q{self.order}"
+
+    @property
+    def is_runnable(self) -> bool:
+        return (
+            self.interview_type == "coding"
+            and bool(self.function_name)
+            and bool(self.test_cases)
+        )
+
+    @property
+    def public_test_cases(self) -> list:
+        return [c for c in (self.test_cases or []) if not c.get("hidden")]
 
 
 class MockInterviewSession(UUIDModel):
@@ -895,6 +910,9 @@ class MockInterviewResponse(UUIDModel):
         default=5.0, validators=[MinValueValidator(0), MaxValueValidator(10)]
     )
     time_spent_seconds = models.PositiveIntegerField(default=0)
+    tests_passed = models.PositiveSmallIntegerField(null=True, blank=True)
+    tests_total = models.PositiveSmallIntegerField(null=True, blank=True)
+    auto_scored = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["order"]
