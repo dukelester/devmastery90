@@ -1,0 +1,23 @@
+<ul class="dm-criteria-list">
+    {% for c in criteria %}
+    <li class="dm-criteria-item{% if c.checked %} is-checked{% endif %}">
+        <form method="post" class="dm-criteria-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="toggle_criterion">
+            <input type="hidden" name="criterion_id" value="{{ c.id }}">
+            <button type="submit" class="dm-criteria-toggle" aria-pressed="{% if c.checked %}true{% else %}false{% endif %}">
+                <span class="dm-criteria-box" aria-hidden="true">{% if c.checked %}✓{% else %}○{% endif %}</span>
+                <span>
+                    {{ c.text }}
+                    {% if c.required %}<em class="dm-criteria-req">Required</em>{% else %}<em class="dm-criteria-opt">Optional</em>{% endif %}
+                </span>
+            </button>
+        </form>
+    </li>
+    {% empty %}
+    <li class="dm-muted">No acceptance criteria defined.</li>
+    {% endfor %}
+</ul>
+{% if is_passing %}
+<p class="dm-coaching-yes" style="margin:0.75rem 0 0">All required criteria satisfied.</p>
+{% endif %}

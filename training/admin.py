@@ -12,6 +12,7 @@ from training.models import (
     Phase,
     PracticeProgress,
     Project,
+    ProjectProgress,
     Skill,
     StudySession,
     Task,
@@ -99,7 +100,16 @@ class MistakeAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ["name", "status", "start_date"]
+    list_display = ["name", "is_catalog", "difficulty", "status", "order", "is_featured"]
+    list_filter = ["is_catalog", "difficulty", "status", "is_featured"]
+    search_fields = ["name", "slug", "tagline"]
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(ProjectProgress)
+class ProjectProgressAdmin(admin.ModelAdmin):
+    list_display = ["user", "project", "status", "updated_at"]
+    list_filter = ["status"]
 
 
 @admin.register(InterviewQuestion)

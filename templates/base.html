@@ -92,6 +92,10 @@
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-code"/></svg>
                     <span class="dm-nav-label">Coding</span>
                 </a>
+                <a href="{% url 'projects' %}" {% if 'project' in request.resolver_match.url_name %}class="is-active"{% endif %} title="Projects">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-flag"/></svg>
+                    <span class="dm-nav-label">Projects</span>
+                </a>
                 <details class="dm-nav-more{% if request.resolver_match.url_name == 'analytics' or request.resolver_match.url_name == 'calendar' or 'engineering' in request.resolver_match.url_name or request.resolver_match.url_name == 'career' %} is-current{% endif %}">
                     <summary class="dm-nav-more-btn" title="More">
                         <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
@@ -178,8 +182,14 @@
             <a href="{% url 'coding' %}" {% if request.resolver_match.url_name == 'coding' %}class="is-active"{% endif %}>
                 <svg class="dm-ico" aria-hidden="true"><use href="#i-code"/></svg> Coding
             </a>
+            <a href="{% url 'projects' %}" {% if 'project' in request.resolver_match.url_name %}class="is-active"{% endif %}>
+                <svg class="dm-ico" aria-hidden="true"><use href="#i-flag"/></svg> Projects
+            </a>
             <a href="{% url 'analytics' %}" {% if request.resolver_match.url_name == 'analytics' or request.resolver_match.url_name == 'reports' %}class="is-active"{% endif %}>
                 <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg> Reports
+            </a>
+            <a href="{% url 'features' %}" {% if request.resolver_match.url_name == 'features' %}class="is-active"{% endif %}>
+                <svg class="dm-ico" aria-hidden="true"><use href="#i-book"/></svg> Features
             </a>
             <a href="{% url 'calendar' %}" {% if request.resolver_match.url_name == 'calendar' %}class="is-active"{% endif %}>
                 <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg> Calendar
@@ -210,12 +220,13 @@
     {% else %}
     <header class="dm-nav">
         <div class="dm-nav-inner dm-nav-inner-guest">
-            <a href="{% url 'login' %}" class="dm-brand">DevMastery <span>90</span></a>
+            <a href="{% url 'home' %}" class="dm-brand">DevMastery <span>90</span></a>
             <div class="dm-nav-meta">
                 <button type="button" class="dm-theme-toggle" data-theme-toggle aria-label="Toggle theme" title="Toggle theme">
                     <svg class="dm-ico dm-ico-sun" aria-hidden="true"><use href="#i-sun"/></svg>
                     <svg class="dm-ico dm-ico-moon" aria-hidden="true"><use href="#i-moon"/></svg>
                 </button>
+                <a href="{% url 'features' %}" class="dm-btn dm-btn-ghost dm-btn-sm">Features</a>
                 <a href="{% url 'login' %}" class="dm-btn dm-btn-ghost dm-btn-sm">Sign in</a>
             </div>
         </div>

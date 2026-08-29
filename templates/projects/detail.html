@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — Projects{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise dm-project-detail">
+    <header class="dm-project-hero dm-panel dm-pad">
+        <p class="dm-kicker">Project brief</p>
+        <h1 class="dm-display" style="font-size:clamp(1.6rem,3.5vw,2.3rem);margin:0.4rem 0 0">{{ project.name }}</h1>
+        <p class="dm-soft" style="margin:0.55rem 0 0;max-width:42rem">{{ project.tagline }}</p>
+        <div class="dm-project-hero-meta">
+            <span class="dm-tag">{{ project.get_difficulty_display }}</span>
+            <span class="dm-tag">{{ project.estimated_hours }} hours</span>
+            {% if project.week_focus %}<span class="dm-tag">Week {{ project.week_focus }}</span>{% endif %}
+            {% if is_passing %}<span class="dm-tag is-ember">Passing</span>{% endif %}
+        </div>
+        <div class="dm-progress" style="margin-top:1rem;max-width:24rem">
+            <span style="width:{{ progress.pass_pct }}%"></span>
+        </div>
+        <p class="dm-mono dm-muted" style="margin:0.4rem 0 0;font-size:0.75rem">
+            {{ progress.checked_count }}/{{ project.criteria_count }} criteria · {{ progress.pass_pct }}%
+        </p>
+    </header>
+
+    <div class="dm-project-layout">
+        <div class="dm-stack">
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Overview</h2>
+                <p class="dm-project-prose">{{ project.overview|linebreaksbr }}</p>
+                <h3 class="dm-project-subhead">Problem</h3>
+                <p class="dm-project-prose">{{ project.problem_statement|linebreaksbr }}</p>
+            </section>
+
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Features</h2>
+                <ul class="dm-project-list">
+                    {% for f in project.features %}
+                    <li><strong>{{ f.title }}</strong> — {{ f.description }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Requirements</h2>
+                <h3 class="dm-project-subhead">Functional</h3>
+                <ul class="dm-project-list">
+                    {% for r in project.functional_requirements %}<li>{{ r }}</li>{% endfor %}
+                </ul>
+                <h3 class="dm-project-subhead">Non-functional</h3>
+                <ul class="dm-project-list">
+                    {% for r in project.non_functional_requirements %}<li>{{ r }}</li>{% endfor %}
+                </ul>
+            </section>
+
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Milestones</h2>
+                <div class="dm-milestone-grid">
+                    {% for m in project.milestones %}
+                    <div class="dm-milestone-card is-earned">
+                        <span class="dm-milestone-mark">{{ forloop.counter }}</span>
+                        <div>
+                            <div class="dm-milestone-title">{{ m.title }} · {{ m.hours }}h</div>
+                            <div class="dm-muted dm-milestone-hint">{{ m.deliverables|join:", " }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Getting started</h2>
+                <pre class="dm-code-block dm-project-pre">{{ project.getting_started }}</pre>
+                <h3 class="dm-project-subhead">Architecture notes</h3>
+                <p class="dm-project-prose">{{ project.architecture_notes|linebreaksbr }}</p>
+            </section>
+        </div>
+
+        <aside class="dm-stack">
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Tech stack</h2>
+                <div class="dm-project-chips">
+                    {% for t in project.tech_stack %}<span class="dm-tag">{{ t }}</span>{% endfor %}
+                </div>
+                <h3 class="dm-project-subhead">Learning outcomes</h3>
+                <ul class="dm-project-list">
+                    {% for o in project.learning_outcomes %}<li>{{ o }}</li>{% endfor %}
+                </ul>
+                <h3 class="dm-project-subhead">Deliverables</h3>
+                <ul class="dm-project-list">
+                    {% for d in project.deliverables %}<li>{{ d }}</li>{% endfor %}
+                </ul>
+                {% if project.resources %}
+                <h3 class="dm-project-subhead">Resources</h3>
+                <ul class="dm-project-list">
+                    {% for r in project.resources %}
+                    <li><a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </section>
+
+            <section class="dm-panel dm-pad" id="project-criteria">
+                <h2 class="dm-section-title dm-section-title-sm">Passing criteria</h2>
+                <p class="dm-muted" style="font-size:0.82rem;margin:0 0 0.75rem">Required items must be checked to pass. +75 XP when you clear them.</p>
+                {% include "projects/_criteria.html" %}
+            </section>
+
+            <section class="dm-panel dm-pad">
+                <h2 class="dm-section-title dm-section-title-sm">Your progress</h2>
+                <form method="post" class="dm-form-stack">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save">
+                    <label class="dm-field">
+                        <span class="dm-label">Status</span>
+                        <select name="status" class="dm-select dm-input">
+                            <option value="planned" {% if progress.status == "planned" %}selected{% endif %}>Planned</option>
+                            <option value="in_progress" {% if progress.status == "in_progress" %}selected{% endif %}>In progress</option>
+                            <option value="completed" {% if progress.status == "completed" %}selected{% endif %}>Completed</option>
+                            <option value="paused" {% if progress.status == "paused" %}selected{% endif %}>Paused</option>
+                        </select>
+                    </label>
+                    <label class="dm-field">
+                        <span class="dm-label">Repository URL</span>
+                        <input class="dm-input" type="url" name="repository_url" value="{{ progress.repository_url }}">
+                    </label>
+                    <label class="dm-field">
+                        <span class="dm-label">Deployed URL</span>
+                        <input class="dm-input" type="url" name="deployed_url" value="{{ progress.deployed_url }}">
+                    </label>
+                    <label class="dm-field">
+                        <span class="dm-label">Notes</span>
+                        <textarea class="dm-textarea dm-input" name="notes" rows="4">{{ progress.notes }}</textarea>
+                    </label>
+                    <button type="submit" class="dm-btn dm-btn-primary">Save progress</button>
+                </form>
+            </section>
+        </aside>
+    </div>
+
+    <p><a href="{% url 'projects' %}" class="dm-link-quiet">← All projects</a></p>
+</div>
+{% endblock %}

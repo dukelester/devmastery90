@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Projects — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise">
+    <header>
+        <p class="dm-kicker">Build & prove</p>
+        <h1 class="dm-display" style="font-size:clamp(1.8rem,4vw,2.5rem);margin:0.4rem 0 0">Projects hub</h1>
+        <p class="dm-soft" style="margin:0.55rem 0 0;max-width:40rem;line-height:1.5">
+            Production-shaped briefs with tech stacks, NFRs, milestones, and explicit passing criteria. Check off criteria as you ship.
+        </p>
+    </header>
+
+    <div class="dm-project-grid">
+        {% for card in cards %}
+        <a href="{% url 'project_detail' card.project.id %}" class="dm-project-card dm-panel dm-pad">
+            <div class="dm-project-card-top">
+                <span class="dm-tag">{{ card.project.get_difficulty_display }}</span>
+                <span class="dm-mono dm-muted">{{ card.project.estimated_hours }}h</span>
+            </div>
+            <h2 class="dm-project-card-title">{{ card.project.name }}</h2>
+            <p class="dm-muted dm-project-card-tagline">{{ card.project.tagline }}</p>
+            <div class="dm-progress" style="margin:0.85rem 0 0.4rem">
+                <span style="width:{{ card.pass_pct }}%"></span>
+            </div>
+            <div class="dm-project-card-meta">
+                <span class="dm-mono">{{ card.pass_pct }}% criteria</span>
+                <span class="dm-tag">{{ card.status|cut:"_"|title }}</span>
+            </div>
+        </a>
+        {% empty %}
+        <p class="dm-muted">No catalog projects yet. Run <code>seed_projects</code>.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

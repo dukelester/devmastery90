@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Features — DevMastery 90{% endblock %}
+{% block content %}
+<div class="dm-stack dm-rise dm-features-page">
+    <header class="dm-features-hero">
+        <p class="dm-kicker">Platform capabilities</p>
+        <h1 class="dm-display" style="font-size:clamp(1.8rem,4vw,2.6rem);margin:0.45rem 0 0">Everything in DevMastery 90</h1>
+        <p class="dm-soft" style="margin:0.55rem 0 0;max-width:38rem;line-height:1.55">
+            A full training operating system — curriculum, coaching, interviews, labs, projects, and reports — designed for serious engineering practice.
+        </p>
+    </header>
+
+    <aside class="dm-qotd dm-panel dm-pad" aria-label="Quote of the day">
+        <p class="dm-stat-label">Quote of the day</p>
+        <blockquote class="dm-qotd-text">“{{ quote_of_the_day.text }}”</blockquote>
+        <cite class="dm-qotd-author">— {{ quote_of_the_day.author }}</cite>
+    </aside>
+
+    {% for group in feature_groups %}
+    <section>
+        <h2 class="dm-section-title">{{ group.title }}</h2>
+        <div class="dm-feature-grid">
+            {% for item in group.items %}
+            <article class="dm-panel dm-pad dm-feature-card">
+                <h3 class="dm-feature-name">{{ item.name }}</h3>
+                <p class="dm-muted">{{ item.detail }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+
+    <section class="dm-panel dm-pad" style="text-align:center">
+        <h2 class="dm-section-title" style="margin-bottom:0.5rem">Start the program</h2>
+        <p class="dm-muted" style="margin-bottom:1rem">Register free and unlock the full hub.</p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="dm-btn dm-btn-primary">Go to dashboard</a>
+        {% else %}
+        <a href="{% url 'register' %}" class="dm-btn dm-btn-primary">Create account</a>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

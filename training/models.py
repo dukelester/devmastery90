@@ -454,14 +454,46 @@ class Mistake(UUIDModel):
 
 class Project(UUIDModel):
     name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
+    tagline = models.CharField(max_length=300, blank=True)
     description = models.TextField(blank=True)
+    problem_statement = models.TextField(blank=True)
+    overview = models.TextField(blank=True)
     status = models.CharField(
         max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PLANNED
     )
+    difficulty = models.CharField(
+        max_length=10, choices=Difficulty.choices, default=Difficulty.HARD
+    )
+    estimated_hours = models.PositiveSmallIntegerField(default=40)
+    week_focus = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Suggested curriculum week"
+    )
+    tech_stack = models.JSONField(default=list, blank=True)
+    learning_outcomes = models.JSONField(default=list, blank=True)
+    features = models.JSONField(default=list, blank=True)
+    functional_requirements = models.JSONField(default=list, blank=True)
+    non_functional_requirements = models.JSONField(default=list, blank=True)
+    acceptance_criteria = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of {"id": "ac-1", "text": "...", "required": true}',
+    )
+    milestones = models.JSONField(default=list, blank=True)
+    deliverables = models.JSONField(default=list, blank=True)
+    getting_started = models.TextField(blank=True)
+    architecture_notes = models.TextField(blank=True)
+    resources = models.JSONField(default=list, blank=True)
     repository_url = models.URLField(blank=True)
     deployed_url = models.URLField(blank=True)
     start_date = models.DateField(null=True, blank=True)
     completion_date = models.DateField(null=True, blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    is_catalog = models.BooleanField(
+        default=False,
+        help_text="Published in the Projects hub (curriculum / portfolio briefs)",
+    )
+    is_featured = models.BooleanField(default=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -471,10 +503,85 @@ class Project(UUIDModel):
     )
 
     class Meta:
-        ordering = ["-start_date"]
+        ordering = ["order", "name"]
+        indexes = [
+            models.Index(fields=["is_catalog", "order"]),
+            models.Index(fields=["slug"]),
+        ]
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+
+            base = slugify(self.name)[:200] or "project"
+            candidate = base
+            n = 2
+            while Project.objects.filter(slug=candidate).exclude(pk=self.pk).exists():
+                candidate = f"{base}-{n}"
+                n += 1
+            self.slug = candidate
+        super().save(*args, **kwargs)
+
+    @property
+    def required_criteria(self) -> list:
+        return [c for c in (self.acceptance_criteria or []) if c.get("required", True)]
+
+    @property
+    def criteria_count(self) -> int:
+        return len(self.acceptance_criteria or [])
+
+
+class ProjectProgress(UUIDModel):
+    """Tracks a learner's work against a catalog project brief."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="project_progress",
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="progress_rows"
+    )
+    status = models.CharField(
+        max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PLANNED
+    )
+    checked_criteria = models.JSONField(default=list, blank=True)
+    notes = models.TextField(blank=True)
+    repository_url = models.URLField(blank=True)
+    deployed_url = models.URLField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["user", "project"]
+        ordering = ["-updated_at"]
+        indexes = [models.Index(fields=["user", "status"])]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} — {self.project.name}"
+
+    @property
+    def checked_count(self) -> int:
+        return len(self.checked_criteria or [])
+
+    @property
+    def pass_pct(self) -> float:
+        total = self.project.criteria_count
+        if not total:
+            return 0.0
+        return round((self.checked_count / total) * 100, 1)
+
+    @property
+    def is_passing(self) -> bool:
+        required = self.project.required_criteria
+        if not required:
+            return self.status == ProjectStatus.COMPLETED
+        checked = set(self.checked_criteria or [])
+        return all(c.get("id") in checked for c in required)
 
 
 class InterviewQuestion(UUIDModel):

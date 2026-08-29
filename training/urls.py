@@ -12,7 +12,12 @@ from training import views
 from training.forms import DevMasteryPasswordResetForm, DevMasterySetPasswordForm
 
 urlpatterns = [
-    path("", views.dashboard, name="dashboard"),
+    path("", views.home, name="home"),
+    path("dashboard/", views.dashboard, name="dashboard"),
+    path("landing/", views.landing_view, name="landing"),
+    path("features/", views.features_view, name="features"),
+    path("projects/", views.projects_view, name="projects"),
+    path("projects/<uuid:project_id>/", views.project_detail, name="project_detail"),
     path("login/", views.login_view, name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", views.register_view, name="register"),
@@ -51,7 +56,6 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path("profile/", views.profile_view, name="profile"),
-    path("dashboard/", views.dashboard, name="dashboard"),
     path("today/", views.today_view, name="today"),
     path("today/daily-review/", views.daily_review_submit, name="daily_review"),
     path("coding/", views.coding_view, name="coding"),

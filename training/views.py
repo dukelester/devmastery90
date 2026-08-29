@@ -31,6 +31,7 @@ from training.models import (
     MockInterviewRound,
     MockInterviewSession,
     Project,
+    ProjectProgress,
     ReviewCard,
     Skill,
     StudySession,
@@ -1144,3 +1145,170 @@ def cognitive_reveal(request: HttpRequest, type_slug: str, question_id: UUID) ->
     if request.htmx:
         return render(request, "cognitive/_answer.html", data)
     return redirect("cognitive_question", type_slug=type_slug, question_id=question.id)
+
+
+def home(request: HttpRequest) -> HttpResponse:
+    """Public landing for guests; authenticated users go to the dashboard."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    return landing_view(request)
+
+
+def landing_view(request: HttpRequest) -> HttpResponse:
+    from training.quotes import carousel_quotes, quote_of_the_day
+
+    featured = Project.objects.filter(is_catalog=True, is_featured=True).order_by("order")[:3]
+    return render(
+        request,
+        "landing/index.html",
+        {
+            "quote_of_the_day": quote_of_the_day(),
+            "carousel_quotes": carousel_quotes(8),
+            "featured_projects": featured,
+            "feature_highlights": FEATURE_HIGHLIGHTS[:6],
+        },
+    )
+
+
+def features_view(request: HttpRequest) -> HttpResponse:
+    from training.quotes import quote_of_the_day
+
+    return render(
+        request,
+        "marketing/features.html",
+        {"feature_groups": FEATURE_GROUPS, "quote_of_the_day": quote_of_the_day()},
+    )
+
+
+@login_required
+def projects_view(request: HttpRequest) -> HttpResponse:
+    projects = Project.objects.filter(is_catalog=True).order_by("order", "name")
+    progress_map = {
+        str(p.project_id): p
+        for p in ProjectProgress.objects.filter(user=request.user, project__in=projects)
+    }
+    cards = []
+    for project in projects:
+        prog = progress_map.get(str(project.id))
+        cards.append(
+            {
+                "project": project,
+                "progress": prog,
+                "pass_pct": prog.pass_pct if prog else 0,
+                "status": prog.status if prog else "planned",
+            }
+        )
+    return render(request, "projects/index.html", {"cards": cards})
+
+
+@login_required
+def project_detail(request: HttpRequest, project_id: UUID) -> HttpResponse:
+    project = get_object_or_404(Project, id=project_id, is_catalog=True)
+    progress, _ = ProjectProgress.objects.get_or_create(user=request.user, project=project)
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        was_passing = progress.is_passing
+        if action == "toggle_criterion":
+            cid = request.POST.get("criterion_id", "").strip()
+            checked = list(progress.checked_criteria or [])
+            if cid:
+                if cid in checked:
+                    checked.remove(cid)
+                else:
+                    checked.append(cid)
+                progress.checked_criteria = checked
+                if progress.status == "planned":
+                    progress.status = "in_progress"
+                    progress.started_at = progress.started_at or timezone.now()
+        else:
+            progress.notes = request.POST.get("notes", progress.notes)
+            progress.repository_url = request.POST.get("repository_url", progress.repository_url)
+            progress.deployed_url = request.POST.get("deployed_url", progress.deployed_url)
+            progress.status = request.POST.get("status", progress.status)
+            if progress.status == "in_progress" and not progress.started_at:
+                progress.started_at = timezone.now()
+
+        if progress.is_passing:
+            progress.status = "completed"
+            progress.completed_at = progress.completed_at or timezone.now()
+            if not was_passing:
+                award_xp(request.user, 75)
+                messages.success(request, "All required criteria met — +75 XP.")
+        progress.save()
+        if action != "toggle_criterion":
+            messages.success(request, "Project progress saved.")
+        return redirect("project_detail", project_id=project.id)
+
+    criteria = []
+    checked = set(progress.checked_criteria or [])
+    for c in project.acceptance_criteria or []:
+        criteria.append({**c, "checked": c.get("id") in checked})
+
+    return render(
+        request,
+        "projects/detail.html",
+        {
+            "project": project,
+            "progress": progress,
+            "criteria": criteria,
+            "is_passing": progress.is_passing,
+        },
+    )
+
+
+FEATURE_HIGHLIGHTS = [
+    {"title": "90-day curriculum", "copy": "Phased roadmap from Python foundations to interview war room."},
+    {"title": "Adaptive coaching", "copy": "Weakness signals, repeating mistakes, and next actions on the dashboard."},
+    {"title": "Practice bank", "copy": "Interview questions with hints, solutions, and proficiency unlocks."},
+    {"title": "Mock interviews", "copy": "Timed rounds with coding run/tests and scored feedback."},
+    {"title": "Engineering labs", "copy": "Hands-on challenges with steps, hints, and timers."},
+    {"title": "Projects hub", "copy": "Production briefs with acceptance criteria you can check off."},
+]
+
+FEATURE_GROUPS = [
+    {
+        "title": "Training core",
+        "items": [
+            {"name": "90-day curriculum", "detail": "Phases, weeks, days, and prioritized tasks with workload safety."},
+            {"name": "Today execution", "detail": "Mission view, timer, daily review, and streak tracking."},
+            {"name": "Focus mode", "detail": "Distraction-light sessions tied to tasks and XP."},
+            {"name": "Calendar", "detail": "Visual 90-day map with day detail drawers."},
+        ],
+    },
+    {
+        "title": "Skill engines",
+        "items": [
+            {"name": "Adaptive recommendations", "detail": "Daily coaching from weaknesses, overdue work, and curriculum."},
+            {"name": "Skill health", "detail": "Scores and trends from assessments, coding, and mistakes."},
+            {"name": "Spaced review", "detail": "Review cards with scheduling for durable memory."},
+            {"name": "Mistakes log", "detail": "Capture, categorize, and resolve repeating errors."},
+        ],
+    },
+    {
+        "title": "Interview & coding",
+        "items": [
+            {"name": "Practice interview bank", "detail": "Sectioned questions with objectives, hints, and solutions."},
+            {"name": "Mock interviews", "detail": "Multi-round sessions, coding sandbox, and results."},
+            {"name": "Coding tracker", "detail": "Pattern performance and solve rate analytics."},
+            {"name": "Cognitive drills", "detail": "Aptitude and brain teasers with countdown timers."},
+        ],
+    },
+    {
+        "title": "Build & operate",
+        "items": [
+            {"name": "Engineering labs", "detail": "Interactive labs with checklists, hints, and workspaces."},
+            {"name": "Projects hub", "detail": "Detailed briefs, NFRs, milestones, and passing criteria."},
+            {"name": "Career toolkit", "detail": "Applications, goals, and portfolio entries."},
+            {"name": "Reports", "detail": "Heatmaps, study charts, XP, achievements, weekly reviews."},
+        ],
+    },
+    {
+        "title": "Platform",
+        "items": [
+            {"name": "Gamification", "detail": "XP, levels, streaks, and unlockable milestones."},
+            {"name": "Dark mode", "detail": "Theme toggle with accessible contrast."},
+            {"name": "PWA", "detail": "Installable app shell with offline-friendly static caching."},
+            {"name": "API", "detail": "Authenticated DRF endpoints for progress and analytics."},
+        ],
+    },
+]

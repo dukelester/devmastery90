@@ -25,6 +25,7 @@ CONTENT_SEEDS = (
     ("seed_engineering", True),
     ("seed_mock_interviews", True),
     ("seed_cognitive", True),
+    ("seed_projects", True),
 )
 
 
@@ -153,16 +154,8 @@ class Command(BaseCommand):
             call_command(command_name, **kwargs)
 
     def _seed_project(self):
-        Project.objects.get_or_create(
-            name="AI Document Processing Platform",
-            defaults={
-                "description": (
-                    "Multi-tenant document processing platform with AI integration, "
-                    "Celery background jobs, and object storage."
-                ),
-                "status": "planned",
-            },
-        )
+        # Catalog briefs are seeded via seed_projects; keep a lightweight fallback.
+        call_command("seed_projects")
 
     def _print_summary(self):
         self.stdout.write(
