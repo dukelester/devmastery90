@@ -4,11 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#e2e8f0">
     <title>{% block title %}DevMastery 90{% endblock %}</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("dm-theme");
+          var theme = stored === "dark" || stored === "light"
+            ? stored
+            : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", theme === "dark" ? "#0b1017" : "#e2e8f0");
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script src="{% static 'js/theme.js' %}" defer></script>
     <script src="{% static 'js/timer.js' %}" defer></script>
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
@@ -34,59 +49,92 @@
     <header class="dm-nav">
         <div class="dm-nav-inner">
             <a href="{% url 'dashboard' %}" class="dm-brand">DevMastery <span>90</span></a>
+
             <nav class="dm-nav-links" aria-label="Primary">
-                <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="is-active"{% endif %}>
+                <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="is-active"{% endif %} title="Dashboard">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-home"/></svg>
-                    Dashboard
+                    <span class="dm-nav-label">Dashboard</span>
                 </a>
-                <a href="{% url 'today' %}" {% if request.resolver_match.url_name == 'today' %}class="is-active"{% endif %}>
+                <a href="{% url 'today' %}" {% if request.resolver_match.url_name == 'today' %}class="is-active"{% endif %} title="Today">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-zap"/></svg>
-                    Today
+                    <span class="dm-nav-label">Today</span>
                 </a>
-                <a href="{% url 'coding' %}" {% if request.resolver_match.url_name == 'coding' %}class="is-active"{% endif %}>
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-code"/></svg>
-                    Coding
+                <a href="{% url 'interview' %}" {% if request.resolver_match.url_name == 'interview' or 'practice' in request.resolver_match.url_name %}class="is-active"{% endif %} title="Practice">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-book"/></svg>
+                    <span class="dm-nav-label">Practice</span>
                 </a>
-                <a href="{% url 'interview' %}" {% if request.resolver_match.url_name == 'interview' %}class="is-active"{% endif %}>
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
-                    Practice
+                <a href="{% url 'mock_interviews' %}" {% if 'mock_interview' in request.resolver_match.url_name or request.resolver_match.url_name == 'mock_interviews' %}class="is-active"{% endif %} title="Mocks">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-flag"/></svg>
+                    <span class="dm-nav-label">Mocks</span>
                 </a>
-                <a href="{% url 'mock_interviews' %}" {% if 'mock_interview' in request.resolver_match.url_name or request.resolver_match.url_name == 'mock_interviews' %}class="is-active"{% endif %}>
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
-                    Mocks
-                </a>
-                <a href="{% url 'cognitive_hub' %}" {% if 'cognitive' in request.resolver_match.url_name %}class="is-active"{% endif %}>
+                <a href="{% url 'cognitive_hub' %}" {% if 'cognitive' in request.resolver_match.url_name %}class="is-active"{% endif %} title="Cognitive">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
-                    Cognitive
+                    <span class="dm-nav-label">Cognitive</span>
                 </a>
-                <a href="{% url 'analytics' %}" {% if request.resolver_match.url_name == 'analytics' %}class="is-active"{% endif %}>
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
-                    Analytics
+                <a href="{% url 'coding' %}" {% if request.resolver_match.url_name == 'coding' %}class="is-active"{% endif %} title="Coding">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-code"/></svg>
+                    <span class="dm-nav-label">Coding</span>
                 </a>
-                <a href="{% url 'calendar' %}" {% if request.resolver_match.url_name == 'calendar' %}class="is-active"{% endif %}>
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
-                    Calendar
-                </a>
+                <details class="dm-nav-more{% if request.resolver_match.url_name == 'analytics' or request.resolver_match.url_name == 'calendar' or 'engineering' in request.resolver_match.url_name or request.resolver_match.url_name == 'career' %} is-current{% endif %}">
+                    <summary class="dm-nav-more-btn" title="More">
+                        <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
+                        <span class="dm-nav-label">More</span>
+                    </summary>
+                    <div class="dm-nav-more-menu" role="menu">
+                        <a href="{% url 'analytics' %}" role="menuitem" {% if request.resolver_match.url_name == 'analytics' %}class="is-active"{% endif %}>
+                            <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
+                            Analytics
+                        </a>
+                        <a href="{% url 'calendar' %}" role="menuitem" {% if request.resolver_match.url_name == 'calendar' %}class="is-active"{% endif %}>
+                            <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
+                            Calendar
+                        </a>
+                        <a href="{% url 'engineering' %}" role="menuitem" {% if 'engineering' in request.resolver_match.url_name %}class="is-active"{% endif %}>
+                            <svg class="dm-ico" aria-hidden="true"><use href="#i-code"/></svg>
+                            Engineering
+                        </a>
+                        <a href="{% url 'career' %}" role="menuitem" {% if request.resolver_match.url_name == 'career' %}class="is-active"{% endif %}>
+                            <svg class="dm-ico" aria-hidden="true"><use href="#i-trophy"/></svg>
+                            Career
+                        </a>
+                    </div>
+                </details>
             </nav>
+
             <div class="dm-nav-meta">
-                <div class="dm-rank" title="Progress">
+                <div class="dm-rank" title="{{ user_level_display }} · {{ user_xp_display }} XP">
                     <div class="dm-rank-level">{{ user_level_display }}</div>
-                    <div class="dm-rank-xp">XP: {{ user_xp_display }}</div>
+                    <div class="dm-rank-xp">{{ user_xp_display }} XP</div>
                 </div>
                 {% if user_streak %}
-                <div class="dm-streak" title="Study streak">
+                <div class="dm-streak" title="{{ user_streak }} day streak">
                     <svg class="dm-ico dm-ico-sm" aria-hidden="true"><use href="#i-flame"/></svg>
-                    {{ user_streak }} day streak
+                    <span class="dm-streak-count">{{ user_streak }}d</span>
                 </div>
                 {% endif %}
-                <a href="{% url 'profile' %}" class="dm-profile-link" aria-label="Profile" title="Profile">
-                    <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
-                    <span class="dm-profile-link-text">Profile</span>
+                <button type="button" class="dm-theme-toggle" data-theme-toggle aria-label="Toggle theme" title="Toggle theme">
+                    <svg class="dm-ico dm-ico-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+                    <svg class="dm-ico dm-ico-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+                </button>
+                <a href="{% url 'profile' %}" class="dm-icon-btn" aria-label="Profile" title="Profile">
+                    <svg class="dm-ico" aria-hidden="true"><use href="#i-user"/></svg>
                 </a>
-                <a href="{% url 'logout' %}" class="dm-logout" aria-label="Logout" title="Logout">
+                <a href="{% url 'logout' %}" class="dm-icon-btn" aria-label="Logout" title="Logout">
                     <svg class="dm-ico" aria-hidden="true"><use href="#i-logout"/></svg>
-                    <span class="dm-logout-text">Logout</span>
                 </a>
+            </div>
+        </div>
+    </header>
+    {% else %}
+    <header class="dm-nav">
+        <div class="dm-nav-inner dm-nav-inner-guest">
+            <a href="{% url 'login' %}" class="dm-brand">DevMastery <span>90</span></a>
+            <div class="dm-nav-meta">
+                <button type="button" class="dm-theme-toggle" data-theme-toggle aria-label="Toggle theme" title="Toggle theme">
+                    <svg class="dm-ico dm-ico-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+                    <svg class="dm-ico dm-ico-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+                </button>
+                <a href="{% url 'login' %}" class="dm-btn dm-btn-ghost dm-btn-sm">Sign in</a>
             </div>
         </div>
     </header>
@@ -113,25 +161,41 @@
             <svg class="dm-ico" aria-hidden="true"><use href="#i-zap"/></svg>
             <span>Today</span>
         </a>
+        <a href="{% url 'interview' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'interview' or 'practice' in request.resolver_match.url_name %}is-active{% endif %}">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
+            <span>Practice</span>
+        </a>
+        <a href="{% url 'mock_interviews' %}" class="dm-dock-item {% if 'mock_interview' in request.resolver_match.url_name or request.resolver_match.url_name == 'mock_interviews' %}is-active{% endif %}">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-flag"/></svg>
+            <span>Mocks</span>
+        </a>
+        <a href="{% url 'cognitive_hub' %}" class="dm-dock-item {% if 'cognitive' in request.resolver_match.url_name %}is-active{% endif %}">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-target"/></svg>
+            <span>Cognitive</span>
+        </a>
         <a href="{% url 'coding' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'coding' %}is-active{% endif %}">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-code"/></svg>
             <span>Code</span>
-        </a>
-        <a href="{% url 'interview' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'interview' %}is-active{% endif %}">
-            <svg class="dm-ico" aria-hidden="true"><use href="#i-mic"/></svg>
-            <span>Practice</span>
         </a>
         <a href="{% url 'analytics' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'analytics' %}is-active{% endif %}">
             <svg class="dm-ico" aria-hidden="true"><use href="#i-chart"/></svg>
             <span>Stats</span>
         </a>
-        <a href="{% url 'calendar' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'calendar' %}is-active{% endif %}">
-            <svg class="dm-ico" aria-hidden="true"><use href="#i-calendar"/></svg>
-            <span>Days</span>
+        <a href="{% url 'profile' %}" class="dm-dock-item {% if request.resolver_match.url_name == 'profile' %}is-active{% endif %}">
+            <svg class="dm-ico" aria-hidden="true"><use href="#i-user"/></svg>
+            <span>Profile</span>
         </a>
     </nav>
     {% endif %}
 
     {% include "partials/footer.html" %}
+    <script>
+      // Close nav "More" menu when clicking outside
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll(".dm-nav-more[open]").forEach(function (el) {
+          if (!el.contains(e.target)) el.removeAttribute("open");
+        });
+      });
+    </script>
 </body>
 </html>

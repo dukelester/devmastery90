@@ -71,6 +71,7 @@
                     spellcheck="false"
                     required
                 >{% if editor_code %}{{ editor_code }}{% else %}{{ question.starter_code }}{% endif %}</textarea>
+                <input type="hidden" name="custom_cases" id="mock-custom-cases" value="{{ custom_cases_json|default:'[]' }}">
                 <div class="dm-mock-coding-actions">
                     <button type="submit" class="dm-btn dm-btn-ghost">Run tests</button>
                 </div>
@@ -111,32 +112,82 @@
                     <li class="dm-muted">No public cases.</li>
                     {% endfor %}
                 </ul>
-                <p class="dm-muted" style="font-size:0.75rem;margin:0.65rem 0 0">Hidden cases run only on submit.</p>
+                <p class="dm-muted" style="font-size:0.75rem;margin:0.65rem 0 0">Hidden cases run only on submit (not shown here).</p>
             </section>
 
-            <section class="dm-panel dm-pad" id="mock-run-results">
+            <section class="dm-panel dm-pad dm-mock-custom-panel" data-custom-cases data-question-id="{{ question.id }}">
+                <div class="dm-lab-panel-head">
+                    <p class="dm-stat-label" style="margin:0">Your custom cases</p>
+                    <span class="dm-tag">Local only</span>
+                </div>
+                <p class="dm-muted" style="font-size:0.78rem;margin:0.35rem 0 0.65rem;line-height:1.45">
+                    Add cases to probe edge conditions. They run with <strong>Run tests</strong> but do not affect submit score.
+                </p>
+                <ul class="dm-mock-test-list" data-custom-list>
+                    {% for case in custom_cases %}
+                    <li class="dm-mock-test-case is-custom" data-custom-item>
+                        <div class="dm-mock-custom-head">
+                            <span class="dm-mono dm-mock-test-name">{{ case.name }}</span>
+                            <button type="button" class="dm-btn dm-btn-ghost dm-btn-sm" data-custom-remove>Remove</button>
+                        </div>
+                        <div class="dm-mock-test-io">
+                            <span class="dm-muted">args</span> <code data-custom-args>{{ case.args }}</code>
+                            <span class="dm-muted">→</span> <code data-custom-expected>{{ case.expected }}</code>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="dm-mock-custom-form">
+                    <label class="dm-muted" style="font-size:0.78rem">
+                        Name
+                        <input type="text" class="dm-input" data-custom-name placeholder="edge_zeros" maxlength="40">
+                    </label>
+                    <label class="dm-muted" style="font-size:0.78rem">
+                        Args (JSON list)
+                        <input type="text" class="dm-input dm-mono" data-custom-args-input placeholder='[[1, -2, 3]]' spellcheck="false">
+                    </label>
+                    <label class="dm-muted" style="font-size:0.78rem">
+                        Expected (JSON)
+                        <input type="text" class="dm-input dm-mono" data-custom-expected-input placeholder="4" spellcheck="false">
+                    </label>
+                    <p class="dm-mock-custom-error" data-custom-error hidden></p>
+                    <button type="button" class="dm-btn dm-btn-ghost dm-btn-sm" data-custom-add>Add case</button>
+                </div>
+            </section>
+
+            <section
+                class="dm-panel dm-pad dm-mock-run-panel{% if run_result %} is-{{ run_result.status }}{% endif %}"
+                id="mock-run-results"
+            >
                 <p class="dm-stat-label">Last run</p>
                 {% if run_result %}
                     {% if run_result.error %}
                     <p class="dm-mock-run-error">{{ run_result.error }}</p>
                     {% endif %}
                     {% if run_result.total %}
-                    <p class="dm-mono" style="margin:0.35rem 0 0.65rem;font-weight:650">
-                        {{ run_result.passed }}/{{ run_result.total }} passed
-                        · preview score {{ run_result.score }}/10
-                    </p>
+                    <div class="dm-mock-run-summary is-{{ run_result.status }}">
+                        <span class="dm-mock-run-badge">
+                            {% if run_result.status == "all_pass" %}All passed
+                            {% elif run_result.status == "all_fail" %}All failed
+                            {% elif run_result.status == "partial" %}Partial
+                            {% else %}No tests{% endif %}
+                        </span>
+                        <span class="dm-mono">{{ run_result.passed }}/{{ run_result.total }} · {{ run_result.score }}/10</span>
+                    </div>
                     {% endif %}
                     <ul class="dm-mock-test-results">
                         {% for r in run_result.results %}
-                        <li class="dm-mock-test-result {% if r.passed %}is-pass{% else %}is-fail{% endif %}">
-                            <span class="dm-mono">{{ r.name }}</span>
-                            <span>{% if r.passed %}Pass{% else %}Fail{% endif %}</span>
-                            {% if r.message %}<span class="dm-muted" style="display:block;font-size:0.78rem;margin-top:0.2rem">{{ r.message }}</span>{% endif %}
+                        <li class="dm-mock-test-result {% if r.passed %}is-pass{% else %}is-fail{% endif %}{% if r.custom %} is-custom{% endif %}">
+                            <div class="dm-mock-test-result-top">
+                                <span class="dm-mono">{{ r.name }}{% if r.custom %} · custom{% endif %}</span>
+                                <span class="dm-mock-test-pill">{% if r.passed %}Pass{% else %}Fail{% endif %}</span>
+                            </div>
+                            {% if r.message %}<span class="dm-mock-test-msg">{{ r.message }}</span>{% endif %}
                         </li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                <p class="dm-muted" style="margin:0.35rem 0 0">Click <strong>Run tests</strong> to check against public cases.</p>
+                <p class="dm-muted" style="margin:0.35rem 0 0">Click <strong>Run tests</strong> to check public + custom cases.</p>
                 {% endif %}
             </section>
         </aside>
@@ -169,6 +220,11 @@
 (function () {
   const display = document.querySelector("[data-mock-timer] [data-timer-display]");
   const startMs = display ? Date.parse(display.dataset.startedAt) : NaN;
+  const editor = document.getElementById("mock-code-editor");
+  const customInput = document.getElementById("mock-custom-cases");
+  const customRoot = document.querySelector("[data-custom-cases]");
+  const qid = customRoot ? customRoot.dataset.questionId : "";
+  const storageKey = qid ? "dm-mock-custom-" + qid : "";
 
   function stampTime(form) {
     const hidden = form.querySelector("#mock-time-spent") || document.getElementById("mock-time-spent");
@@ -177,8 +233,123 @@
     }
   }
 
+  function readCases() {
+    try {
+      const raw = customInput ? customInput.value : "[]";
+      const data = JSON.parse(raw || "[]");
+      return Array.isArray(data) ? data : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function writeCases(cases) {
+    if (!customInput) return;
+    customInput.value = JSON.stringify(cases);
+    if (storageKey) {
+      try { sessionStorage.setItem(storageKey, customInput.value); } catch (_) {}
+    }
+    renderCustomList(cases);
+  }
+
+  function renderCustomList(cases) {
+    const list = document.querySelector("[data-custom-list]");
+    if (!list) return;
+    list.innerHTML = "";
+    cases.forEach(function (caseItem, idx) {
+      const li = document.createElement("li");
+      li.className = "dm-mock-test-case is-custom";
+      li.innerHTML =
+        '<div class="dm-mock-custom-head">' +
+        '<span class="dm-mono dm-mock-test-name"></span>' +
+        '<button type="button" class="dm-btn dm-btn-ghost dm-btn-sm" data-custom-remove>Remove</button>' +
+        "</div>" +
+        '<div class="dm-mock-test-io">' +
+        '<span class="dm-muted">args</span> <code></code> ' +
+        '<span class="dm-muted">→</span> <code></code>' +
+        "</div>";
+      li.querySelector(".dm-mock-test-name").textContent = caseItem.name || "custom_" + (idx + 1);
+      const codes = li.querySelectorAll("code");
+      codes[0].textContent = JSON.stringify(caseItem.args);
+      codes[1].textContent = JSON.stringify(caseItem.expected);
+      li.querySelector("[data-custom-remove]").addEventListener("click", function () {
+        const next = readCases().filter(function (_, i) { return i !== idx; });
+        writeCases(next);
+      });
+      list.appendChild(li);
+    });
+  }
+
+  function showError(msg) {
+    const el = document.querySelector("[data-custom-error]");
+    if (!el) return;
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    el.textContent = msg;
+  }
+
+  function parseJsonField(raw, label) {
+    const text = (raw || "").trim();
+    if (!text) throw new Error(label + " is required.");
+    try {
+      return JSON.parse(text);
+    } catch (_) {
+      throw new Error(label + " must be valid JSON.");
+    }
+  }
+
+  // Restore from sessionStorage if server did not provide cases (fresh page)
+  if (customInput && storageKey) {
+    const serverVal = (customInput.value || "").trim();
+    if (!serverVal || serverVal === "[]") {
+      try {
+        const saved = sessionStorage.getItem(storageKey);
+        if (saved) customInput.value = saved;
+      } catch (_) {}
+    }
+    renderCustomList(readCases());
+  } else if (customInput) {
+    renderCustomList(readCases());
+  }
+
+  const addBtn = document.querySelector("[data-custom-add]");
+  if (addBtn) {
+    addBtn.addEventListener("click", function () {
+      showError("");
+      try {
+        const nameEl = document.querySelector("[data-custom-name]");
+        const argsEl = document.querySelector("[data-custom-args-input]");
+        const expEl = document.querySelector("[data-custom-expected-input]");
+        const name = ((nameEl && nameEl.value) || "").trim() || ("custom_" + (readCases().length + 1));
+        let args = parseJsonField(argsEl && argsEl.value, "Args");
+        const expected = parseJsonField(expEl && expEl.value, "Expected");
+        if (!Array.isArray(args)) args = [args];
+        const cases = readCases();
+        if (cases.length >= 12) throw new Error("Limit 12 custom cases.");
+        cases.push({ name: name.slice(0, 40), args: args, expected: expected, custom: true });
+        writeCases(cases);
+        if (nameEl) nameEl.value = "";
+        if (argsEl) argsEl.value = "";
+        if (expEl) expEl.value = "";
+      } catch (err) {
+        showError(err.message || "Could not add case.");
+      }
+    });
+  }
+
+  // Wire remove buttons rendered by server
+  document.querySelectorAll("[data-custom-list] [data-custom-remove]").forEach(function (btn, idx) {
+    btn.addEventListener("click", function () {
+      const next = readCases().filter(function (_, i) { return i !== idx; });
+      writeCases(next);
+    });
+  });
+
   const submitForm = document.getElementById("mock-submit-form");
-  const editor = document.getElementById("mock-code-editor");
   if (submitForm) {
     submitForm.addEventListener("submit", function () {
       stampTime(submitForm);
@@ -196,6 +367,7 @@
   if (runForm) {
     runForm.addEventListener("submit", function () {
       stampTime(runForm);
+      if (customInput) customInput.value = JSON.stringify(readCases());
     });
   }
 })();

@@ -68,3 +68,43 @@ def test_runner_rejects_bad_code():
     ])
     assert result["ok"] is False
     assert "sum_positive" in result["error"]
+
+
+def test_parse_custom_and_status():
+    from training.code_runner import merge_run_cases, parse_custom_test_cases
+
+    custom = parse_custom_test_cases(
+        '[{"name": "mine", "args": [[1, 2]], "expected": 3}]'
+    )
+    assert len(custom) == 1
+    assert custom[0]["custom"] is True
+
+    merged = merge_run_cases(
+        [{"name": "a", "args": [[]], "expected": 0, "hidden": True}],
+        custom,
+        include_hidden=False,
+    )
+    assert len(merged) == 1
+    assert merged[0]["name"] == "mine"
+
+    code = "def sum_positive(nums):\n    return sum(x for x in nums if x > 0)\n"
+    result = run_coding_tests(
+        code,
+        "sum_positive",
+        [
+            {"name": "ok", "args": [[1]], "expected": 1},
+            {"name": "bad", "args": [[1]], "expected": 99},
+        ],
+    )
+    assert result["status"] == "partial"
+    assert result["passed"] == 1
+
+    all_pass = run_coding_tests(
+        code, "sum_positive", [{"name": "ok", "args": [[2]], "expected": 2}]
+    )
+    assert all_pass["status"] == "all_pass"
+
+    all_fail = run_coding_tests(
+        code, "sum_positive", [{"name": "bad", "args": [[2]], "expected": 0}]
+    )
+    assert all_fail["status"] == "all_fail"

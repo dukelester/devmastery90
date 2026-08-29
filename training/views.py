@@ -1010,6 +1010,8 @@ def mock_interview_session(request: HttpRequest, session_id: UUID) -> HttpRespon
 @login_required
 @require_POST
 def mock_interview_run(request: HttpRequest, session_id: UUID) -> HttpResponse:
+    from training.code_runner import parse_custom_test_cases
+
     session = get_object_or_404(
         MockInterviewSession.objects.select_related("round"),
         id=session_id,
@@ -1018,12 +1020,18 @@ def mock_interview_run(request: HttpRequest, session_id: UUID) -> HttpResponse:
     if session.status == MockInterviewSession.Status.COMPLETED:
         return redirect("mock_interview_results", session_id=session.id)
 
+    custom_cases = parse_custom_test_cases(request.POST.get("custom_cases", ""))
     result = run_mock_coding_tests(
-        request.user, session_id, request.POST.get("code", "")
+        request.user,
+        session_id,
+        request.POST.get("code", ""),
+        custom_cases=custom_cases,
     )
     state = get_mock_session_state(session)
     state["run_result"] = result
     state["editor_code"] = request.POST.get("code", "")
+    state["custom_cases"] = custom_cases
+    state["custom_cases_json"] = request.POST.get("custom_cases", "[]")
     return render(request, "mock_interviews/session.html", state)
 
 

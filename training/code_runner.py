@@ -109,6 +109,7 @@ def main():
         expected = case.get("expected")
         take = case.get("take")
         hidden = bool(case.get("hidden", False))
+        custom = bool(case.get("custom", False))
         try:
             got = fn(*args, **kwargs)
             if take is not None:
@@ -120,6 +121,7 @@ def main():
                 "name": name,
                 "passed": passed,
                 "hidden": hidden,
+                "custom": custom,
             }
             if not hidden:
                 entry["expected"] = expected
@@ -136,6 +138,7 @@ def main():
                 "name": name,
                 "passed": False,
                 "hidden": hidden,
+                "custom": custom,
                 "message": f"{type(exc).__name__}: {exc}",
             }
             if not hidden:
@@ -202,6 +205,7 @@ def run_coding_tests(
             "passed": 0,
             "total": 0,
             "score": 0.0,
+            "status": "empty",
         }
     if len(code) > MAX_CODE_CHARS:
         return {
@@ -211,6 +215,7 @@ def run_coding_tests(
             "passed": 0,
             "total": 0,
             "score": 0.0,
+            "status": "empty",
         }
     if not function_name:
         return {
@@ -220,6 +225,7 @@ def run_coding_tests(
             "passed": 0,
             "total": 0,
             "score": 0.0,
+            "status": "empty",
         }
     if not test_cases:
         return {
@@ -229,6 +235,7 @@ def run_coding_tests(
             "passed": 0,
             "total": 0,
             "score": 0.0,
+            "status": "empty",
         }
 
     cases = list(test_cases) if include_hidden else public_test_cases(test_cases)
@@ -261,6 +268,7 @@ def run_coding_tests(
                 "passed": 0,
                 "total": len(cases),
                 "score": 0.0,
+                "status": "all_fail",
             }
 
     if proc.returncode != 0 and not proc.stdout.strip():
@@ -272,6 +280,7 @@ def run_coding_tests(
             "passed": 0,
             "total": len(cases),
             "score": 0.0,
+            "status": "all_fail",
         }
 
     try:
@@ -284,12 +293,21 @@ def run_coding_tests(
             "passed": 0,
             "total": len(cases),
             "score": 0.0,
+            "status": "all_fail",
         }
 
     results = data.get("results") or []
     passed = sum(1 for r in results if r.get("passed"))
     total = len(results)
     score = round((passed / total) * 10, 1) if total else 0.0
+    if total == 0:
+        status = "empty"
+    elif passed == total:
+        status = "all_pass"
+    elif passed == 0:
+        status = "all_fail"
+    else:
+        status = "partial"
     return {
         "ok": bool(data.get("ok", True)) and not data.get("error"),
         "error": data.get("error") or "",
@@ -297,7 +315,61 @@ def run_coding_tests(
         "passed": passed,
         "total": total,
         "score": score,
+        "status": status,
     }
+
+
+def parse_custom_test_cases(raw: str | list | None, *, limit: int = 12) -> list[dict[str, Any]]:
+    """Parse user-provided custom cases from JSON string or list."""
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+    except (json.JSONDecodeError, TypeError):
+        return []
+    if not isinstance(data, list):
+        return []
+
+    cases: list[dict[str, Any]] = []
+    for i, item in enumerate(data[:limit]):
+        if not isinstance(item, dict):
+            continue
+        if "expected" not in item:
+            continue
+        name = str(item.get("name") or f"custom_{i + 1}")[:40]
+        case: dict[str, Any] = {
+            "name": name,
+            "args": item.get("args", []),
+            "expected": item["expected"],
+            "custom": True,
+            "hidden": False,
+        }
+        if isinstance(item.get("kwargs"), dict):
+            case["kwargs"] = item["kwargs"]
+        if item.get("take") is not None:
+            try:
+                case["take"] = int(item["take"])
+            except (TypeError, ValueError):
+                pass
+        if not isinstance(case["args"], list):
+            case["args"] = [case["args"]]
+        cases.append(case)
+    return cases
+
+
+def merge_run_cases(
+    official: list[dict[str, Any]] | None,
+    custom: list[dict[str, Any]] | None,
+    *,
+    include_hidden: bool = False,
+) -> list[dict[str, Any]]:
+    base = list(official or [])
+    if not include_hidden:
+        base = [c for c in base if not c.get("hidden")]
+    extras = []
+    for c in custom or []:
+        extras.append({**c, "custom": True, "hidden": False})
+    return base + extras
 
 
 def score_from_full_suite(code: str, function_name: str, test_cases: list[dict[str, Any]]) -> dict[str, Any]:

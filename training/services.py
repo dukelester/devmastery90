@@ -1194,16 +1194,18 @@ def submit_mock_response(
     return {"session": session, "completed": False, "score": final_score}
 
 
-def run_mock_coding_tests(user, session_id, code: str) -> dict[str, Any]:
-    """Run public tests for the current coding question in a live session."""
-    from training.code_runner import run_coding_tests
+def run_mock_coding_tests(
+    user, session_id, code: str, custom_cases: list | None = None
+) -> dict[str, Any]:
+    """Run public (+ optional custom) tests for the current coding question."""
+    from training.code_runner import merge_run_cases, run_coding_tests
     from training.models import MockInterviewSession
 
     session = MockInterviewSession.objects.select_related("round").get(
         id=session_id, user=user
     )
     if session.status == MockInterviewSession.Status.COMPLETED:
-        return {"ok": False, "error": "Session already completed.", "results": []}
+        return {"ok": False, "error": "Session already completed.", "results": [], "status": "empty"}
 
     question = session.round.questions.filter(order=session.current_order).first()
     if not question or not question.is_runnable:
@@ -1211,13 +1213,19 @@ def run_mock_coding_tests(user, session_id, code: str) -> dict[str, Any]:
             "ok": False,
             "error": "Current question is not a runnable coding problem.",
             "results": [],
+            "status": "empty",
         }
 
+    cases = merge_run_cases(
+        question.test_cases or [],
+        custom_cases or [],
+        include_hidden=False,
+    )
     return run_coding_tests(
         code,
         question.function_name,
-        question.test_cases or [],
-        include_hidden=False,
+        cases,
+        include_hidden=True,
     )
 
 
