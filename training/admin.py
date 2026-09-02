@@ -8,6 +8,7 @@ from training.models import (
     DailyReview,
     InterviewAttempt,
     InterviewQuestion,
+    LearningResource,
     Mistake,
     Phase,
     PracticeProgress,
@@ -28,6 +29,14 @@ class SkillAdmin(admin.ModelAdmin):
     list_display = ["name", "category", "current_score", "target_score"]
     search_fields = ["name"]
     list_filter = ["category"]
+
+
+@admin.register(LearningResource)
+class LearningResourceAdmin(admin.ModelAdmin):
+    list_display = ["title", "resource_type", "skill", "day_number", "is_primary", "order"]
+    list_filter = ["resource_type", "is_primary", "skill"]
+    search_fields = ["title", "url", "description"]
+    autocomplete_fields = ["skill"]
 
 
 @admin.register(Phase)

@@ -7,7 +7,10 @@
     <header class="dm-hero-stage dm-rise">
         <div class="dm-hero-main">
             <p class="dm-kicker">Execution day</p>
-            <div class="dm-day-mark">Day {{ progress.current_day }} <span class="dm-muted" style="font-weight:500;font-size:0.5em">/ 90</span></div>
+            <div class="dm-day-mark">Day {{ progress.current_day }} <span class="dm-muted" style="font-weight:500;font-size:0.5em">/ {{ progress.total_days }}</span></div>
+            {% if progress.in_mastery_track %}
+            <p class="dm-kicker" style="margin-top:0.5rem;color:var(--signal)">{{ progress.phase_label }}</p>
+            {% endif %}
             {% if training_day %}
             <p class="dm-hero-copy">
                 <strong>{{ training_day.title }}</strong>
@@ -70,6 +73,18 @@
                 <p class="dm-muted">No training day found. Seed the program and set your start date.</p>
                 {% endfor %}
             </div>
+            {% if day_resources %}
+            <h2 class="dm-section-title" style="margin-top:1.5rem"><span class="dm-sec-num">01b</span> Recommended resources</h2>
+            <div class="dm-panel dm-pad dm-resource-list">
+                {% for r in day_resources %}
+                <a class="dm-resource-row" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">
+                    <span class="dm-stat-label">{{ r.get_resource_type_display }}{% if r.is_primary %} · primary{% endif %}</span>
+                    <strong>{{ r.title }}</strong>
+                    {% if r.description %}<span class="dm-muted">{{ r.description }}</span>{% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </section>
         <aside>
             <h2 class="dm-section-title"><span class="dm-sec-num">02</span> Daily Review</h2>

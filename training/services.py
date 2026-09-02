@@ -3,12 +3,14 @@ from datetime import date, timedelta
 from typing import Any
 
 from django.conf import settings
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Max, Q, Sum
 from django.utils import timezone
 
+from training.constants import PROGRAM_CORE_DAYS, PROGRAM_ELITE_DAYS
 from training.models import (
     Assessment,
     CodingProblem,
+    LearningResource,
     Mistake,
     Skill,
     StudySession,
@@ -18,6 +20,14 @@ from training.models import (
 )
 
 
+def get_program_total_days() -> int:
+    """Return seeded program length (90 core, 120 with Phase 4)."""
+    max_day = TrainingDay.objects.aggregate(m=Max("day_number"))["m"]
+    if max_day and max_day >= PROGRAM_CORE_DAYS:
+        return int(max_day)
+    return PROGRAM_CORE_DAYS
+
+
 def get_or_create_profile(user) -> UserProfile:
     profile, _ = UserProfile.objects.get_or_create(user=user)
     return profile
@@ -25,9 +35,10 @@ def get_or_create_profile(user) -> UserProfile:
 
 def get_current_day_number(user) -> int:
     profile = get_or_create_profile(user)
+    total = get_program_total_days()
     if profile.program_start_date:
         delta = (date.today() - profile.program_start_date).days + 1
-        return max(1, min(delta, 90))
+        return max(1, min(delta, total))
     return 1
 
 
@@ -42,7 +53,7 @@ def get_today_training_day(user) -> TrainingDay | None:
 def calculate_progress(user) -> dict[str, Any]:
     """Calculate overall program progress for a user."""
     current_day = get_current_day_number(user)
-    total_days = 90
+    total_days = get_program_total_days()
     days_remaining = max(0, total_days - current_day)
 
     total_tasks = Task.objects.count()
@@ -55,10 +66,12 @@ def calculate_progress(user) -> dict[str, Any]:
     study_hours = profile.total_study_minutes / 60
 
     completed_days = TrainingDay.objects.filter(completed=True).count()
+    in_mastery = current_day > PROGRAM_CORE_DAYS and total_days >= PROGRAM_ELITE_DAYS
 
     return {
         "current_day": current_day,
         "total_days": total_days,
+        "core_days": PROGRAM_CORE_DAYS,
         "days_remaining": days_remaining,
         "day_progress": round(day_progress, 1),
         "task_progress": round(task_progress, 1),
@@ -70,6 +83,8 @@ def calculate_progress(user) -> dict[str, Any]:
         "xp": profile.xp,
         "level": profile.level,
         "level_title": profile.level_title,
+        "in_mastery_track": in_mastery,
+        "phase_label": "Phase 4 — Elite Mastery" if in_mastery else "Core 90",
     }
 
 
@@ -163,7 +178,8 @@ def build_milestones(user, profile: UserProfile | None = None) -> dict[str, Any]
         {"key": "week1", "label": "Week 1", "hint": "Reach day 7", "earned": current_day >= 7},
         {"key": "month1", "label": "Month 1", "hint": "Reach day 30", "earned": current_day >= 30},
         {"key": "month2", "label": "Month 2", "hint": "Reach day 60", "earned": current_day >= 60},
-        {"key": "day90", "label": "Day 90", "hint": "Finish the program", "earned": current_day >= 90},
+        {"key": "day90", "label": "Day 90", "hint": "Finish the core program", "earned": current_day >= 90},
+        {"key": "day120", "label": "Day 120", "hint": "Complete elite mastery track", "earned": current_day >= 120},
         {
             "key": "streak7",
             "label": "7-day streak",
@@ -543,7 +559,6 @@ def get_daily_recommendations(user) -> list[dict[str, Any]]:
         today_tasks = training_day.tasks.filter(
             completed=False, skipped=False
         ).select_related("skill").order_by("order")[:task_limit]
-        # Prefer higher-priority curriculum items when lightening load
         for task in today_tasks:
             recommendations.append({
                 "priority": task.priority,
@@ -553,6 +568,33 @@ def get_daily_recommendations(user) -> list[dict[str, Any]]:
                 "task_id": task.id,
                 "type": "scheduled",
             })
+
+    # 6. Curated resources for today / weak skills
+    if not light_mode:
+        for resource in get_day_resources(current_day)[:2]:
+            recommendations.append({
+                "priority": "medium",
+                "title": f"Read: {resource.title}",
+                "minutes": 20,
+                "reason": resource.description or resource.get_resource_type_display(),
+                "type": "resource",
+                "url": resource.url,
+                "skill_slug": resource.skill.slug if resource.skill_id else "",
+            })
+        for weakness in get_top_weaknesses(user, 1):
+            skill_resources = LearningResource.objects.filter(
+                skill=weakness["skill"]
+            ).order_by("-is_primary", "order")[:1]
+            for resource in skill_resources:
+                recommendations.append({
+                    "priority": "medium",
+                    "title": f"Resource: {resource.title}",
+                    "minutes": 25,
+                    "reason": f"Supports weak skill — {weakness['skill'].name}",
+                    "type": "resource",
+                    "url": resource.url,
+                    "skill_slug": weakness["skill"].slug,
+                })
 
     if light_mode:
         recommendations.insert(0, {
@@ -567,6 +609,22 @@ def get_daily_recommendations(user) -> list[dict[str, Any]]:
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
     recommendations.sort(key=lambda x: priority_order.get(x["priority"], 4))
     return recommendations[: (5 if light_mode else 8)]
+
+
+def get_day_resources(day_number: int) -> list[LearningResource]:
+    """Curated resources for a curriculum day (plus week-level fallbacks)."""
+    day = get_training_day(day_number)
+    qs = LearningResource.objects.filter(day_number=day_number).select_related("skill")
+    resources = list(qs.order_by("-is_primary", "order", "title"))
+    if day and day.week_id and len(resources) < 3:
+        week_extras = (
+            LearningResource.objects.filter(week_number=day.week.week_number)
+            .exclude(id__in=[r.id for r in resources])
+            .select_related("skill")
+            .order_by("-is_primary", "order")[: 3 - len(resources)]
+        )
+        resources.extend(week_extras)
+    return resources
 
 
 def get_analytics_data(user) -> dict[str, Any]:
@@ -1097,7 +1155,7 @@ def get_coaching_briefing(user) -> dict[str, Any]:
     performance_summary = (
         f"{progress['completed_tasks']} tasks done · "
         f"{progress['study_hours']}h studied · "
-        f"Day {progress['current_day']} of 90"
+        f"Day {progress['current_day']} of {progress['total_days']}"
     )
 
     recent_assess = Assessment.objects.filter(user=user).order_by("-completed_at").first()
@@ -1116,7 +1174,10 @@ def get_coaching_briefing(user) -> dict[str, Any]:
             "type": rec.get("type"),
             "url": None,
         }
-        if rec.get("task_id"):
+        if rec.get("type") == "resource" and rec.get("url"):
+            action["url"] = rec["url"]
+            action["external"] = True
+        elif rec.get("task_id"):
             action["url"] = reverse("today")
         elif rec.get("type") == "weakness":
             slug = rec.get("skill_slug", "python")

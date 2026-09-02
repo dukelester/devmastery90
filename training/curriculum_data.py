@@ -39,6 +39,14 @@ PHASES = [
         "name": "Phase 3 — Elite Engineering + Interview Preparation",
         "description": "Production project, hardening, testing, cloud, performance, and interview war room (Days 61–90).",
     },
+    {
+        "order": 4,
+        "name": "Phase 4 — Elite Mastery Track",
+        "description": (
+            "Weakness remediation, production failure drills, proof-of-work artifacts, "
+            "and interview calibration (Days 91–120)."
+        ),
+    },
 ]
 
 WEEKS = [
@@ -58,6 +66,10 @@ WEEKS = [
   {"week_number": 11, "phase_order": 3, "title": "Testing + Cloud + Performance", "objectives": "pytest mastery, integration testing, AWS, cloud architecture, and performance testing."},
   {"week_number": 12, "phase_order": 3, "title": "Interview / Assessment War Room", "objectives": "Full mock interviews, assessments, debugging challenges, and final review."},
 ]
+
+from training.curriculum_phase4 import WEEKS_13_16
+
+WEEKS.extend(WEEKS_13_16)
 
 # Day definitions: day_number, week_number, title, focus, target_minutes, tasks
 # Each task: (title, description, task_type, skill_slug, estimated_minutes, difficulty, priority, order)
@@ -230,6 +242,8 @@ DAYS: list[dict[str, Any]] = [
 ]
 
 from training.curriculum_remaining import REMAINING_DAYS, build_week_5_12_days
+from training.curriculum_phase4 import PHASE4_DAYS
 
 DAYS.extend(REMAINING_DAYS)
 DAYS.extend(build_week_5_12_days())
+DAYS.extend(PHASE4_DAYS)

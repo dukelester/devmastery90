@@ -48,6 +48,7 @@ from training.services import (
     get_coaching_briefing,
     get_coding_stats,
     get_daily_recommendations,
+    get_day_resources,
     get_due_review_cards,
     get_interview_stats,
     get_practice_hub_data,
@@ -251,6 +252,7 @@ def today_view(request: HttpRequest) -> HttpResponse:
         "tasks": training_day.tasks.select_related("skill").all() if training_day else [],
         "active_session": active_session,
         "daily_total_minutes": daily_total,
+        "day_resources": get_day_resources(progress["current_day"]) if training_day else [],
     }
     return render(request, "today/index.html", context)
 
@@ -748,7 +750,7 @@ def assessments_view(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def engineering_view(request: HttpRequest) -> HttpResponse:
-    challenges = EngineeringChallenge.objects.all()
+    challenges = list(EngineeringChallenge.objects.all())
     by_type: dict[str, list] = {}
     for ch in challenges:
         by_type.setdefault(ch.challenge_type, []).append(ch)
@@ -758,15 +760,50 @@ def engineering_view(request: HttpRequest) -> HttpResponse:
             user=request.user, challenge__in=challenges
         )
     }
+    in_progress = 0
+    completed_labs = 0
     for ch in challenges:
-        ch.lab_session = sessions.get(ch.id)
-    attempts = EngineeringAttempt.objects.filter(user=request.user).select_related(
-        "challenge"
-    )[:15]
+        session = sessions.get(ch.id)
+        ch.lab_session = session
+        steps = ch.lab_steps or []
+        if session and steps:
+            done = len(session.completed_steps or [])
+            if done >= len(steps):
+                completed_labs += 1
+            elif done > 0 or session.accumulated_minutes or session.timer_started_at:
+                in_progress += 1
+        elif session and (session.accumulated_minutes or session.code_workspace):
+            in_progress += 1
+
+    attempts = list(
+        EngineeringAttempt.objects.filter(user=request.user)
+        .select_related("challenge")[:12]
+    )
+    type_meta = [
+        {
+            "key": key,
+            "label": items[0].get_challenge_type_display(),
+            "count": len(items),
+            "items": items,
+        }
+        for key, items in by_type.items()
+    ]
+    stats = {
+        "total": len(challenges),
+        "in_progress": in_progress,
+        "completed": completed_labs,
+        "attempts": EngineeringAttempt.objects.filter(user=request.user).count(),
+        "types": len(by_type),
+    }
     return render(
         request,
         "engineering/index.html",
-        {"by_type": by_type, "attempts": attempts},
+        {
+            "by_type": by_type,
+            "type_meta": type_meta,
+            "attempts": attempts,
+            "stats": stats,
+        },
     )
 
 
@@ -1257,30 +1294,30 @@ def project_detail(request: HttpRequest, project_id: UUID) -> HttpResponse:
 
 
 FEATURE_HIGHLIGHTS = [
-    {"title": "90-day curriculum", "copy": "Phased roadmap from Python foundations to interview war room."},
+    {"title": "90-day core + Phase 4", "copy": "Core mastery through day 90, then elite remediation and failure drills to 120."},
     {"title": "Adaptive coaching", "copy": "Weakness signals, repeating mistakes, and next actions on the dashboard."},
-    {"title": "Practice bank", "copy": "Interview questions with hints, solutions, and proficiency unlocks."},
+    {"title": "Curated resources", "copy": "Articles, docs, and courses mapped to each skill and training day."},
     {"title": "Mock interviews", "copy": "Timed rounds with coding run/tests and scored feedback."},
     {"title": "Engineering labs", "copy": "Hands-on challenges with steps, hints, and timers."},
-    {"title": "Projects hub", "copy": "Production briefs with acceptance criteria you can check off."},
+    {"title": "Elite project NFRs", "copy": "Production briefs with SLOs, chaos, load evidence, and ADRs."},
 ]
 
 FEATURE_GROUPS = [
     {
         "title": "Training core",
         "items": [
-            {"name": "90-day curriculum", "detail": "Phases, weeks, days, and prioritized tasks with workload safety."},
-            {"name": "Today execution", "detail": "Mission view, timer, daily review, and streak tracking."},
+            {"name": "90-day core + Phase 4", "detail": "Phases 1–3 through day 90; elite mastery track days 91–120."},
+            {"name": "Today execution", "detail": "Mission view, curated resources, timer, daily review, and streaks."},
             {"name": "Focus mode", "detail": "Distraction-light sessions tied to tasks and XP."},
-            {"name": "Calendar", "detail": "Visual 90-day map with day detail drawers."},
+            {"name": "Calendar", "detail": "Visual program map with day detail drawers."},
         ],
     },
     {
         "title": "Skill engines",
         "items": [
-            {"name": "Adaptive recommendations", "detail": "Daily coaching from weaknesses, overdue work, and curriculum."},
+            {"name": "Adaptive recommendations", "detail": "Daily coaching from weaknesses, overdue work, resources, and curriculum."},
             {"name": "Skill health", "detail": "Scores and trends from assessments, coding, and mistakes."},
-            {"name": "Spaced review", "detail": "Review cards with scheduling for durable memory."},
+            {"name": "Curated resources", "detail": "Docs, articles, and courses linked to skills and days."},
             {"name": "Mistakes log", "detail": "Capture, categorize, and resolve repeating errors."},
         ],
     },

@@ -48,7 +48,7 @@
             {% for action in coaching.next_actions|slice:":2" %}
             <p>
                 {{ action.title|truncatechars:44 }}
-                {% if action.url %}<a href="{{ action.url }}" class="dm-link-quiet">Go</a>{% endif %}
+                {% if action.url %}<a href="{{ action.url }}" class="dm-link-quiet"{% if action.external %} target="_blank" rel="noopener noreferrer"{% endif %}>Go</a>{% endif %}
             </p>
             {% empty %}
             <p>Continue today's mission.</p>

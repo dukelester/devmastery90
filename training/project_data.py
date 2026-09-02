@@ -56,6 +56,10 @@ PROJECTS = [
             "Idempotent webhook delivery with signature verification",
             "Structured JSON logs with request/job correlation IDs",
             "Horizontal worker scale without duplicate side effects",
+            "Defined SLOs: availability ≥ 99.5%, extraction success ≥ 98% excluding poison files",
+            "Chaos: kill a worker mid-job; job recovers or fails cleanly with DLQ path",
+            "Cost envelope documented for 10× document volume (storage + worker hours)",
+            "Security: virus-scan hook or documented compensating control; signed download URLs expire",
         ],
         "acceptance_criteria": [
             {"id": "ac-tenant", "text": "Two tenants cannot read each other's documents via API or UI", "required": True},
@@ -65,6 +69,9 @@ PROJECTS = [
             {"id": "ac-authz", "text": "Role-based permissions cover owner/admin/member for mutations", "required": True},
             {"id": "ac-tests", "text": "Automated tests cover isolation, upload→job, and webhook signing", "required": True},
             {"id": "ac-docs", "text": "README documents local run, env vars, and architecture diagram", "required": True},
+            {"id": "ac-load", "text": "Load-test notes show p95 job enqueue latency and worker saturation point", "required": True},
+            {"id": "ac-postmortem", "text": "One tabletop/postmortem for a simulated extraction outage is in the repo", "required": True},
+            {"id": "ac-adr", "text": "At least two ADRs cover tenancy and async job design", "required": True},
             {"id": "ac-docker", "text": "docker compose brings up web, worker, postgres, redis, and storage", "required": False},
         ],
         "milestones": [
@@ -136,6 +143,9 @@ PROJECTS = [
             "Redirect P95 under 50ms from warm cache",
             "No duplicate codes under concurrent creates",
             "Analytics eventual consistency acceptable within seconds",
+            "Hot-path stays online if analytics queue is down (degrade gracefully)",
+            "Abuse: creator rate limits + disable-link kill switch under 1s effect",
+            "Capacity sheet for 10k QPS redirect with cache hit-ratio assumptions",
         ],
         "acceptance_criteria": [
             {"id": "ac-create", "text": "POST create returns code and fully qualified short URL", "required": True},
@@ -144,6 +154,8 @@ PROJECTS = [
             {"id": "ac-analytics", "text": "Click events are persisted asynchronously", "required": True},
             {"id": "ac-disable", "text": "Disabled links return 410/404 and stop counting", "required": True},
             {"id": "ac-tests", "text": "Concurrency test proves unique code allocation", "required": True},
+            {"id": "ac-bench", "text": "Benchmark doc includes methodology and p95 redirect numbers", "required": True},
+            {"id": "ac-degrade", "text": "Demo or test shows redirects succeed when analytics worker is stopped", "required": True},
         ],
         "milestones": [
             {"title": "M1 — Core API", "hours": 10, "deliverables": ["Models", "Create/resolve"]},
@@ -175,8 +187,8 @@ PROJECTS = [
             "Features ship faster than operators can debug them. Build an API that is "
             "operable on day one with clear signals when it is healthy, degraded, or down."
         ),
-        "difficulty": "medium",
-        "estimated_hours": 28,
+        "difficulty": "hard",
+        "estimated_hours": 36,
         "week_focus": 10,
         "order": 3,
         "is_featured": False,
@@ -198,9 +210,12 @@ PROJECTS = [
             "Every response includes a request id header",
         ],
         "non_functional_requirements": [
-            "Documented SLO for availability and latency",
-            "Logs are structured JSON",
+            "Documented SLO for availability and latency with error-budget policy",
+            "Logs are structured JSON with correlation IDs",
             "Readiness fails when DB is unreachable",
+            "Chaos: dependency failure surfaces on /readyz without crashing the process",
+            "Alert definitions are actionable (symptom + next step), not raw metric noise",
+            "p95 latency budget stated and verified under a small load test",
         ],
         "acceptance_criteria": [
             {"id": "ac-crud", "text": "Authenticated CRUD works with validation errors as 400", "required": True},
@@ -208,6 +223,8 @@ PROJECTS = [
             {"id": "ac-ready", "text": "/readyz fails closed when database is down", "required": True},
             {"id": "ac-metrics", "text": "Metrics endpoint or exporter exposes latency + errors", "required": True},
             {"id": "ac-slo", "text": "SLO sheet checked into repo with error-budget policy", "required": True},
+            {"id": "ac-runbook", "text": "On-call runbook covers SEV definitions and first 15 minutes", "required": True},
+            {"id": "ac-chaos", "text": "Documented chaos check for DB down / high latency path", "required": True},
         ],
         "milestones": [
             {"title": "M1 — API", "hours": 8, "deliverables": ["Resource + auth"]},

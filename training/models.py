@@ -120,6 +120,62 @@ class Skill(UUIDModel):
         super().save(*args, **kwargs)
 
 
+class ResourceType(models.TextChoices):
+    ARTICLE = "article", "Article"
+    DOCS = "docs", "Official docs"
+    COURSE = "course", "Course"
+    VIDEO = "video", "Video"
+    BOOK = "book", "Book"
+    TOOL = "tool", "Tool"
+
+
+class LearningResource(UUIDModel):
+    """Curated external resources tied to skills and/or curriculum days."""
+
+    title = models.CharField(max_length=240)
+    url = models.URLField()
+    resource_type = models.CharField(
+        max_length=20, choices=ResourceType.choices, default=ResourceType.ARTICLE
+    )
+    skill = models.ForeignKey(
+        Skill,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resources",
+    )
+    day_number = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Optional curriculum day this resource supports.",
+    )
+    week_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Highlight as the first recommended read for the skill/day.",
+    )
+    order = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "title"]
+        indexes = [
+            models.Index(fields=["day_number"]),
+            models.Index(fields=["skill", "order"]),
+            models.Index(fields=["resource_type"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["url", "day_number", "skill"],
+                name="uniq_resource_url_day_skill",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.title
+
+
 class Phase(UUIDModel):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)

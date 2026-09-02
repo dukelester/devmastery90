@@ -7,7 +7,7 @@
 >
     <div class="dm-dash-bar-main">
         <div class="dm-dash-day">
-            <span class="dm-kicker" style="margin:0">Day {{ progress.current_day }} / 90</span>
+            <span class="dm-kicker" style="margin:0">Day {{ progress.current_day }} / {{ progress.total_days }}{% if progress.in_mastery_track %} · Mastery{% endif %}</span>
             <h1 class="dm-dash-title">
                 {% if training_day %}{{ training_day.title }}{% else %}DevMastery 90{% endif %}
             </h1>

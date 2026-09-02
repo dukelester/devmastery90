@@ -3,7 +3,7 @@
 {% block content %}
 <div class="dm-stack dm-rise">
     <header>
-        <p class="dm-kicker">90-day map</p>
+        <p class="dm-kicker">{% if progress.total_days > 90 %}120-day map · core + elite{% else %}90-day map{% endif %}</p>
         <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">Training Calendar</h1>
         <p class="dm-muted" style="margin:0.4rem 0 0">Select a day for mission details.</p>
     </header>
