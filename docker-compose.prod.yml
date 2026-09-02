@@ -102,6 +102,31 @@ services:
     networks:
       - dm_net
 
+  beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A config beat -l info
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DEBUG: "False"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      SKIP_SEED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    networks:
+      - dm_net
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped

@@ -182,6 +182,36 @@ Installable on mobile/desktop:
 
 On a phone: open the site over HTTPS (or localhost), use **Add to Home Screen** / **Install app**.
 
+## Email coaching reminders
+
+Digests cover today’s session, upcoming day, strengths, weak skills, weekly study summary, and curated reading links.
+
+### SMTP setup
+
+Copy values from `.env.example` into `.env`. For Gmail:
+
+1. Enable 2FA on the Google account.
+2. Create an [App Password](https://myaccount.google.com/apppasswords) and set `EMAIL_HOST_PASSWORD` to it.
+3. Set `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, `EMAIL_HOST=smtp.gmail.com`, `EMAIL_PORT=587`, `EMAIL_USE_TLS=True`, plus `EMAIL_HOST_USER` / `DEFAULT_FROM_EMAIL`.
+4. Set `SITE_URL` to the public base URL (links inside digests).
+5. Restart `runserver` / Celery so they reload `.env`.
+
+Production (`config.settings.production`) defaults to the SMTP backend. Never commit real passwords — only placeholders in `*.example` files.
+
+### Send digests
+
+1. Set your **email**, **timezone**, and reminder prefs under **Profile → Email reminders**.
+2. Click **Send test digest now** — you should receive mail at your account email.
+3. For automatic sends, run Celery worker + beat (or cron the management command):
+
+```bash
+celery -A config worker -l info
+celery -A config beat -l info
+# or
+./venv/bin/python manage.py send_training_reminders
+./venv/bin/python manage.py send_training_reminders --username YOUR_USER  # force one user
+```
+
 ## Curriculum Structure
 
 - **Phase 1** (Days 1–30): Python + Problem Solving

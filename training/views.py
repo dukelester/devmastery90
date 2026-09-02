@@ -80,6 +80,7 @@ from training.forms import (
     DevMasteryAuthenticationForm,
     DevMasteryPasswordChangeForm,
     DevMasteryUserCreationForm,
+    EmailRemindersForm,
     ProfileDetailsForm,
     UserAccountForm,
 )
@@ -133,6 +134,7 @@ def profile_view(request: HttpRequest) -> HttpResponse:
 
     account_form = UserAccountForm(instance=request.user)
     profile_form = ProfileDetailsForm(instance=profile)
+    reminders_form = EmailRemindersForm(instance=profile)
     password_form = DevMasteryPasswordChangeForm(request.user)
 
     if request.method == "POST":
@@ -146,6 +148,35 @@ def profile_view(request: HttpRequest) -> HttpResponse:
                 messages.success(request, "Profile updated.")
                 return redirect("profile")
             tab = "profile"
+        elif action == "reminders":
+            reminders_form = EmailRemindersForm(request.POST, instance=profile)
+            if reminders_form.is_valid():
+                reminders_form.save()
+                messages.success(request, "Reminder preferences saved.")
+                return redirect(reverse("profile") + "?tab=reminders")
+            tab = "reminders"
+        elif action == "send_test_digest":
+            from training.email_digest import send_training_digest
+
+            if not request.user.email:
+                messages.error(request, "Add an email on your account before sending a digest.")
+            else:
+                try:
+                    send_training_digest(request.user, force=True)
+                    from django.conf import settings as dj_settings
+
+                    backend = dj_settings.EMAIL_BACKEND or ""
+                    if "console" in backend or "locmem" in backend:
+                        hint = " (console backend — check server/worker logs)."
+                    else:
+                        hint = f" via {dj_settings.EMAIL_HOST or 'SMTP'}."
+                    messages.success(
+                        request,
+                        f"Test digest sent to {request.user.email}{hint}",
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    messages.error(request, f"Could not send digest: {exc}")
+            return redirect(reverse("profile") + "?tab=reminders")
         elif action == "password":
             password_form = DevMasteryPasswordChangeForm(request.user, request.POST)
             if password_form.is_valid():
@@ -164,6 +195,7 @@ def profile_view(request: HttpRequest) -> HttpResponse:
             "tab": tab,
             "account_form": account_form,
             "profile_form": profile_form,
+            "reminders_form": reminders_form,
             "password_form": password_form,
         },
     )
@@ -1141,8 +1173,13 @@ def cognitive_list(request: HttpRequest, type_slug: str) -> HttpResponse:
         return redirect("cognitive_hub")
     category = request.GET.get("category") or None
     difficulty = request.GET.get("difficulty") or None
+    show = request.GET.get("show") or "open"
     data = get_cognitive_list_data(
-        request.user, challenge_type, category=category, difficulty=difficulty
+        request.user,
+        challenge_type,
+        category=category,
+        difficulty=difficulty,
+        show=show,
     )
     data["type_slug"] = type_slug
     data["type_label"] = "Aptitude Tests" if challenge_type == "aptitude" else "Brain Teasers"
@@ -1155,7 +1192,8 @@ def cognitive_question(request: HttpRequest, type_slug: str, question_id: UUID) 
     if not challenge_type:
         return redirect("cognitive_hub")
     question = get_object_or_404(CognitiveQuestion, id=question_id, challenge_type=challenge_type)
-    data = get_cognitive_question_data(request.user, question.id)
+    show_all = request.GET.get("show") == "all"
+    data = get_cognitive_question_data(request.user, question.id, show_all=show_all)
     data["type_slug"] = type_slug
     data["type_label"] = "Aptitude Tests" if challenge_type == "aptitude" else "Brain Teasers"
     return render(request, "cognitive/question.html", data)
@@ -1179,6 +1217,8 @@ def cognitive_reveal(request: HttpRequest, type_slug: str, question_id: UUID) ->
         notes=request.POST.get("notes", ""),
         time_spent_seconds=max(0, time_spent),
     )
+    data["type_slug"] = type_slug
+    data["oob_nav"] = True
     if request.htmx:
         return render(request, "cognitive/_answer.html", data)
     return redirect("cognitive_question", type_slug=type_slug, question_id=question.id)

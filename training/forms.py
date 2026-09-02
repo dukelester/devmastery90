@@ -104,6 +104,37 @@ class ProfileDetailsForm(StyledFormMixin, forms.ModelForm):
             "linkedin_url": "LinkedIn URL",
             "portfolio_url": "Portfolio URL",
         }
+        help_texts = {
+            "timezone": "IANA name such as Africa/Nairobi or UTC — used for reminder timing.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_fields()
+
+
+class EmailRemindersForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = (
+            "timezone",
+            "email_reminders_enabled",
+            "email_digest_frequency",
+            "email_reminder_hour",
+        )
+        widgets = {
+            "email_reminder_hour": forms.NumberInput(attrs={"min": 0, "max": 23}),
+        }
+        labels = {
+            "email_reminders_enabled": "Email coaching reminders",
+            "email_digest_frequency": "Digest frequency",
+            "email_reminder_hour": "Send at local hour (0–23)",
+        }
+        help_texts = {
+            "email_reminders_enabled": "Sessions, strengths, gaps, summary, and reading links.",
+            "email_reminder_hour": "Uses your timezone. Example: 7 = 7:00 local.",
+            "timezone": "IANA name such as Africa/Nairobi or UTC.",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

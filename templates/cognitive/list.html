@@ -1,51 +1,104 @@
 {% extends "base.html" %}
 {% block title %}{{ type_label }} — Cognitive{% endblock %}
 {% block content %}
-<div class="dm-stack dm-rise">
-    <header>
-        <p class="dm-kicker"><a href="{% url 'cognitive_hub' %}" class="dm-muted">Cognitive</a> / {{ type_label }}</p>
-        <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">{{ type_label }}</h1>
-        <p class="dm-muted" style="margin:0.35rem 0 0">
-            {{ questions|length }} shown · {{ revealed_count }} revealed
-        </p>
+<div class="dm-stack dm-rise dm-cognitive-list-page">
+    <header class="dm-cognitive-list-head">
+        <div>
+            <p class="dm-kicker"><a href="{% url 'cognitive_hub' %}" class="dm-muted">Cognitive</a> / {{ type_label }}</p>
+            <h1 class="dm-display" style="font-size:2rem;margin:0.35rem 0 0">{{ type_label }}</h1>
+            <p class="dm-muted" style="margin:0.35rem 0 0">
+                {% if show_filter == 'open' %}
+                {{ open_count }} left in queue · {{ revealed_count }} done
+                {% elif show_filter == 'done' %}
+                {{ revealed_count }} completed · {{ open_count }} still open
+                {% else %}
+                {{ total_count }} total · {{ open_count }} open · {{ revealed_count }} done
+                {% endif %}
+            </p>
+        </div>
+        {% if total_count %}
+        <div class="dm-cognitive-list-progress">
+            <div class="dm-stat-label">Progress</div>
+            <div class="dm-mono" style="font-size:0.85rem;margin-top:0.2rem">{{ revealed_count }}/{{ total_count }}</div>
+            <div class="dm-progress" style="margin-top:0.45rem">
+                <div class="dm-progress-bar" style="width:{% widthratio revealed_count total_count 100 %}%"></div>
+            </div>
+        </div>
+        {% endif %}
     </header>
 
-    <form method="get" class="dm-panel dm-pad dm-cognitive-filters">
-        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
-            <select name="category" class="dm-input" style="width:auto;min-width:10rem">
-                <option value="">All categories</option>
-                {% for cat in categories %}
-                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
-                {% endfor %}
-            </select>
-            <select name="difficulty" class="dm-input" style="width:auto">
-                <option value="">All difficulties</option>
-                <option value="easy" {% if difficulty_filter == 'easy' %}selected{% endif %}>Easy</option>
-                <option value="medium" {% if difficulty_filter == 'medium' %}selected{% endif %}>Medium</option>
-                <option value="hard" {% if difficulty_filter == 'hard' %}selected{% endif %}>Hard</option>
-            </select>
-            <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Filter</button>
+    {% if show_filter == 'open' and questions %}
+    <a href="{% url 'cognitive_question' type_slug questions.0.id %}" class="dm-panel dm-pad dm-cognitive-continue">
+        <div>
+            <p class="dm-kicker" style="color:var(--signal)">Next up</p>
+            <p class="dm-cognitive-continue-q">#{{ questions.0.order }} · {{ questions.0.category_label }}</p>
+            <p class="dm-cognitive-continue-text">{{ questions.0.question }}</p>
         </div>
+        <span class="dm-btn dm-btn-primary dm-btn-sm">Start →</span>
+    </a>
+    {% endif %}
+
+    <form method="get" class="dm-cognitive-toolbar">
+        <select name="show" class="dm-input dm-cognitive-toolbar-input" aria-label="Show">
+            <option value="open" {% if show_filter == 'open' %}selected{% endif %}>Unanswered</option>
+            <option value="all" {% if show_filter == 'all' %}selected{% endif %}>All</option>
+            <option value="done" {% if show_filter == 'done' %}selected{% endif %}>Done</option>
+        </select>
+        <select name="category" class="dm-input dm-cognitive-toolbar-input" aria-label="Category">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|title }}</option>
+            {% endfor %}
+        </select>
+        <select name="difficulty" class="dm-input dm-cognitive-toolbar-input" aria-label="Difficulty">
+            <option value="">Any difficulty</option>
+            <option value="easy" {% if difficulty_filter == 'easy' %}selected{% endif %}>Easy</option>
+            <option value="medium" {% if difficulty_filter == 'medium' %}selected{% endif %}>Medium</option>
+            <option value="hard" {% if difficulty_filter == 'hard' %}selected{% endif %}>Hard</option>
+        </select>
+        <button type="submit" class="dm-btn dm-btn-ghost dm-btn-sm">Apply</button>
     </form>
 
-    <div class="dm-cognitive-list">
-        {% for q in questions %}
-        <article class="dm-panel dm-pad dm-cognitive-item {% if q.is_revealed %}is-revealed{% endif %}">
-            <div class="dm-cognitive-item-head">
-                <span class="dm-mono">#{{ q.order }}</span>
-                <span class="dm-tag">{{ q.category }}</span>
-                <span class="dm-tag">{{ q.get_difficulty_display }}</span>
-                <span class="dm-tag dm-tag-timer">{{ q.time_limit_label }}</span>
-                {% if q.is_revealed %}<span class="dm-tag" style="background:var(--signal-soft);color:var(--signal-deep)">Revealed</span>{% endif %}
-            </div>
-            <p style="margin:0.5rem 0 0;font-weight:600;line-height:1.45">{{ q.question }}</p>
-            <a href="{% url 'cognitive_question' type_slug q.id %}" class="dm-btn dm-btn-primary dm-btn-sm" style="margin-top:0.65rem">
-                Work on this →
+    <div class="dm-panel dm-cognitive-queue">
+        {% if questions %}
+        <div class="dm-cognitive-queue-head">
+            <span class="dm-stat-label">{% if show_filter == 'open' %}Queue{% elif show_filter == 'done' %}Completed{% else %}All questions{% endif %}</span>
+            <span class="dm-mono dm-muted" style="font-size:0.78rem">{{ questions|length }} shown</span>
+        </div>
+        <div class="dm-cognitive-rows">
+            {% for q in questions %}
+            <a
+                href="{% url 'cognitive_question' type_slug q.id %}{% if show_filter == 'all' %}?show=all{% endif %}"
+                class="dm-cognitive-row{% if q.is_revealed %} is-done{% endif %}{% if show_filter == 'open' and forloop.first %} is-next{% endif %}"
+            >
+                <span class="dm-cognitive-row-num dm-mono">#{{ q.order }}</span>
+                <span class="dm-cognitive-row-body">
+                    <span class="dm-cognitive-row-text">{{ q.question }}</span>
+                    <span class="dm-cognitive-row-meta">
+                        <span>{{ q.category_label }}</span>
+                        <span class="dm-tag dm-tag-diff-{{ q.difficulty }}">{{ q.get_difficulty_display }}</span>
+                        <span class="dm-tag dm-tag-timer">{{ q.time_limit_label }}</span>
+                        {% if q.is_revealed %}<span class="dm-tag dm-tag-done">Done</span>{% endif %}
+                    </span>
+                </span>
+                <span class="dm-cognitive-row-action" aria-hidden="true">→</span>
             </a>
-        </article>
-        {% empty %}
-        <p class="dm-muted">No questions match this filter.</p>
-        {% endfor %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="dm-pad dm-cognitive-empty">
+            {% if show_filter == 'open' %}
+            <p style="margin:0;font-weight:600">You’re caught up — nothing left in the queue.</p>
+            <p class="dm-muted" style="margin:0.35rem 0 0">Review completed questions or browse the full bank.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem">
+                <a href="?show=done{% if category_filter %}&category={{ category_filter }}{% endif %}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}" class="dm-btn dm-btn-ghost dm-btn-sm">View done</a>
+                <a href="?show=all{% if category_filter %}&category={{ category_filter }}{% endif %}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}" class="dm-btn dm-btn-primary dm-btn-sm">Show all</a>
+            </div>
+            {% else %}
+            <p class="dm-muted" style="margin:0">No questions match this filter.</p>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

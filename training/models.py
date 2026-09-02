@@ -290,6 +290,25 @@ class UserProfile(UUIDModel):
     github_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
     portfolio_url = models.URLField(blank=True)
+    email_reminders_enabled = models.BooleanField(
+        default=True,
+        help_text="Send coaching digests about sessions, progress, and reading.",
+    )
+    email_digest_frequency = models.CharField(
+        max_length=20,
+        choices=[
+            ("daily", "Daily"),
+            ("weekdays", "Weekdays only"),
+            ("weekly", "Weekly (Mondays)"),
+        ],
+        default="daily",
+    )
+    email_reminder_hour = models.PositiveSmallIntegerField(
+        default=7,
+        validators=[MinValueValidator(0), MaxValueValidator(23)],
+        help_text="Local hour (0–23) to send the digest.",
+    )
+    last_reminder_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1152,6 +1171,10 @@ class CognitiveQuestion(UUIDModel):
             return f"{secs}s"
         mins, rem = divmod(secs, 60)
         return f"{mins}m" if rem == 0 else f"{mins}m {rem}s"
+
+    @property
+    def category_label(self) -> str:
+        return self.category.replace("_", " ").title()
 
 
 class CognitiveProgress(UUIDModel):

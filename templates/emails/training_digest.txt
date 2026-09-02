@@ -1,0 +1,42 @@
+{% autoescape off %}Hi {{ name }},
+
+DevMastery coaching digest
+Day {{ progress.current_day }} / {{ progress.total_days }}{% if progress.in_mastery_track %} · {{ progress.phase_label }}{% endif %}
+Streak: {{ progress.streak }}d · Study this week: {{ week_hours }}h · XP: {{ progress.xp }}
+
+{% if training_day %}TODAY — {{ training_day.title }}
+Focus: {{ training_day.focus }}
+Target: {{ training_day.target_minutes }} minutes
+{% for t in today_tasks %}- {{ t.title }} ({{ t.minutes }}m){% if t.skill %} · {{ t.skill }}{% endif %}
+{% empty %}- Mission clear or rest day — open Today to confirm.
+{% endfor %}{% else %}No training day mapped yet — set your program start date in onboarding/profile.
+{% endif %}
+
+UPCOMING
+{% for u in upcoming %}- {{ u.label }}: {{ u.title }} ({{ u.focus }}, ~{{ u.minutes }}m)
+{% empty %}- You're near the end of the seeded program map.
+{% endfor %}
+
+DOING WELL
+{% for s in strengths %}- {{ s.name }}{% if s.score %} ({{ s.score }}/10){% endif %}
+{% endfor %}
+
+NEEDS IMPROVEMENT
+{% for w in weaknesses %}- {{ w.skill.name }} — {{ w.score }}/10 · {{ w.recommended_action }}
+{% empty %}- No high-priority weaknesses flagged. Keep shipping.
+{% endfor %}
+
+READ / WATCH NEXT
+{% for r in reading %}- {{ r.title }} ({{ r.type }})
+  {{ r.url }}
+{% empty %}- Open Today for curated resources tied to your day.
+{% endfor %}
+
+Links:
+Today: {{ urls.today }}
+Dashboard: {{ urls.dashboard }}
+Reports: {{ urls.analytics }}
+Reminder settings: {{ urls.profile }}
+
+— DevMastery
+{% endautoescape %}

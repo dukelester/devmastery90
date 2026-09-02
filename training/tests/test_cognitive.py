@@ -35,3 +35,52 @@ def test_seed_cognitive_command():
     call_command("seed_cognitive", force=True)
     assert CognitiveQuestion.objects.filter(challenge_type="aptitude").count() == COGNITIVE_COUNTS["aptitude"]
     assert CognitiveQuestion.objects.filter(challenge_type="brain_teaser").count() == COGNITIVE_COUNTS["brain_teaser"]
+
+
+@pytest.mark.django_db
+def test_cognitive_queue_hides_revealed_by_default(django_user_model):
+    from training.models import CognitiveProgress
+    from training.services import get_cognitive_list_data, get_cognitive_question_data, reveal_cognitive_answer
+
+    user = django_user_model.objects.create_user(username="cog", password="x")
+    q1 = CognitiveQuestion.objects.create(
+        challenge_type="aptitude",
+        category="num",
+        difficulty="easy",
+        order=1,
+        question="Q1",
+        answer="A",
+    )
+    q2 = CognitiveQuestion.objects.create(
+        challenge_type="aptitude",
+        category="num",
+        difficulty="easy",
+        order=2,
+        question="Q2",
+        answer="B",
+    )
+    CognitiveQuestion.objects.create(
+        challenge_type="aptitude",
+        category="num",
+        difficulty="easy",
+        order=3,
+        question="Q3",
+        answer="C",
+    )
+    reveal_cognitive_answer(user, q1.id, attempted_answer="A")
+
+    open_list = get_cognitive_list_data(user, "aptitude", show="open")
+    assert [q.order for q in open_list["questions"]] == [2, 3]
+    assert open_list["open_count"] == 2
+    assert open_list["revealed_count"] == 1
+
+    all_list = get_cognitive_list_data(user, "aptitude", show="all")
+    assert len(all_list["questions"]) == 3
+
+    data = get_cognitive_question_data(user, q2.id)
+    assert data["next_question"].order == 3
+    assert data["prev_question"] is None  # q1 revealed
+
+    revealed = reveal_cognitive_answer(user, q2.id, attempted_answer="B")
+    assert revealed["next_question"].order == 3
+    assert CognitiveProgress.objects.filter(user=user, revealed=True).count() == 2

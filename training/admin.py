@@ -75,7 +75,18 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ["user", "xp", "level", "current_streak", "total_study_minutes"]
+    list_display = [
+        "user",
+        "xp",
+        "level",
+        "current_streak",
+        "email_reminders_enabled",
+        "email_digest_frequency",
+        "total_study_minutes",
+    ]
+    list_filter = ["email_reminders_enabled", "email_digest_frequency"]
+    search_fields = ["user__username", "user__email", "display_name"]
+    readonly_fields = ["last_reminder_sent_at"]
 
 
 @admin.register(StudySession)

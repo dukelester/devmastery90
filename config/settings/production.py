@@ -2,6 +2,12 @@ from .base import *  # noqa: F403, F401
 
 DEBUG = False
 
+# Production defaults to real SMTP unless explicitly overridden in .env
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend",
+)
+
 # Prefer hashed static when collectstatic succeeds; fall back is handled by WhiteNoise.
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},

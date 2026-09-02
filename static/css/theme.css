@@ -3165,6 +3165,218 @@ label {
   margin-bottom: 0.5rem;
 }
 
+.dm-cognitive-list-page {
+  max-width: 880px;
+}
+
+.dm-cognitive-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem 1.5rem;
+}
+
+.dm-cognitive-list-progress {
+  min-width: 10rem;
+  flex: 0 0 auto;
+}
+
+.dm-cognitive-continue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-decoration: none;
+  color: inherit;
+  border-color: rgba(10, 107, 102, 0.35);
+  background: linear-gradient(
+    135deg,
+    rgba(10, 107, 102, 0.1) 0%,
+    rgba(10, 107, 102, 0.03) 55%
+  );
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.dm-cognitive-continue:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.dm-cognitive-continue-q {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.dm-cognitive-continue-text {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 550;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.dm-cognitive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dm-cognitive-toolbar-input {
+  width: auto;
+  min-width: 0;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.dm-cognitive-queue {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dm-cognitive-queue-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-raised, transparent);
+}
+
+.dm-cognitive-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-cognitive-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.65rem 0.85rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s var(--ease);
+}
+
+.dm-cognitive-row:last-child {
+  border-bottom: 0;
+}
+
+.dm-cognitive-row:hover {
+  background: rgba(10, 107, 102, 0.06);
+}
+
+.dm-cognitive-row.is-next {
+  background: rgba(10, 107, 102, 0.08);
+  border-left: 3px solid var(--signal);
+  padding-left: calc(1rem - 3px);
+}
+
+.dm-cognitive-row.is-done {
+  opacity: 0.72;
+}
+
+.dm-cognitive-row.is-done:hover {
+  opacity: 0.9;
+}
+
+.dm-cognitive-row-num {
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 2rem;
+}
+
+.dm-cognitive-row-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dm-cognitive-row-text {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 520;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dm-cognitive-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.dm-cognitive-row-meta .dm-tag {
+  font-size: 0.68rem;
+  padding: 0.12rem 0.4rem;
+}
+
+.dm-tag-diff-easy {
+  background: rgba(34, 139, 90, 0.12);
+  color: #2a9d6a;
+}
+
+.dm-tag-diff-medium {
+  background: rgba(201, 148, 58, 0.14);
+  color: #c9943a;
+}
+
+.dm-tag-diff-hard {
+  background: rgba(196, 72, 72, 0.12);
+  color: #c44848;
+}
+
+.dm-tag-done {
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+}
+
+.dm-cognitive-row-action {
+  font-size: 0.9rem;
+  color: var(--muted);
+  opacity: 0.5;
+  transition: opacity 0.12s var(--ease), transform 0.12s var(--ease);
+}
+
+.dm-cognitive-row:hover .dm-cognitive-row-action {
+  opacity: 1;
+  transform: translateX(2px);
+  color: var(--signal);
+}
+
+.dm-cognitive-empty {
+  padding: 1rem;
+}
+
+@media (max-width: 640px) {
+  .dm-cognitive-continue {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dm-cognitive-row-text {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
 .dm-cognitive-list {
   display: grid;
   gap: 0.65rem;

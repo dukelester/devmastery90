@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevMastery digest</title>
+</head>
+<body style="margin:0;padding:0;background:#0f141c;color:#e8eef6;font-family:Georgia,'Times New Roman',serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f141c;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#161c26;border:1px solid #2a3342;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:22px 24px 8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#3dd4cb;">
+              DevMastery coaching digest
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px 8px;font-size:22px;font-weight:700;letter-spacing:-0.03em;color:#f4f7fb;">
+              Hi {{ name }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#9aa8bc;line-height:1.5;">
+              Day {{ progress.current_day }} / {{ progress.total_days }}
+              · Streak {{ progress.streak }}d
+              · {{ week_hours }}h this week
+              · {{ progress.xp }} XP
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 24px 18px;">
+              <div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#3dd4cb;margin-bottom:8px;">Today’s session</div>
+              {% if training_day %}
+              <div style="font-size:17px;font-weight:700;color:#f4f7fb;margin-bottom:4px;">{{ training_day.title }}</div>
+              <div style="font-size:14px;color:#9aa8bc;margin-bottom:10px;">{{ training_day.focus }} · {{ training_day.target_minutes }}m</div>
+              <ul style="margin:0;padding-left:18px;color:#c5cedb;font-size:14px;line-height:1.55;">
+                {% for t in today_tasks %}
+                <li>{{ t.title }} <span style="color:#7f8b9c;">({{ t.minutes }}m)</span></li>
+                {% empty %}
+                <li>No open tasks — check Today or advance to the next day.</li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <div style="font-size:14px;color:#9aa8bc;">Set your program start date to unlock daily missions.</div>
+              {% endif %}
+            </td>
+          </tr>
+
+          {% if upcoming %}
+          <tr>
+            <td style="padding:0 24px 18px;">
+              <div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#3dd4cb;margin-bottom:8px;">Upcoming</div>
+              {% for u in upcoming %}
+              <div style="font-size:14px;color:#e8eef6;margin-bottom:4px;"><strong>{{ u.label }}</strong> — {{ u.title }}</div>
+              <div style="font-size:13px;color:#9aa8bc;">{{ u.focus }} · ~{{ u.minutes }}m</div>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endif %}
+
+          <tr>
+            <td style="padding:0 24px 18px;">
+              <div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#3dd4cb;margin-bottom:8px;">Doing well</div>
+              <ul style="margin:0;padding-left:18px;color:#c5cedb;font-size:14px;line-height:1.55;">
+                {% for s in strengths %}
+                <li>{{ s.name }}{% if s.score %} — {{ s.score }}/10{% endif %}</li>
+                {% endfor %}
+              </ul>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 24px 18px;">
+              <div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#e8914a;margin-bottom:8px;">Needs improvement</div>
+              <ul style="margin:0;padding-left:18px;color:#c5cedb;font-size:14px;line-height:1.55;">
+                {% for w in weaknesses %}
+                <li><strong style="color:#f4f7fb;">{{ w.skill.name }}</strong> ({{ w.score }}/10) — {{ w.recommended_action }}</li>
+                {% empty %}
+                <li>No critical weakness flags right now.</li>
+                {% endfor %}
+              </ul>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 24px 18px;">
+              <div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#3dd4cb;margin-bottom:8px;">Articles & resources</div>
+              {% for r in reading %}
+              <div style="margin-bottom:10px;">
+                <a href="{{ r.url }}" style="color:#3dd4cb;font-size:14px;font-weight:600;text-decoration:none;">{{ r.title }}</a>
+                <div style="font-size:12px;color:#7f8b9c;font-family:ui-monospace,Menlo,Consolas,monospace;">{{ r.type }}</div>
+                {% if r.description %}<div style="font-size:13px;color:#9aa8bc;margin-top:2px;">{{ r.description }}</div>{% endif %}
+              </div>
+              {% empty %}
+              <div style="font-size:14px;color:#9aa8bc;">Open Today for day-linked reading.</div>
+              {% endfor %}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 24px 24px;">
+              <a href="{{ urls.today }}" style="display:inline-block;background:#1eb5ac;color:#0b1017;text-decoration:none;font-weight:700;font-size:14px;padding:10px 16px;border-radius:8px;margin-right:8px;">Start today</a>
+              <a href="{{ urls.dashboard }}" style="display:inline-block;color:#3dd4cb;text-decoration:none;font-size:13px;padding:10px 0;">Dashboard</a>
+              <div style="margin-top:14px;font-size:12px;color:#7f8b9c;">
+                <a href="{{ urls.analytics }}" style="color:#9aa8bc;">Reports</a>
+                ·
+                <a href="{{ urls.profile }}" style="color:#9aa8bc;">Reminder settings</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

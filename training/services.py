@@ -1577,10 +1577,51 @@ def get_cognitive_hub(user) -> dict[str, Any]:
     }
 
 
+def _cognitive_revealed_ids(user, challenge_type: str | None = None) -> set:
+    from training.models import CognitiveProgress
+
+    qs = CognitiveProgress.objects.filter(user=user, revealed=True)
+    if challenge_type:
+        qs = qs.filter(question__challenge_type=challenge_type)
+    return set(qs.values_list("question_id", flat=True))
+
+
+def _cognitive_neighbors(
+    user,
+    question,
+    *,
+    show_all: bool = False,
+) -> tuple[Any, Any]:
+    """Prev/next in queue. Default skips revealed so next is always unanswered."""
+    from training.models import CognitiveQuestion
+
+    base = CognitiveQuestion.objects.filter(challenge_type=question.challenge_type)
+    if show_all:
+        prev_q = base.filter(order__lt=question.order).order_by("-order").first()
+        next_q = base.filter(order__gt=question.order).order_by("order").first()
+        return prev_q, next_q
+
+    revealed_ids = _cognitive_revealed_ids(user, question.challenge_type)
+    open_qs = base.exclude(id__in=revealed_ids).order_by("order")
+    prev_q = open_qs.filter(order__lt=question.order).order_by("-order").first()
+    next_q = open_qs.filter(order__gt=question.order).order_by("order").first()
+    # After answering, current is revealed and gone from open_qs — wrap to earliest open.
+    if next_q is None and question.id in revealed_ids:
+        next_q = open_qs.order_by("order").first()
+    return prev_q, next_q
+
+
 def get_cognitive_list_data(
-    user, challenge_type: str, category: str | None = None, difficulty: str | None = None
+    user,
+    challenge_type: str,
+    category: str | None = None,
+    difficulty: str | None = None,
+    show: str = "open",
 ) -> dict[str, Any]:
-    from training.models import CognitiveProgress, CognitiveQuestion
+    from training.models import CognitiveQuestion
+
+    if show not in {"open", "all", "done"}:
+        show = "open"
 
     qs = CognitiveQuestion.objects.filter(challenge_type=challenge_type)
     if category:
@@ -1588,14 +1629,19 @@ def get_cognitive_list_data(
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
 
-    revealed_ids = set(
-        CognitiveProgress.objects.filter(user=user, revealed=True).values_list(
-            "question_id", flat=True
-        )
-    )
+    revealed_ids = _cognitive_revealed_ids(user, challenge_type)
     questions = list(qs.order_by("order"))
     for q in questions:
         q.is_revealed = q.id in revealed_ids
+
+    total_count = len(questions)
+    revealed_count = sum(1 for q in questions if q.is_revealed)
+    open_count = total_count - revealed_count
+
+    if show == "open":
+        questions = [q for q in questions if not q.is_revealed]
+    elif show == "done":
+        questions = [q for q in questions if q.is_revealed]
 
     categories = (
         CognitiveQuestion.objects.filter(challenge_type=challenge_type)
@@ -1608,32 +1654,22 @@ def get_cognitive_list_data(
         "challenge_type": challenge_type,
         "category_filter": category,
         "difficulty_filter": difficulty,
+        "show_filter": show,
         "categories": categories,
-        "revealed_count": sum(1 for q in questions if q.is_revealed),
+        "total_count": total_count,
+        "open_count": open_count,
+        "revealed_count": revealed_count,
     }
 
 
-def get_cognitive_question_data(user, question_id) -> dict[str, Any]:
+def get_cognitive_question_data(user, question_id, *, show_all: bool = False) -> dict[str, Any]:
     from training.models import CognitiveProgress, CognitiveQuestion
 
     question = CognitiveQuestion.objects.get(id=question_id)
     progress, _ = CognitiveProgress.objects.get_or_create(
         user=user, question=question
     )
-    prev_q = (
-        CognitiveQuestion.objects.filter(
-            challenge_type=question.challenge_type, order__lt=question.order
-        )
-        .order_by("-order")
-        .first()
-    )
-    next_q = (
-        CognitiveQuestion.objects.filter(
-            challenge_type=question.challenge_type, order__gt=question.order
-        )
-        .order_by("order")
-        .first()
-    )
+    prev_q, next_q = _cognitive_neighbors(user, question, show_all=show_all)
     choices = question.choices if isinstance(question.choices, list) else []
     is_correct = None
     if progress.revealed and progress.attempted_answer and choices:
@@ -1645,6 +1681,7 @@ def get_cognitive_question_data(user, question_id) -> dict[str, Any]:
         "progress": progress,
         "prev_question": prev_q,
         "next_question": next_q,
+        "show_all": show_all,
         "choices": choices,
         "is_multiple_choice": bool(choices),
         "is_correct": is_correct,
@@ -1691,10 +1728,13 @@ def reveal_cognitive_answer(
                     is_correct = True
                     break
 
+    _, next_q = _cognitive_neighbors(user, question, show_all=False)
     return {
         "question": question,
         "progress": progress,
         "choices": choices,
         "is_multiple_choice": bool(choices),
         "is_correct": is_correct if attempt else None,
+        "next_question": next_q,
+        "show_all": False,
     }

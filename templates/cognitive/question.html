@@ -102,13 +102,15 @@
         {% endif %}
     </div>
 
-    <nav class="dm-cognitive-nav">
+    <nav id="cognitive-nav" class="dm-cognitive-nav">
         {% if prev_question %}
-        <a href="{% url 'cognitive_question' type_slug prev_question.id %}" class="dm-btn dm-btn-ghost dm-btn-sm">← #{{ prev_question.order }}</a>
+        <a href="{% url 'cognitive_question' type_slug prev_question.id %}{% if show_all %}?show=all{% endif %}" class="dm-btn dm-btn-ghost dm-btn-sm">← #{{ prev_question.order }}</a>
         {% endif %}
-        <a href="{% url 'cognitive_list' type_slug %}" class="dm-btn dm-btn-ghost dm-btn-sm">All questions</a>
+        <a href="{% url 'cognitive_list' type_slug %}{% if show_all %}?show=all{% endif %}" class="dm-btn dm-btn-ghost dm-btn-sm">{% if show_all %}All questions{% else %}Unanswered queue{% endif %}</a>
         {% if next_question %}
-        <a href="{% url 'cognitive_question' type_slug next_question.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Next #{{ next_question.order }} →</a>
+        <a href="{% url 'cognitive_question' type_slug next_question.id %}{% if show_all %}?show=all{% endif %}" class="dm-btn dm-btn-primary dm-btn-sm">{% if show_all %}Next #{{ next_question.order }} →{% else %}Next unanswered #{{ next_question.order }} →{% endif %}</a>
+        {% elif not show_all %}
+        <a href="{% url 'cognitive_list' type_slug %}?show=all" class="dm-btn dm-btn-ghost dm-btn-sm">Show all</a>
         {% endif %}
     </nav>
 </div>

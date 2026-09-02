@@ -44,10 +44,11 @@
 
     <div class="dm-profile-tabs" role="tablist" aria-label="Profile sections">
         <a href="{% url 'profile' %}?tab=profile" class="dm-profile-tab{% if tab == 'profile' %} is-active{% endif %}">Details</a>
+        <a href="{% url 'profile' %}?tab=reminders" class="dm-profile-tab{% if tab == 'reminders' %} is-active{% endif %}">Email reminders</a>
         <a href="{% url 'profile' %}?tab=security" class="dm-profile-tab{% if tab == 'security' %} is-active{% endif %}">Security</a>
     </div>
 
-    {% if tab == 'security' %}
+    {% if tab == "security" %}
     <section class="dm-panel dm-pad dm-form-stack">
         <h2 class="dm-section-title"><span class="dm-sec-num">01</span> Change password</h2>
         <form method="post" class="dm-form-stack" novalidate>
@@ -57,6 +58,34 @@
             {% include "partials/form_field.html" with field=password_form.new_password1 %}
             {% include "partials/form_field.html" with field=password_form.new_password2 %}
             <button type="submit" class="dm-btn dm-btn-primary">Update password</button>
+        </form>
+    </section>
+    {% elif tab == "reminders" %}
+    <section class="dm-panel dm-pad dm-form-stack">
+        <h2 class="dm-section-title"><span class="dm-sec-num">01</span> Coaching email reminders</h2>
+        <p class="dm-soft" style="margin:0 0 1rem;max-width:40rem;line-height:1.5">
+            Get notified about today’s session, what’s coming up, strengths, weak skills,
+            a short summary, and curated articles/docs to read.
+        </p>
+        <form method="post" class="dm-form-stack" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reminders">
+            {% include "partials/form_field.html" with field=reminders_form.timezone %}
+            {% include "partials/form_field.html" with field=reminders_form.email_reminders_enabled %}
+            {% include "partials/form_field.html" with field=reminders_form.email_digest_frequency %}
+            {% include "partials/form_field.html" with field=reminders_form.email_reminder_hour %}
+            <button type="submit" class="dm-btn dm-btn-primary">Save reminder settings</button>
+        </form>
+        <form method="post" style="margin-top:1rem">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="send_test_digest">
+            <button type="submit" class="dm-btn dm-btn-ghost">Send test digest now</button>
+            <p class="dm-muted" style="margin:0.5rem 0 0;font-size:0.85rem">
+                Uses {{ request.user.email|default:"(no email on account)" }}.
+                {% if profile.last_reminder_sent_at %}
+                Last sent: {{ profile.last_reminder_sent_at }}
+                {% endif %}
+            </p>
         </form>
     </section>
     {% else %}

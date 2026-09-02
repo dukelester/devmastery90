@@ -46,4 +46,28 @@
     </p>
     {% endif %}
     <p class="dm-muted" style="font-size:0.8rem;margin:0.75rem 0 0">Compare your reasoning with the solution. Retry similar category drills to build speed.</p>
+
+    {% if type_slug %}
+    <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+        {% if next_question %}
+        <a href="{% url 'cognitive_question' type_slug next_question.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Next unanswered #{{ next_question.order }} →</a>
+        {% else %}
+        <a href="{% url 'cognitive_list' type_slug %}" class="dm-btn dm-btn-primary dm-btn-sm">Back to queue</a>
+        {% endif %}
+        <a href="{% url 'cognitive_list' type_slug %}?show=all" class="dm-btn dm-btn-ghost dm-btn-sm">Show all questions</a>
+    </div>
+    {% endif %}
 </div>
+
+{% if oob_nav and type_slug %}
+<nav id="cognitive-nav" class="dm-cognitive-nav" hx-swap-oob="true">
+    {% if next_question %}
+    <a href="{% url 'cognitive_list' type_slug %}" class="dm-btn dm-btn-ghost dm-btn-sm">Unanswered queue</a>
+    <a href="{% url 'cognitive_question' type_slug next_question.id %}" class="dm-btn dm-btn-primary dm-btn-sm">Next unanswered #{{ next_question.order }} →</a>
+    {% else %}
+    <a href="{% url 'cognitive_list' type_slug %}" class="dm-btn dm-btn-primary dm-btn-sm">Queue complete</a>
+    <a href="{% url 'cognitive_list' type_slug %}?show=all" class="dm-btn dm-btn-ghost dm-btn-sm">Show all</a>
+    {% endif %}
+</nav>
+{% endif %}
+
