@@ -1101,6 +1101,11 @@ class CognitiveQuestion(UUIDModel):
     answer = models.TextField()
     explanation = models.TextField(blank=True)
     hints = models.TextField(blank=True)
+    choices = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Multiple-choice options, e.g. [{"key":"A","text":"□"}, ...]',
+    )
 
     class Meta:
         ordering = ["challenge_type", "order"]

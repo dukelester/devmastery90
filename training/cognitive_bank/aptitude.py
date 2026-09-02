@@ -299,8 +299,11 @@ def _profit_loss() -> list[dict[str, Any]]:
 
 
 def build_aptitude_questions() -> list[dict[str, Any]]:
+    from training.cognitive_bank.shape_patterns import build_shape_pattern_questions
+
     all_q: list[dict[str, Any]] = []
     all_q.extend(_number_series_questions())
+    all_q.extend(build_shape_pattern_questions())
     all_q.extend(_percentage_questions())
     all_q.extend(_ratio_questions())
     all_q.extend(_time_speed_distance())

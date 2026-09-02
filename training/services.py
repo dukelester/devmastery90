@@ -1634,11 +1634,20 @@ def get_cognitive_question_data(user, question_id) -> dict[str, Any]:
         .order_by("order")
         .first()
     )
+    choices = question.choices if isinstance(question.choices, list) else []
+    is_correct = None
+    if progress.revealed and progress.attempted_answer and choices:
+        attempt = progress.attempted_answer.strip().upper()
+        correct = (question.answer or "").strip().upper()
+        is_correct = attempt == correct
     return {
         "question": question,
         "progress": progress,
         "prev_question": prev_q,
         "next_question": next_q,
+        "choices": choices,
+        "is_multiple_choice": bool(choices),
+        "is_correct": is_correct,
     }
 
 
@@ -1654,7 +1663,7 @@ def reveal_cognitive_answer(
     progress.revealed = True
     progress.revealed_at = timezone.now()
     if attempted_answer:
-        progress.attempted_answer = attempted_answer
+        progress.attempted_answer = attempted_answer.strip()
     if notes:
         progress.notes = notes
     if time_spent_seconds > 0:
@@ -1662,4 +1671,30 @@ def reveal_cognitive_answer(
     progress.save()
     update_streak_on_activity(user)
     award_xp(user, 3)
-    return {"question": question, "progress": progress}
+
+    choices = question.choices if isinstance(question.choices, list) else []
+    attempt = (progress.attempted_answer or "").strip().upper()
+    correct = (question.answer or "").strip().upper()
+    # Accept "A" or full choice text match
+    is_correct = False
+    if attempt and correct:
+        if attempt == correct or attempt.startswith(correct + " ") or correct.startswith(attempt):
+            is_correct = True
+        else:
+            for c in choices:
+                key = str(c.get("key", "")).upper()
+                text = str(c.get("text", "")).strip()
+                if key == correct and (attempt == key or attempt == text.upper()):
+                    is_correct = True
+                    break
+                if key == attempt and key == correct:
+                    is_correct = True
+                    break
+
+    return {
+        "question": question,
+        "progress": progress,
+        "choices": choices,
+        "is_multiple_choice": bool(choices),
+        "is_correct": is_correct if attempt else None,
+    }

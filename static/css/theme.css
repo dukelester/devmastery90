@@ -3204,6 +3204,116 @@ label {
   max-width: 720px;
 }
 
+.dm-cognitive-prompt {
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  overflow-x: auto;
+}
+
+.dm-mcq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+@media (max-width: 520px) {
+  .dm-mcq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dm-mcq-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dm-mcq-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dm-mcq-option:hover {
+  border-color: color-mix(in srgb, var(--signal) 40%, var(--line));
+  background: var(--signal-soft);
+}
+
+.dm-mcq-option:has(input:checked) {
+  border-color: var(--signal);
+  background: var(--signal-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--signal) 35%, transparent);
+}
+
+.dm-mcq-option.is-static {
+  cursor: default;
+}
+
+.dm-mcq-option.is-answer {
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line));
+  background: var(--signal-soft);
+}
+
+.dm-mcq-option.is-picked {
+  border-color: color-mix(in srgb, #c45c6a 50%, var(--line));
+  background: color-mix(in srgb, #c45c6a 10%, var(--surface));
+}
+
+.dm-mcq-key {
+  flex: 0 0 auto;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.35rem;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--signal);
+  background: var(--panel-bg);
+}
+
+.dm-mcq-text {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  color: var(--ink);
+}
+
+.dm-mcq-result {
+  margin: 0 0 0.65rem;
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.dm-mcq-result.is-correct {
+  color: var(--signal-deep);
+}
+
+[data-theme="dark"] .dm-mcq-result.is-correct {
+  color: var(--signal-bright);
+}
+
+.dm-mcq-result.is-wrong {
+  color: #c45c6a;
+}
+
+[data-theme="dark"] .dm-mcq-result.is-wrong {
+  color: #f0a0ab;
+}
+
 .dm-cognitive-q-header {
   display: grid;
   gap: 1rem;

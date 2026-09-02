@@ -1,15 +1,39 @@
 <div class="dm-panel dm-pad dm-cognitive-answer dm-rise">
     <p class="dm-kicker" style="color:var(--signal)">Answer revealed</p>
+
+    {% if is_correct == True %}
+    <p class="dm-mcq-result is-correct">Correct — you chose {{ progress.attempted_answer }}</p>
+    {% elif is_correct == False %}
+    <p class="dm-mcq-result is-wrong">Not quite — you chose {{ progress.attempted_answer|default:"—" }}</p>
+    {% endif %}
+
     <div class="dm-cognitive-answer-text">
         <strong>Answer:</strong> {{ question.answer }}
+        {% if is_multiple_choice %}
+            {% for c in choices %}
+                {% if c.key == question.answer %} — {{ c.text }}{% endif %}
+            {% endfor %}
+        {% endif %}
     </div>
+
+    {% if is_multiple_choice %}
+    <div class="dm-mcq-grid is-revealed" style="margin-top:0.85rem">
+        {% for c in choices %}
+        <div class="dm-mcq-option is-static{% if c.key == question.answer %} is-answer{% endif %}{% if progress.attempted_answer == c.key and c.key != question.answer %} is-picked{% endif %}">
+            <span class="dm-mcq-key">{{ c.key }}</span>
+            <span class="dm-mcq-text">{{ c.text }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% if question.explanation %}
     <div style="margin-top:0.85rem">
         <p class="dm-stat-label">Explanation</p>
-        <p class="dm-muted" style="margin:0.35rem 0 0;line-height:1.55">{{ question.explanation }}</p>
+        <p class="dm-muted" style="margin:0.35rem 0 0;line-height:1.55;white-space:pre-wrap">{{ question.explanation }}</p>
     </div>
     {% endif %}
-    {% if progress.attempted_answer %}
+    {% if progress.attempted_answer and not is_multiple_choice %}
     <div style="margin-top:0.85rem">
         <p class="dm-stat-label">Your attempt</p>
         <p class="dm-muted" style="margin:0.35rem 0 0">{{ progress.attempted_answer }}</p>

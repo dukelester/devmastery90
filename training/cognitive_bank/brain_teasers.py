@@ -239,4 +239,7 @@ def build_brain_teasers() -> list[dict]:
         {"question": "Volume of sphere radius r formula?", "answer": "4/3 pi r^3", "explanation": "Standard sphere volume formula.", "category": "spatial", "difficulty": "medium"},
         {"question": "Three fair coins. P(at least two heads)?", "answer": "1/2", "explanation": "HHT, HTH, THH, HHH: four of eight.", "category": "probability_paradox", "difficulty": "medium"},
     ]
+    from training.cognitive_bank.shape_patterns import build_shape_brain_teasers
+
+    raw.extend(build_shape_brain_teasers())
     return raw

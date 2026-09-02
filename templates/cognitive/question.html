@@ -13,6 +13,7 @@
                 <span class="dm-tag">{{ question.category }}</span>
                 <span class="dm-tag">{{ question.get_difficulty_display }}</span>
                 <span class="dm-tag dm-tag-timer">{{ question.time_limit_label }} limit</span>
+                {% if is_multiple_choice %}<span class="dm-tag">A–D choice</span>{% endif %}
             </div>
         </div>
 
@@ -50,7 +51,7 @@
     </header>
 
     <article class="dm-panel dm-pad-lg">
-        <h1 class="dm-display" style="font-size:1.5rem;margin:0;line-height:1.35">{{ question.question }}</h1>
+        <h1 class="dm-display dm-cognitive-prompt" style="font-size:1.35rem;margin:0;line-height:1.45">{{ question.question }}</h1>
         {% if question.hints %}
         <details style="margin-top:0.75rem">
             <summary class="dm-muted" style="cursor:pointer;font-size:0.85rem">Hint (before revealing)</summary>
@@ -70,11 +71,27 @@
     >
         {% csrf_token %}
         <input type="hidden" name="time_spent_seconds" value="0" data-countdown-spent>
+
+        {% if is_multiple_choice %}
+        <p class="dm-stat-label">Choose an answer</p>
+        <div class="dm-mcq-grid" role="radiogroup" aria-label="Answer choices">
+            {% for c in choices %}
+            <label class="dm-mcq-option">
+                <input type="radio" name="attempted_answer" value="{{ c.key }}" required>
+                <span class="dm-mcq-key">{{ c.key }}</span>
+                <span class="dm-mcq-text">{{ c.text }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <textarea name="notes" rows="2" class="dm-textarea" placeholder="Optional notes on your reasoning…" style="margin-top:0.85rem"></textarea>
+        {% else %}
         <p class="dm-stat-label">Your attempt (optional)</p>
         <textarea name="attempted_answer" rows="4" class="dm-textarea" placeholder="Write your answer before revealing…" style="margin-top:0.5rem"></textarea>
         <textarea name="notes" rows="2" class="dm-textarea" placeholder="Notes on your reasoning…" style="margin-top:0.5rem"></textarea>
+        {% endif %}
+
         <button type="submit" class="dm-btn dm-btn-primary" style="margin-top:0.75rem">
-            Reveal answer (+3 XP)
+            {% if is_multiple_choice %}Lock choice &amp; reveal (+3 XP){% else %}Reveal answer (+3 XP){% endif %}
         </button>
     </form>
     {% endif %}
