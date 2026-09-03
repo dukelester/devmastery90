@@ -69,7 +69,7 @@ def test_profile_update(client, django_user_model):
             "display_name": "Pro Engineer",
             "bio": "Building depth daily.",
             "location": "Remote",
-            "timezone": "UTC",
+            "timezone": "Africa/Nairobi",
             "company": "DevMastery",
             "target_role": "Staff Engineer",
             "years_experience": 5,

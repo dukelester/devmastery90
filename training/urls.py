@@ -60,6 +60,7 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path("profile/", views.profile_view, name="profile"),
+    path("profile/timezone/", views.profile_timezone_sync, name="profile_timezone_sync"),
     path("today/", views.today_view, name="today"),
     path("today/daily-review/", views.daily_review_submit, name="daily_review"),
     path("coding/", views.coding_view, name="coding"),

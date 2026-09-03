@@ -36,9 +36,18 @@
     <script src="{% static 'js/nav.js' %}" defer></script>
     <script src="{% static 'js/pwa.js' %}" defer></script>
     <script src="{% static 'js/timer.js' %}" defer></script>
+    <script src="{% static 'js/timezone.js' %}" defer></script>
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
-<body class="dm-shell {% block body_class %}{% endblock %} {% if user.is_authenticated %}has-dock{% endif %}">
+<body
+    class="dm-shell {% block body_class %}{% endblock %} {% if user.is_authenticated %}has-dock{% endif %}"
+    {% if user.is_authenticated %}
+    data-user-authenticated="1"
+    data-timezone="{{ user_timezone|default:'Africa/Nairobi' }}"
+    data-timezone-auto="{% if user_timezone_auto %}1{% else %}0{% endif %}"
+    data-timezone-sync-url="{% url 'profile_timezone_sync' %}"
+    {% endif %}
+>
     <div class="dm-bg" aria-hidden="true">
         <div class="dm-bg-gradient"></div>
         <div class="dm-bg-orb dm-bg-orb-1"></div>

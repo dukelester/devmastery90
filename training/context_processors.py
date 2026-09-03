@@ -26,4 +26,6 @@ def gamification(request):
         "user_milestones_total": milestones["total_count"],
         "user_milestones_pct": milestones["earned_pct"],
         "workload": assess_workload(request.user),
+        "user_timezone": profile.timezone or "Africa/Nairobi",
+        "user_timezone_auto": profile.timezone_auto,
     }

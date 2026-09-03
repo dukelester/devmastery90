@@ -10,6 +10,7 @@ from django.contrib.auth.forms import (
 from django.contrib.auth.models import User
 
 from training.models import UserProfile
+from training.timezones import DEFAULT_TIMEZONE, normalize_timezone, timezone_choices
 
 
 class StyledFormMixin:
@@ -78,6 +79,14 @@ class UserAccountForm(StyledFormMixin, forms.ModelForm):
 
 
 class ProfileDetailsForm(StyledFormMixin, forms.ModelForm):
+    timezone = forms.ChoiceField(
+        choices=timezone_choices,
+        initial=DEFAULT_TIMEZONE,
+        required=False,
+        label="Timezone",
+        help_text="Detected from your browser. Defaults to Africa/Nairobi.",
+    )
+
     class Meta:
         model = UserProfile
         fields = (
@@ -104,16 +113,35 @@ class ProfileDetailsForm(StyledFormMixin, forms.ModelForm):
             "linkedin_url": "LinkedIn URL",
             "portfolio_url": "Portfolio URL",
         }
-        help_texts = {
-            "timezone": "IANA name such as Africa/Nairobi or UTC — used for reminder timing.",
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["timezone"].choices = timezone_choices()
+        if self.instance and self.instance.pk:
+            self.fields["timezone"].initial = normalize_timezone(self.instance.timezone)
         self._style_fields()
+
+    def clean_timezone(self):
+        return normalize_timezone(self.cleaned_data.get("timezone"))
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if "timezone" in self.changed_data:
+            profile.timezone_auto = False
+        if commit:
+            profile.save()
+        return profile
 
 
 class EmailRemindersForm(StyledFormMixin, forms.ModelForm):
+    timezone = forms.ChoiceField(
+        choices=timezone_choices,
+        initial=DEFAULT_TIMEZONE,
+        required=False,
+        label="Timezone",
+        help_text="Detected from your browser. Defaults to Africa/Nairobi.",
+    )
+
     class Meta:
         model = UserProfile
         fields = (
@@ -133,12 +161,25 @@ class EmailRemindersForm(StyledFormMixin, forms.ModelForm):
         help_texts = {
             "email_reminders_enabled": "Sessions, strengths, gaps, summary, and reading links.",
             "email_reminder_hour": "Uses your timezone. Example: 7 = 7:00 local.",
-            "timezone": "IANA name such as Africa/Nairobi or UTC.",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["timezone"].choices = timezone_choices()
+        if self.instance and self.instance.pk:
+            self.fields["timezone"].initial = normalize_timezone(self.instance.timezone)
         self._style_fields()
+
+    def clean_timezone(self):
+        return normalize_timezone(self.cleaned_data.get("timezone"))
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if "timezone" in self.changed_data:
+            profile.timezone_auto = False
+        if commit:
+            profile.save()
+        return profile
 
 
 class DevMasteryPasswordChangeForm(StyledFormMixin, PasswordChangeForm):

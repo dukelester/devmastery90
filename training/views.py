@@ -7,7 +7,7 @@ from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
 from django.contrib.staticfiles import finders
-from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
+from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -56,6 +56,7 @@ from training.services import (
     can_access_practice_question,
     submit_practice_attempt,
     get_or_create_profile,
+    set_profile_timezone,
     get_skill_scores,
     get_mock_interview_hub,
     start_mock_session,
@@ -198,6 +199,32 @@ def profile_view(request: HttpRequest) -> HttpResponse:
             "reminders_form": reminders_form,
             "password_form": password_form,
         },
+    )
+
+
+@login_required
+@require_POST
+def profile_timezone_sync(request: HttpRequest) -> JsonResponse:
+    """Accept browser-detected timezone when auto mode is enabled."""
+    profile = get_or_create_profile(request.user)
+    detected = (request.POST.get("timezone") or "").strip()
+    force = request.POST.get("force") == "1"
+    if not profile.timezone_auto and not force:
+        return JsonResponse(
+            {
+                "ok": True,
+                "skipped": True,
+                "timezone": profile.timezone,
+                "auto": False,
+            }
+        )
+    updated = set_profile_timezone(request.user, detected, auto=True)
+    return JsonResponse(
+        {
+            "ok": True,
+            "timezone": updated.timezone,
+            "auto": updated.timezone_auto,
+        }
     )
 
 

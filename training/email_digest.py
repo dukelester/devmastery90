@@ -39,10 +39,12 @@ def absolute_url(path: str) -> str:
 
 
 def _user_local_now(profile: UserProfile):
+    from training.timezones import DEFAULT_TIMEZONE, normalize_timezone
+
     try:
-        tz = ZoneInfo(profile.timezone or "UTC")
+        tz = ZoneInfo(normalize_timezone(profile.timezone))
     except ZoneInfoNotFoundError:
-        tz = ZoneInfo("UTC")
+        tz = ZoneInfo(DEFAULT_TIMEZONE)
     return timezone.now().astimezone(tz)
 
 

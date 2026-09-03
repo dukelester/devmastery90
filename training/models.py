@@ -283,7 +283,16 @@ class UserProfile(UUIDModel):
     display_name = models.CharField(max_length=120, blank=True)
     bio = models.TextField(blank=True)
     location = models.CharField(max_length=120, blank=True)
-    timezone = models.CharField(max_length=80, blank=True, default="UTC")
+    timezone = models.CharField(
+        max_length=80,
+        blank=True,
+        default="Africa/Nairobi",
+        help_text="IANA timezone. Auto-detected from the browser; defaults to Africa/Nairobi.",
+    )
+    timezone_auto = models.BooleanField(
+        default=True,
+        help_text="When true, timezone is kept in sync with the browser.",
+    )
     company = models.CharField(max_length=200, blank=True)
     target_role = models.CharField(max_length=200, blank=True)
     years_experience = models.PositiveSmallIntegerField(null=True, blank=True)

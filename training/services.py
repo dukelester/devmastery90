@@ -29,7 +29,37 @@ def get_program_total_days() -> int:
 
 
 def get_or_create_profile(user) -> UserProfile:
-    profile, _ = UserProfile.objects.get_or_create(user=user)
+    from training.timezones import DEFAULT_TIMEZONE, normalize_timezone
+
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    updates: list[str] = []
+    if created and not profile.timezone:
+        profile.timezone = DEFAULT_TIMEZONE
+        updates.append("timezone")
+    elif profile.timezone:
+        normalized = normalize_timezone(profile.timezone)
+        if normalized != profile.timezone:
+            profile.timezone = normalized
+            updates.append("timezone")
+    else:
+        profile.timezone = DEFAULT_TIMEZONE
+        updates.append("timezone")
+    if updates:
+        profile.save(update_fields=[*updates, "updated_at"])
+    return profile
+
+
+def set_profile_timezone(user, timezone_name: str, *, auto: bool = True) -> UserProfile:
+    """Set profile timezone from browser detection or manual override."""
+    from training.timezones import normalize_timezone
+
+    profile = get_or_create_profile(user)
+    tz = normalize_timezone(timezone_name)
+    if profile.timezone == tz and profile.timezone_auto == auto:
+        return profile
+    profile.timezone = tz
+    profile.timezone_auto = auto
+    profile.save(update_fields=["timezone", "timezone_auto", "updated_at"])
     return profile
 
 
