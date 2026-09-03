@@ -74,6 +74,16 @@ services:
       - dm_net
     expose:
       - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import socket; s=socket.create_connection(('127.0.0.1',8000),2); s.close()\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
 
   worker:
     build: .
@@ -137,7 +147,8 @@ services:
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     networks:
       - dm_net
 
